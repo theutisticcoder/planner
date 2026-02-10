@@ -575,7 +575,7 @@
 
         async function loadClasses() {
             try {
-                const { data, error } = await supabase
+                const { data, error } = await _supabase
                     .from('classes')
                     .select('*')
                     .eq('user_id', currentUser.id)
@@ -592,7 +592,7 @@
 
         async function loadCategories() {
             try {
-                const { data, error } = await supabase
+                const { data, error } = await __supabase
                     .from('categories')
                     .select('*')
                     .eq('user_id', currentUser.id)
