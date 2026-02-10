@@ -154,7 +154,6 @@
         const SUPABASE_URL = 'https://njgjgpiamweujgyknqtz.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_3bRvo_Zuppdi4ICnOtfjeA_VWfp6Zyx'; 
         
-        // FIX: Renamed variable to supabaseClient to avoid conflict with the global window.supabase object
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         // --- STATE MANAGEMENT ---
@@ -166,7 +165,6 @@
 
         // --- AUTHENTICATION ---
         async function checkUser() {
-            // Updated to use supabaseClient
             const { data: { user } } = await supabaseClient.auth.getUser();
             state.user = user;
             updateAuthUI();
@@ -193,7 +191,6 @@
         }
 
         document.getElementById('login-btn').addEventListener('click', async () => {
-            // Updated to use supabaseClient
             await supabaseClient.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
@@ -203,7 +200,6 @@
         });
 
         document.getElementById('logout-btn').addEventListener('click', async () => {
-            // Updated to use supabaseClient
             await supabaseClient.auth.signOut();
             state.user = null;
             state.classes = [];
@@ -225,7 +221,6 @@
             if (state.user) {
                 document.getElementById('sync-status').innerText = 'Syncing...';
                 
-                // Updated to use supabaseClient
                 const { data: existingData } = await supabaseClient
                     .from('user_data')
                     .select('id')
@@ -260,7 +255,6 @@
 
         async function loadDataFromSupabase() {
             document.getElementById('sync-status').innerText = 'Loading...';
-            // Updated to use supabaseClient
             const { data, error } = await supabaseClient
                 .from('user_data')
                 .select('data')
@@ -375,7 +369,6 @@
                 
                 if(!activeClass.assignments || activeClass.assignments.length === 0) {
                      assignmentsHtml = `<div class="text-center text-gray-400 py-10">No assignments yet.</div>`;
-                     // Ensure assignments array exists
                      if(!activeClass.assignments) activeClass.assignments = [];
                 } else {
                     assignmentsHtml = `<div class="bg-white shadow overflow-hidden sm:rounded-md mt-4"><ul class="divide-y divide-gray-200">`;
@@ -472,10 +465,8 @@
                 document.getElementById('edit-class-id').value = '';
                 document.getElementById('class-name').value = '';
                 form.reset();
-                addCategoryInput('Homework', 20);
-                addCategoryInput('Tests', 40);
-                addCategoryInput('Quizzes', 20);
-                addCategoryInput('Projects', 20);
+                // CHANGE: Default to just one category
+                addCategoryInput('Assignments', 100);
                 deleteBtn.classList.add('hidden');
             }
             toggleModal('class-modal');
@@ -487,11 +478,12 @@
             const wrapper = document.createElement('div');
             wrapper.className = 'flex gap-2 category-row';
             const idVal = id ? id : 'new_' + Date.now() + Math.random();
+            // CHANGE: Added specific button for deleting the row
             wrapper.innerHTML = `
                 <input type="text" placeholder="Category Name" class="cat-name flex-grow shadow appearance-none border rounded py-2 px-3 text-gray-700" value="${name}" required>
                 <input type="number" placeholder="%" class="cat-weight w-20 shadow appearance-none border rounded py-2 px-3 text-gray-700" value="${weight}" required>
                 <input type="hidden" class="cat-id" value="${idVal}">
-                <button type="button" onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-700"><i class="fas fa-times"></i></button>
+                <button type="button" onclick="this.closest('.category-row').remove()" class="text-red-500 hover:text-red-700 px-2" title="Delete Category"><i class="fas fa-trash-alt"></i></button>
             `;
             document.getElementById('category-inputs').appendChild(wrapper);
         }
@@ -509,6 +501,11 @@
                     weight: row.querySelector('.cat-weight').value
                 });
             });
+
+            if (categories.length === 0) {
+                alert("Please add at least one category.");
+                return;
+            }
 
             if (id) {
                 const cls = state.classes.find(c => c.id === id);
@@ -548,6 +545,11 @@
             const select = document.getElementById('asg-category');
             select.innerHTML = '';
             
+            if (activeClass.categories.length === 0) {
+                alert("This class has no categories. Please edit the class to add categories.");
+                return;
+            }
+
             activeClass.categories.forEach(cat => {
                 const opt = document.createElement('option');
                 opt.value = cat.id;
