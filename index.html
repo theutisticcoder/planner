@@ -470,7 +470,9 @@
         const supabaseProject = 'Edutrack';
 
         // Initialize Supabase
-        const supabase = createClient(supabaseUrl, supabaseKey, { project: supabaseProject });
+          const { createClient } = supabase
+
+        const _supabase = createClient(supabaseUrl, supabaseKey, { project: supabaseProject });
 
         // DOM elements
         const tabs = document.querySelectorAll('.tab');
