@@ -3,364 +3,550 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edutrack - Multifunctional Assignment Tracker</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <title>EduTrack - Advanced Assignment Tracker</title>
+    <!-- Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
-        .tab-active { border-bottom: 3px solid #4f46e5; color: #4f46e5; font-weight: bold; }
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 50; }
-        .modal.active { display: flex; }
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .tab-active { border-bottom: 2px solid #3b82f6; color: #3b82f6; }
+        .tab-inactive { color: #6b7280; }
+        .grade-A { color: #10b981; }
+        .grade-B { color: #3b82f6; }
+        .grade-C { color: #f59e0b; }
+        .grade-D { color: #f97316; }
+        .grade-F { color: #ef4444; }
+        
+        /* Modal Transitions */
+        .modal { transition: opacity 0.25s ease; }
+        body.modal-active { overflow-x: hidden; overflow-y: hidden !important; }
     </style>
 </head>
-<body class="bg-gray-50 font-sans text-gray-900">
+<body class="bg-gray-100 min-h-screen">
 
-    <!-- Auth Section -->
-    <div id="auth-screen" class="min-h-screen flex items-center justify-center">
-        <div class="bg-white p-8 rounded-xl shadow-lg text-center max-w-sm w-full border border-gray-100">
-            <h1 class="text-3xl font-bold text-indigo-600 mb-2">Edutrack</h1>
-            <p class="text-gray-500 mb-8">Your multifunctional assignment & GPA tracker.</p>
-            <button id="login-btn" class="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 py-3 px-4 rounded-lg hover:bg-gray-50 transition font-semibold">
-                <img src="https://www.google.com/favicon.ico" class="w-5" alt="G">
-                Sign in with Google
+    <!-- Navbar -->
+    <nav class="bg-white shadow-sm p-4">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-gray-800"><i class="fa-solid fa-graduation-cap text-blue-600"></i> EduTrack</h1>
+            <div class="flex items-center gap-4">
+                <div id="gpa-display" class="font-bold text-gray-700 bg-gray-100 px-3 py-1 rounded">GPA: 0.00</div>
+                <button id="login-btn" onclick="signIn()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
+                    <i class="fa-brands fa-google"></i> Login
+                </button>
+                <div id="user-profile" class="hidden flex items-center gap-2">
+                    <span id="user-email" class="text-sm text-gray-600"></span>
+                    <button onclick="saveToCloud()" class="bg-green-600 text-white px-3 py-1 text-sm rounded hover:bg-green-700">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Save
+                    </button>
+                    <button onclick="signOut()" class="text-red-500 text-sm hover:underline">Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto p-4 mt-6">
+        
+        <!-- Controls -->
+        <div class="mb-6 flex justify-between items-center">
+            <button onclick="openModal('class-modal')" class="bg-indigo-600 text-white px-4 py-2 rounded shadow hover:bg-indigo-700 transition">
+                <i class="fa-solid fa-plus"></i> Add Class
             </button>
         </div>
-    </div>
 
-    <!-- Main App Section (Hidden by default) -->
-    <div id="app-screen" class="hidden min-h-screen flex flex-col">
-        <header class="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center sticky top-0 z-40">
-            <h1 class="text-2xl font-bold text-indigo-600">Edutrack</h1>
-            <div class="flex items-center gap-4">
-                <span id="user-email" class="text-sm text-gray-500"></span>
-                <button id="logout-btn" class="text-sm text-red-500 hover:underline">Logout</button>
-            </div>
-        </header>
+        <!-- Class Tabs -->
+        <div class="flex overflow-x-auto border-b border-gray-200 bg-white rounded-t-lg px-2" id="tabs-container">
+            <!-- Tabs injected by JS -->
+        </div>
 
-        <main class="flex-1 flex flex-col p-6 max-w-6xl mx-auto w-full">
-            <!-- GPA Summary -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                    <h3 class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Estimated Semester GPA</h3>
-                    <p id="total-gpa" class="text-3xl font-bold text-indigo-600">0.00</p>
-                </div>
-                <div id="add-class-card" class="bg-indigo-50 border-2 border-dashed border-indigo-200 p-6 rounded-xl flex items-center justify-center cursor-pointer hover:bg-indigo-100 transition" onclick="openModal('classModal')">
-                    <span class="text-indigo-600 font-semibold">+ Add New Class</span>
-                </div>
-            </div>
-
-            <!-- Tab Navigation -->
-            <div id="class-tabs" class="flex gap-6 border-b border-gray-200 mb-6 overflow-x-auto">
-                <!-- Tabs injected here -->
-            </div>
-
-            <!-- Tab Content Area -->
-            <div id="class-content" class="flex-1">
-                <div class="text-center py-20 text-gray-400">
-                    <p>Select a class or create one to start tracking assignments.</p>
-                </div>
-            </div>
-        </main>
-    </div>
-
-    <!-- Modals -->
-    <!-- Add/Edit Class Modal -->
-    <div id="classModal" class="modal">
-        <div class="bg-white p-8 rounded-xl shadow-2xl max-w-md w-full mx-4">
-            <h2 class="text-xl font-bold mb-4">Class Details</h2>
-            <input type="text" id="class-name-input" placeholder="e.g. Advanced Calculus" class="w-full border p-3 rounded-lg mb-4 outline-indigo-500">
-            <div class="flex justify-end gap-3 mt-4">
-                <button onclick="closeModal('classModal')" class="px-4 py-2 text-gray-500 hover:bg-gray-100 rounded-lg">Cancel</button>
-                <button id="save-class-btn" class="px-6 py-2 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700">Save Class</button>
+        <!-- Tab Content Area -->
+        <div class="bg-white rounded-b-lg shadow-md p-6 min-h-[500px]" id="tab-content">
+            <div class="text-center text-gray-400 mt-20">
+                <i class="fa-regular fa-folder-open text-6xl mb-4"></i>
+                <p>Select a class tab or add a new class to get started.</p>
             </div>
         </div>
     </div>
 
-    <!-- Add Category Modal -->
-    <div id="categoryModal" class="modal">
-        <div class="bg-white p-8 rounded-xl shadow-2xl max-w-md w-full mx-4">
-            <h2 class="text-xl font-bold mb-4">Add Grading Category</h2>
-            <input type="text" id="cat-name-input" placeholder="e.g. Exams, Homework" class="w-full border p-3 rounded-lg mb-4">
-            <label class="block text-sm text-gray-500 mb-1">Weight (e.g. 30 for 30%)</label>
-            <input type="number" id="cat-weight-input" placeholder="30" class="w-full border p-3 rounded-lg mb-4">
-            <div class="flex justify-end gap-3 mt-4">
-                <button onclick="closeModal('categoryModal')" class="px-4 py-2 text-gray-500 hover:bg-gray-100 rounded-lg">Cancel</button>
-                <button id="save-category-btn" class="px-6 py-2 bg-indigo-600 text-white rounded-lg font-semibold">Add Category</button>
+    <!-- MODALS -->
+
+    <!-- Add Class Modal -->
+    <div id="class-modal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
+        <div class="modal-overlay absolute w-full h-full bg-gray-900 opacity-50"></div>
+        <div class="modal-container bg-white w-11/12 md:max-w-md mx-auto rounded shadow-lg z-50 overflow-y-auto">
+            <div class="modal-content py-4 text-left px-6">
+                <div class="flex justify-between items-center pb-3">
+                    <p class="text-2xl font-bold">Add New Class</p>
+                    <div class="modal-close cursor-pointer z-50" onclick="closeModal('class-modal')">
+                        <i class="fa-solid fa-times"></i>
+                    </div>
+                </div>
+                <div class="my-5">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Class Name</label>
+                    <input type="text" id="new-class-name" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="e.g. AP Calculus">
+                </div>
+                <div class="flex justify-end pt-2">
+                    <button onclick="addClass()" class="px-4 bg-blue-600 p-3 rounded-lg text-white hover:bg-blue-700">Create</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Class / Categories Modal -->
+    <div id="settings-modal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
+        <div class="modal-overlay absolute w-full h-full bg-gray-900 opacity-50"></div>
+        <div class="modal-container bg-white w-11/12 md:max-w-lg mx-auto rounded shadow-lg z-50 overflow-y-auto">
+            <div class="modal-content py-4 text-left px-6">
+                <div class="flex justify-between items-center pb-3">
+                    <p class="text-2xl font-bold">Class Settings</p>
+                    <div class="modal-close cursor-pointer" onclick="closeModal('settings-modal')">
+                        <i class="fa-solid fa-times"></i>
+                    </div>
+                </div>
+                
+                <h3 class="font-bold text-gray-700 mb-2">Weighted Categories</h3>
+                <p class="text-xs text-gray-500 mb-4">Weights should add up to 100%.</p>
+                
+                <div id="categories-list" class="space-y-2 mb-4">
+                    <!-- Categories injected here -->
+                </div>
+
+                <div class="flex gap-2 mb-4">
+                    <input type="text" id="new-cat-name" placeholder="Category Name" class="border rounded p-2 flex-grow text-sm">
+                    <input type="number" id="new-cat-weight" placeholder="%" class="border rounded p-2 w-20 text-sm">
+                    <button onclick="addCategory()" class="bg-green-500 text-white px-3 rounded hover:bg-green-600"><i class="fa-solid fa-plus"></i></button>
+                </div>
+
+                <div class="border-t pt-4 mt-4 flex justify-between">
+                    <button onclick="deleteClass()" class="text-red-600 hover:text-red-800 text-sm font-bold">Delete Class</button>
+                    <button onclick="closeModal('settings-modal')" class="bg-gray-300 text-gray-800 px-4 py-2 rounded">Done</button>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Add Assignment Modal -->
-    <div id="assignmentModal" class="modal">
-        <div class="bg-white p-8 rounded-xl shadow-2xl max-w-md w-full mx-4">
-            <h2 class="text-xl font-bold mb-4">Add Assignment</h2>
-            <input type="text" id="assign-name-input" placeholder="Assignment Name" class="w-full border p-3 rounded-lg mb-4">
-            <div class="flex gap-4">
-                <div class="flex-1">
-                    <label class="text-sm text-gray-500">Score</label>
-                    <input type="number" id="assign-score-input" placeholder="85" class="w-full border p-3 rounded-lg">
+    <div id="assignment-modal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
+        <div class="modal-overlay absolute w-full h-full bg-gray-900 opacity-50"></div>
+        <div class="modal-container bg-white w-11/12 md:max-w-md mx-auto rounded shadow-lg z-50 overflow-y-auto">
+            <div class="modal-content py-4 text-left px-6">
+                <div class="flex justify-between items-center pb-3">
+                    <p class="text-2xl font-bold">Add Assignment</p>
+                    <div class="modal-close cursor-pointer" onclick="closeModal('assignment-modal')">
+                        <i class="fa-solid fa-times"></i>
+                    </div>
                 </div>
-                <div class="flex-1">
-                    <label class="text-sm text-gray-500">Total Points</label>
-                    <input type="number" id="assign-total-input" placeholder="100" class="w-full border p-3 rounded-lg">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Name</label>
+                        <input type="text" id="assign-name" class="shadow border rounded w-full py-2 px-3">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Category</label>
+                        <select id="assign-category" class="shadow border rounded w-full py-2 px-3 bg-white"></select>
+                    </div>
+                    <div class="flex gap-4">
+                        <div class="w-1/2">
+                            <label class="block text-gray-700 text-sm font-bold mb-2">Score</label>
+                            <input type="number" id="assign-score" class="shadow border rounded w-full py-2 px-3">
+                        </div>
+                        <div class="w-1/2">
+                            <label class="block text-gray-700 text-sm font-bold mb-2">Total Points</label>
+                            <input type="number" id="assign-total" value="100" class="shadow border rounded w-full py-2 px-3">
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div class="flex justify-end gap-3 mt-6">
-                <button onclick="closeModal('assignmentModal')" class="px-4 py-2 text-gray-500 hover:bg-gray-100 rounded-lg">Cancel</button>
-                <button id="save-assignment-btn" class="px-6 py-2 bg-indigo-600 text-white rounded-lg font-semibold">Save</button>
+                <div class="flex justify-end pt-6">
+                    <button onclick="saveAssignment()" class="px-4 bg-blue-600 py-2 rounded text-white hover:bg-blue-700">Save Assignment</button>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Supabase Configuration
+        // --- Configuration ---
         const SUPABASE_URL = 'https://njgjgpiamweujgyknqtz.supabase.co';
-        const SUPABASE_KEY = 'sb_publishable_3bRvo_Zuppdi4ICnOtfjeA_VWfp6Zyx';
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-        let currentUser = null;
+        const SUPABASE_KEY = 'sb_publishable_3bRvo_Zuppdi4ICnOtfjeA_VWfp6Zyx'; 
+        
+        // --- State Management ---
         let classes = [];
-        let categories = [];
-        let assignments = [];
         let activeClassId = null;
+        let user = null;
+        
+        // Initialize Supabase
+        // Note: The key provided in prompt was 'sb_publishable...', usually keys are 'eyJ...'. 
+        // Assuming the user provided a valid key format, if not, this part will fail silently in console.
+        // I will use the exact string provided.
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // --- AUTH LOGIC ---
-        async function checkAuth() {
+        // --- Initialization ---
+        window.onload = async function() {
+            // Load from local storage first for speed
+            const localData = localStorage.getItem('edutrack_data');
+            if (localData) {
+                classes = JSON.parse(localData);
+                renderTabs();
+                updateGPA();
+            }
+
+            // Check Supabase Auth
             const { data: { session } } = await supabase.auth.getSession();
             if (session) {
-                currentUser = session.user;
-                document.getElementById('auth-screen').classList.add('hidden');
-                document.getElementById('app-screen').classList.remove('hidden');
-                document.getElementById('user-email').innerText = currentUser.email;
-                loadData();
+                handleUserLogin(session.user);
             }
-        }
+            
+            // Listen for auth changes
+            supabase.auth.onAuthStateChange((_event, session) => {
+                if (session) handleUserLogin(session.user);
+                else handleUserLogout();
+            });
+        };
 
-        document.getElementById('login-btn').onclick = () => {
-            supabase.auth.signInWithOAuth({
+        // --- Auth Functions ---
+        async function signIn() {
+            await supabase.auth.signInWithOAuth({
                 provider: 'google',
-                options: { redirectTo: window.location.origin }
-            });
-        };
-
-        document.getElementById('logout-btn').onclick = async () => {
-            await supabase.auth.signOut();
-            window.location.reload();
-        };
-
-        // --- DATA LOGIC ---
-        async function loadData() {
-            const { data: classData } = await supabase.from('classes').select('*').eq('user_id', currentUser.id);
-            classes = classData || [];
-            
-            if (classes.length > 0) {
-                const classIds = classes.map(c => c.id);
-                const { data: catData } = await supabase.from('categories').select('*').in('class_id', classIds);
-                categories = catData || [];
-
-                const catIds = categories.map(cat => cat.id);
-                if (catIds.length > 0) {
-                    const { data: assignData } = await supabase.from('assignments').select('*').in('category_id', catIds);
-                    assignments = assignData || [];
+                options: {
+                    redirectTo: 'https://njgjgpiamweujgyknqtz.supabase.co/auth/v1/callback'
                 }
-            }
+            });
+        }
+
+        async function signOut() {
+            await supabase.auth.signOut();
+            classes = []; // Clear data on logout
+            localStorage.removeItem('edutrack_data');
             renderTabs();
-            calculateGPA();
+            document.getElementById('tab-content').innerHTML = '';
         }
 
-        // --- UI RENDERING ---
+        async function handleUserLogin(userData) {
+            user = userData;
+            document.getElementById('login-btn').classList.add('hidden');
+            document.getElementById('user-profile').classList.remove('hidden');
+            document.getElementById('user-email').innerText = user.email;
+            
+            // Fetch data from Supabase
+            await loadFromCloud();
+        }
+
+        function handleUserLogout() {
+            user = null;
+            document.getElementById('login-btn').classList.remove('hidden');
+            document.getElementById('user-profile').classList.add('hidden');
+        }
+
+        // --- Data Persistence ---
+        function saveData() {
+            // Save locally
+            localStorage.setItem('edutrack_data', JSON.stringify(classes));
+            renderTabs();
+            if(activeClassId) renderClassContent(activeClassId);
+            updateGPA();
+        }
+
+        async function saveToCloud() {
+            if (!user) return alert("Please login to save to cloud.");
+            
+            const { error } = await supabase
+                .from('user_data')
+                .upsert({ id: user.id, data: classes, updated_at: new Date() });
+
+            if (error) {
+                console.error('Error saving:', error);
+                alert('Error saving to cloud');
+            } else {
+                alert('Data saved to cloud!');
+            }
+        }
+
+        async function loadFromCloud() {
+            if (!user) return;
+            
+            const { data, error } = await supabase
+                .from('user_data')
+                .select('data')
+                .eq('id', user.id)
+                .single();
+
+            if (data && data.data) {
+                // Merge or replace logic. Here we replace for simplicity.
+                classes = data.data;
+                saveData(); // Sync to local
+            }
+        }
+
+        // --- Core Logic ---
+
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+
+        function addClass() {
+            const name = document.getElementById('new-class-name').value;
+            if (!name) return;
+
+            const newClass = {
+                id: generateId(),
+                name: name,
+                categories: [
+                    { id: generateId(), name: 'Homework', weight: 40 },
+                    { id: generateId(), name: 'Exams', weight: 60 }
+                ],
+                assignments: []
+            };
+
+            classes.push(newClass);
+            document.getElementById('new-class-name').value = '';
+            closeModal('class-modal');
+            
+            activeClassId = newClass.id;
+            saveData();
+        }
+
         function renderTabs() {
-            const tabContainer = document.getElementById('class-tabs');
-            tabContainer.innerHTML = '';
-            
+            const container = document.getElementById('tabs-container');
+            container.innerHTML = '';
+
             classes.forEach(c => {
-                const btn = document.createElement('button');
-                btn.className = `px-4 py-2 whitespace-nowrap ${activeClassId === c.id ? 'tab-active' : 'text-gray-500'}`;
-                btn.innerText = c.name;
-                btn.onclick = () => { activeClassId = c.id; renderTabs(); renderClassView(); };
-                tabContainer.appendChild(btn);
+                const isActive = c.id === activeClassId;
+                const tab = document.createElement('div');
+                tab.className = `cursor-pointer px-6 py-3 font-medium text-sm whitespace-nowrap transition-colors ${isActive ? 'tab-active bg-blue-50' : 'tab-inactive hover:bg-gray-50'}`;
+                tab.innerText = c.name;
+                tab.onclick = () => {
+                    activeClassId = c.id;
+                    saveData(); // Just to trigger rerender
+                };
+                container.appendChild(tab);
             });
-
-            if (activeClassId) renderClassView();
         }
 
-        function renderClassView() {
-            const container = document.getElementById('class-content');
-            const currentClass = classes.find(c => c.id === activeClassId);
-            if (!currentClass) return;
-
-            const classCats = categories.filter(cat => cat.class_id === activeClassId);
-            
-            let html = `
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold">${currentClass.name}</h2>
-                    <div class="flex gap-3">
-                        <button onclick="openModal('categoryModal')" class="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm">+ Add Category</button>
-                        <button onclick="deleteClass('${currentClass.id}')" class="text-red-500 hover:bg-red-50 px-3 py-2 rounded-lg text-sm">Delete Class</button>
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 gap-6">
-            `;
-
-            let classGrade = 0;
-            let totalWeightUsed = 0;
-
-            classCats.forEach(cat => {
-                const catAssigns = assignments.filter(a => a.category_id === cat.id);
-                const avg = catAssigns.length > 0 
-                    ? (catAssigns.reduce((sum, a) => sum + (a.score/a.total), 0) / catAssigns.length) * 100 
-                    : 100;
-                
-                classGrade += (avg * (cat.weight/100));
-                totalWeightUsed += cat.weight;
-
-                html += `
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                        <div class="flex justify-between items-start mb-4">
-                            <div>
-                                <h3 class="font-bold text-lg">${cat.name} <span class="text-gray-400 font-normal text-sm">(${cat.weight}%)</span></h3>
-                                <p class="text-indigo-600 font-semibold">Average: ${avg.toFixed(1)}%</p>
-                            </div>
-                            <button onclick="openAssignModal('${cat.id}')" class="text-indigo-600 hover:underline text-sm">+ Add Assignment</button>
-                        </div>
-                        <div class="space-y-2">
-                            ${catAssigns.map(a => `
-                                <div class="flex justify-between items-center text-sm border-b border-gray-50 pb-2">
-                                    <span class="text-gray-700">${a.name}</span>
-                                    <div class="flex items-center gap-4">
-                                        <span class="font-medium">${a.score}/${a.total}</span>
-                                        <button onclick="deleteAssignment('${a.id}')" class="text-gray-300 hover:text-red-400">×</button>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
-            });
-
-            const finalGrade = totalWeightUsed > 0 ? (classGrade / (totalWeightUsed/100)) : 0;
-            html += `</div>
-                <div class="mt-8 p-6 bg-indigo-600 text-white rounded-xl flex justify-between items-center">
-                    <div>
-                        <p class="text-indigo-200 text-sm uppercase font-bold">Current Class Grade</p>
-                        <p class="text-3xl font-bold">${finalGrade.toFixed(2)}%</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-indigo-200 text-sm uppercase font-bold">Letter Grade</p>
-                        <p class="text-3xl font-bold">${getLetter(finalGrade)}</p>
-                    </div>
-                </div>
-            `;
-
-            container.innerHTML = html;
-        }
-
-        // --- CALCULATIONS ---
-        function getLetter(grade) {
-            if (grade >= 90) return 'A';
-            if (grade >= 80) return 'B';
-            if (grade >= 70) return 'C';
-            if (grade >= 60) return 'D';
+        function getGradeLetter(percentage) {
+            if (percentage >= 90) return 'A';
+            if (percentage >= 80) return 'B';
+            if (percentage >= 70) return 'C';
+            if (percentage >= 60) return 'D';
             return 'F';
         }
 
-        function calculateGPA() {
-            let totalPoints = 0;
-            let classCount = 0;
-            
-            classes.forEach(c => {
-                const classCats = categories.filter(cat => cat.class_id === c.id);
-                let classGrade = 0;
-                let weightSum = 0;
-                
-                classCats.forEach(cat => {
-                    const catAssigns = assignments.filter(a => a.category_id === cat.id);
-                    const avg = catAssigns.length > 0 ? (catAssigns.reduce((sum, a) => sum + (a.score/a.total), 0) / catAssigns.length) * 100 : 100;
-                    classGrade += (avg * (cat.weight/100));
-                    weightSum += cat.weight;
-                });
+        function calculateClassGrade(classObj) {
+            let totalWeightedScore = 0;
+            let totalWeightUsed = 0;
 
-                const final = weightSum > 0 ? (classGrade / (weightSum/100)) : 0;
-                if (final >= 90) totalPoints += 4.0;
-                else if (final >= 80) totalPoints += 3.0;
-                else if (final >= 70) totalPoints += 2.0;
-                else if (final >= 60) totalPoints += 1.0;
-                
-                if (weightSum > 0) classCount++;
+            classObj.categories.forEach(cat => {
+                const catAssignments = classObj.assignments.filter(a => a.categoryId === cat.id);
+                if (catAssignments.length > 0) {
+                    let catPoints = 0;
+                    let catTotal = 0;
+                    catAssignments.forEach(a => {
+                        catPoints += parseFloat(a.score);
+                        catTotal += parseFloat(a.total);
+                    });
+                    
+                    if (catTotal > 0) {
+                        const catPercentage = catPoints / catTotal;
+                        totalWeightedScore += (catPercentage * cat.weight);
+                        totalWeightUsed += cat.weight;
+                    }
+                }
             });
 
-            const gpa = classCount > 0 ? (totalPoints / classCount) : 0;
-            document.getElementById('total-gpa').innerText = gpa.toFixed(2);
+            if (totalWeightUsed === 0) return 100; // Default if no work
+            // Normalize to 100% based on used weight (so 50% homework filled still calculates out of 100% effectively if no exams yet)
+            // Or simpler: Grade = TotalWeighted / (TotalWeightUsed/100)
+            return (totalWeightedScore / totalWeightUsed) * 100;
         }
 
-        // --- MODAL & BUTTON HANDLERS ---
-        function openModal(id) { document.getElementById(id).classList.add('active'); }
-        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+        function renderClassContent(classId) {
+            const cls = classes.find(c => c.id === classId);
+            if (!cls) return;
 
-        let activeCatIdForAssign = null;
-        function openAssignModal(catId) {
-            activeCatIdForAssign = catId;
-            openModal('assignmentModal');
+            const currentGrade = calculateClassGrade(cls);
+            const letter = getGradeLetter(currentGrade);
+            const gradeColor = `grade-${letter}`;
+
+            const container = document.getElementById('tab-content');
+            container.innerHTML = `
+                <div class="flex justify-between items-start mb-8">
+                    <div>
+                        <h2 class="text-3xl font-bold text-gray-800">${cls.name}</h2>
+                        <div class="text-5xl font-bold mt-2 ${gradeColor}">${currentGrade.toFixed(2)}% <span class="text-2xl text-gray-400">${letter}</span></div>
+                    </div>
+                    <div class="flex gap-2">
+                         <button onclick="openSettings('${cls.id}')" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded">
+                            <i class="fa-solid fa-gear"></i> Settings
+                        </button>
+                        <button onclick="openAssignmentModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow">
+                            <i class="fa-solid fa-plus"></i> Assignment
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    ${cls.categories.map(cat => {
+                        const catAssigns = cls.assignments.filter(a => a.categoryId === cat.id);
+                        return `
+                        <div class="bg-gray-50 border rounded-lg p-4 shadow-sm">
+                            <div class="flex justify-between items-center mb-3 border-b pb-2">
+                                <h3 class="font-bold text-gray-700">${cat.name}</h3>
+                                <span class="text-xs bg-gray-200 px-2 py-1 rounded text-gray-600">${cat.weight}%</span>
+                            </div>
+                            <div class="space-y-3">
+                                ${catAssigns.length === 0 ? '<p class="text-sm text-gray-400 italic">No assignments</p>' : ''}
+                                ${catAssigns.map(a => `
+                                    <div class="flex justify-between items-center bg-white p-2 rounded border">
+                                        <div class="truncate pr-2">
+                                            <div class="text-sm font-medium">${a.name}</div>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-sm font-bold ${getGradeColor(a.score/a.total*100)}">${a.score}/${a.total}</span>
+                                            <button onclick="deleteAssignment('${a.id}')" class="text-red-400 hover:text-red-600"><i class="fa-solid fa-trash text-xs"></i></button>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
         }
 
-        document.getElementById('save-class-btn').onclick = async () => {
-            const name = document.getElementById('class-name-input').value;
-            if (!name) return;
-            const { data } = await supabase.from('classes').insert([{ name, user_id: currentUser.id }]).select();
-            if (data) {
-                classes.push(data[0]);
-                activeClassId = data[0].id;
-                closeModal('classModal');
-                renderTabs();
-            }
-        };
+        function getGradeColor(percent) {
+            if(percent >= 90) return 'text-green-600';
+            if(percent >= 80) return 'text-blue-600';
+            if(percent >= 70) return 'text-yellow-600';
+            if(percent >= 60) return 'text-orange-600';
+            return 'text-red-600';
+        }
 
-        document.getElementById('save-category-btn').onclick = async () => {
-            const name = document.getElementById('cat-name-input').value;
-            const weight = parseFloat(document.getElementById('cat-weight-input').value);
-            if (!name || isNaN(weight)) return;
-            const { data } = await supabase.from('categories').insert([{ name, weight, class_id: activeClassId }]).select();
-            if (data) {
-                categories.push(data[0]);
-                closeModal('categoryModal');
-                renderClassView();
+        function updateGPA() {
+            if (classes.length === 0) {
+                document.getElementById('gpa-display').innerText = "GPA: 0.00";
+                return;
             }
-        };
 
-        document.getElementById('save-assignment-btn').onclick = async () => {
-            const name = document.getElementById('assign-name-input').value;
-            const score = parseFloat(document.getElementById('assign-score-input').value);
-            const total = parseFloat(document.getElementById('assign-total-input').value);
-            if (!name || isNaN(score) || !total) return;
+            let totalPoints = 0;
+            classes.forEach(c => {
+                const grade = calculateClassGrade(c);
+                if (grade >= 90) totalPoints += 4.0;
+                else if (grade >= 80) totalPoints += 3.0;
+                else if (grade >= 70) totalPoints += 2.0;
+                else if (grade >= 60) totalPoints += 1.0;
+                else totalPoints += 0.0;
+            });
+
+            const gpa = totalPoints / classes.length;
+            document.getElementById('gpa-display').innerText = `GPA: ${gpa.toFixed(2)}`;
+        }
+
+        // --- Settings / Categories Logic ---
+
+        function openSettings(classId) {
+            const cls = classes.find(c => c.id === classId);
+            renderCategoriesList(cls);
+            openModal('settings-modal');
+        }
+
+        function renderCategoriesList(cls) {
+            const list = document.getElementById('categories-list');
+            list.innerHTML = cls.categories.map(cat => `
+                <div class="flex justify-between items-center bg-gray-100 p-2 rounded">
+                    <span>${cat.name} (${cat.weight}%)</span>
+                    <button onclick="removeCategory('${cls.id}', '${cat.id}')" class="text-red-500"><i class="fa-solid fa-times"></i></button>
+                </div>
+            `).join('');
+        }
+
+        function addCategory() {
+            const cls = classes.find(c => c.id === activeClassId);
+            const name = document.getElementById('new-cat-name').value;
+            const weight = parseFloat(document.getElementById('new-cat-weight').value);
             
-            const { data } = await supabase.from('assignments').insert([{ 
-                name, score, total, category_id: activeCatIdForAssign 
-            }]).select();
-            
-            if (data) {
-                assignments.push(data[0]);
-                closeModal('assignmentModal');
-                renderClassView();
-                calculateGPA();
+            if (name && weight) {
+                cls.categories.push({ id: generateId(), name, weight });
+                document.getElementById('new-cat-name').value = '';
+                document.getElementById('new-cat-weight').value = '';
+                renderCategoriesList(cls);
+                saveData();
             }
-        };
-
-        async function deleteAssignment(id) {
-            await supabase.from('assignments').delete().eq('id', id);
-            assignments = assignments.filter(a => a.id !== id);
-            renderClassView();
-            calculateGPA();
         }
 
-        async function deleteClass(id) {
-            if (!confirm("Are you sure? This will delete all categories and assignments for this class.")) return;
-            await supabase.from('classes').delete().eq('id', id);
-            classes = classes.filter(c => c.id !== id);
-            activeClassId = classes[0]?.id || null;
-            renderTabs();
-            calculateGPA();
+        function removeCategory(classId, catId) {
+            const cls = classes.find(c => c.id === classId);
+            cls.categories = cls.categories.filter(c => c.id !== catId);
+            // Also remove assignments in this category to prevent orphans
+            cls.assignments = cls.assignments.filter(a => a.categoryId !== catId);
+            renderCategoriesList(cls);
+            saveData();
         }
 
-        checkAuth();
+        function deleteClass() {
+            if(confirm("Are you sure you want to delete this class?")) {
+                classes = classes.filter(c => c.id !== activeClassId);
+                activeClassId = classes.length > 0 ? classes[0].id : null;
+                saveData();
+                closeModal('settings-modal');
+            }
+        }
+
+        // --- Assignment Logic ---
+
+        function openAssignmentModal() {
+            const cls = classes.find(c => c.id === activeClassId);
+            const select = document.getElementById('assign-category');
+            select.innerHTML = cls.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            
+            document.getElementById('assign-name').value = '';
+            document.getElementById('assign-score').value = '';
+            document.getElementById('assign-total').value = '100';
+            
+            openModal('assignment-modal');
+        }
+
+        function saveAssignment() {
+            const cls = classes.find(c => c.id === activeClassId);
+            const name = document.getElementById('assign-name').value;
+            const catId = document.getElementById('assign-category').value;
+            const score = document.getElementById('assign-score').value;
+            const total = document.getElementById('assign-total').value;
+
+            if (name && catId && score && total) {
+                cls.assignments.push({
+                    id: generateId(),
+                    categoryId: catId,
+                    name,
+                    score: parseFloat(score),
+                    total: parseFloat(total)
+                });
+                closeModal('assignment-modal');
+                saveData();
+            }
+        }
+
+        function deleteAssignment(assignId) {
+            const cls = classes.find(c => c.id === activeClassId);
+            cls.assignments = cls.assignments.filter(a => a.id !== assignId);
+            saveData();
+        }
+
+        // --- Modal Utilities ---
+
+        function openModal(modalID) {
+            const modal = document.getElementById(modalID);
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            document.body.classList.add('modal-active');
+        }
+
+        function closeModal(modalID) {
+            const modal = document.getElementById(modalID);
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            document.body.classList.remove('modal-active');
+        }
     </script>
 </body>
 </html>
