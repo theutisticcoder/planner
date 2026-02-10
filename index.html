@@ -12,7 +12,6 @@
         .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
         .tab-active { border-bottom: 2px solid #6366f1; color: #6366f1; }
         input:focus, select:focus { outline: 2px solid #6366f1; border-color: transparent; }
-        .hidden { display: none !important; }
     </style>
 </head>
 <body class="min-h-screen text-slate-800">
@@ -112,7 +111,7 @@
 
             <!-- Masterlist -->
             <section id="view-masterlist" class="tab-view hidden space-y-6">
-                <div class="flex justify-between items-center gap-4 sm:flex-row sm:items-center">
+                <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                     <h2 class="text-2xl font-bold">Assignment Masterlist</h2>
                     <button onclick="toggleModal('assignment-modal')" class="rounded-lg bg-indigo-600 px-4 py-2 font-semibold text-white hover:bg-indigo-700">+ Add Assignment</button>
                 </div>
@@ -162,7 +161,7 @@
     <!-- Assignment Modal -->
     <div id="assignment-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-slate-900 bg-opacity-50 p-4">
         <div class="glass w-full max-w-lg rounded-2xl p-6 shadow-xl">
-            <h3 class="mb-4 text-xl font-bold">Edit Assignment</h3>
+            <h3 class="mb-4 text-xl font-bold">Add New Assignment</h3>
             <form id="assignment-form" class="space-y-4">
                 <div class="grid grid-cols-2 gap-4">
                     <div class="col-span-2">
@@ -198,7 +197,7 @@
                 </div>
                 <div class="flex justify-end gap-3 pt-4">
                     <button type="button" onclick="toggleModal('assignment-modal')" class="px-4 py-2 text-slate-600">Cancel</button>
-                    <button type="submit" id="btn-edit-assignment" class="rounded-lg bg-indigo-600 px-6 py-2 font-semibold text-white">Save Changes</button>
+                    <button type="submit" class="rounded-lg bg-indigo-600 px-6 py-2 font-semibold text-white">Save</button>
                 </div>
             </form>
         </div>
@@ -207,7 +206,7 @@
     <!-- Class Modal -->
     <div id="class-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-slate-900 bg-opacity-50 p-4">
         <div class="glass w-full max-w-md rounded-2xl p-6 shadow-xl">
-            <h3 class="mb-4 text-xl font-bold">Edit Class</h3>
+            <h3 class="mb-4 text-xl font-bold">Add New Class</h3>
             <form id="class-form" class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium">Class Name (e.g. CS101)</label>
@@ -227,16 +226,9 @@
                         <input type="text" id="cl-period" placeholder="P1" class="mt-1 w-full rounded-lg border border-slate-300 p-2">
                     </div>
                 </div>
-                <div class="grid grid-cols-1 gap-4">
-                    <h3 class="text-lg font-bold mb-2">Weight Categories</h3>
-                    <div id="class-weight-container">
-                        <!-- Populated by JS -->
-                    </div>
-                    <button onclick="addCategory()" class="text-indigo-600 text-sm font-semibold">+ Add Category</button>
-                </div>
                 <div class="flex justify-end gap-3 pt-4">
                     <button type="button" onclick="toggleModal('class-modal')" class="px-4 py-2 text-slate-600">Cancel</button>
-                    <button type="submit" id="btn-edit-class" class="rounded-lg bg-indigo-600 px-6 py-2 font-semibold text-white">Save Changes</button>
+                    <button type="submit" class="rounded-lg bg-indigo-600 px-6 py-2 font-semibold text-white">Add Class</button>
                 </div>
             </form>
         </div>
@@ -348,45 +340,12 @@
             renderAll();
         }
 
-        function toggleModal(id, editId = null) {
-            const modal = document.getElementById(id);
-            modal.classList.toggle('hidden');
-            
-            if (id === 'assignment-modal' && editId) {
-                const as = assignments.find(a => a.id === editId);
-                if (as) {
-                    document.getElementById('as-name').value = as.name;
-                    document.getElementById('as-class').value = as.class_id;
-                    document.getElementById('as-category').value = as.category;
-                    document.getElementById('as-date').value = as.due_date;
-                    document.getElementById('as-points-earned').value = as.points_earned || '';
-                    document.getElementById('as-points-possible').value = as.points_possible;
-                }
-            }
-            
-            if (id === 'class-modal' && editId) {
-                const cls = classes.find(c => c.id === editId);
-                if (cls) {
-                    document.getElementById('cl-name').value = cls.name;
-                    document.getElementById('cl-title').value = cls.title;
-                    document.getElementById('cl-credits').value = cls.credits;
-                    document.getElementById('cl-period').value = cls.period;
-                    
-                    // Clear existing weight categories
-                    const container = document.getElementById('class-weight-container');
-                    container.innerHTML = '';
-                    
-                    // Populate with existing weights
-                    Object.entries(cls.weights || {}).forEach(([cat, val]) => {
-                        container.innerHTML += `
-                            <div class="flex items-center gap-2 mb-2">
-                                <span class="text-sm font-medium w-24">${cat}:</span>
-                                <input type="number" value="${val}" onchange="updateWeight('${cls.id}', '${cat}', this.value)" class="w-16 rounded border p-1 text-sm">
-                                <span class="text-slate-400">%</span>
-                            </div>
-                        `;
-                    });
-                }
+        function toggleModal(id) {
+            const el = document.getElementById(id);
+            el.classList.toggle('hidden');
+            if (id === 'assignment-modal' && !el.classList.contains('hidden')) {
+                const select = document.getElementById('as-class');
+                select.innerHTML = classes.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
             }
         }
 
@@ -513,8 +472,8 @@
                             ${a.points_earned !== null ? `${a.points_earned} / ${a.points_possible}` : `-- / ${a.points_possible}`}
                         </td>
                         <td class="px-6 py-4 text-center">
-                            <button onclick="toggleModal('assignment-modal', '${a.id}')" class="text-slate-300 hover:text-red-500">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            <button onclick="deleteAssignment('${a.id}')" class="text-slate-300 hover:text-red-500">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                             </button>
                         </td>
                     </tr>
@@ -527,8 +486,8 @@
             grid.innerHTML = classes.map(c => `
                 <div class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
                     <div class="mb-4 flex items-center justify-between">
-                        <span class="rounded bg-indigo-100 px-2 py-1 text-xs font-bold">${c.period}</span>
-                        <button onclick="toggleModal('class-modal', '${c.id}')" class="text-slate-300 hover:text-red-500">
+                        <span class="rounded bg-indigo-100 px-2 py-1 text-xs font-bold text-indigo-700">${c.period}</span>
+                        <button onclick="deleteClass('${c.id}')" class="text-slate-300 hover:text-red-500">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                         </button>
                     </div>
@@ -631,22 +590,18 @@
 
         async function updateWeight(classId, category, val) {
             const cls = classes.find(c => c.id === classId);
-            if (cls) {
-                cls.weights[category] = parseFloat(val);
-                await saveData();
-                renderAll();
-            }
+            if (cls) cls.weights[category] = parseFloat(val);
+            await saveData();
+            renderAll();
         }
 
         async function addCategory(classId) {
             const cat = prompt("Enter new category name (e.g., Participation):");
             if (cat) {
                 const cls = classes.find(c => c.id === classId);
-                if (cls) {
-                    cls.weights[cat] = 0;
-                    await saveData();
-                    renderAll();
-                }
+                if (cls) cls.weights[cat] = 0;
+                await saveData();
+                renderAll();
             }
         }
     </script>
