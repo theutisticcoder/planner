@@ -15,23 +15,29 @@
         .grade-C { color: #eab308; }
         .grade-D { color: #f97316; }
         .grade-F { color: #ef4444; }
-        /* Modal Transitions */
         .modal { transition: opacity 0.25s ease; }
         body.modal-active { overflow: hidden; }
+        /* Badge for due dates */
+        .badge-upcoming { background-color: #e0f2fe; color: #0369a1; }
+        .badge-overdue { background-color: #fee2e2; color: #b91c1c; }
+        .badge-done { background-color: #dcfce7; color: #15803d; }
     </style>
 </head>
 <body class="text-gray-800">
 
     <!-- Navbar -->
-    <nav class="bg-white shadow-sm p-4">
+    <nav class="bg-white shadow-sm p-4 sticky top-0 z-30">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
             <h1 class="text-2xl font-bold text-blue-600 tracking-tight">EduTrack</h1>
-            <div id="auth-section">
+            <div id="auth-section" class="flex items-center gap-3">
                 <button id="login-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition hidden">
                     Login with Google
                 </button>
                 <div id="user-info" class="hidden flex items-center gap-4">
-                    <span id="user-email" class="text-sm font-medium"></span>
+                    <button onclick="generateShareLink()" class="text-blue-600 hover:text-blue-800 font-medium text-sm border border-blue-200 px-3 py-1 rounded">
+                        <span id="share-btn-text">Share Results</span>
+                    </button>
+                    <span id="user-email" class="text-sm font-medium hidden md:inline"></span>
                     <button id="logout-btn" class="text-sm text-red-500 hover:text-red-700">Logout</button>
                     <span id="sync-status" class="text-xs text-gray-400">Synced</span>
                 </div>
@@ -42,22 +48,46 @@
     <!-- Main Content -->
     <div class="max-w-7xl mx-auto p-4 mt-6">
         
-        <!-- GPA Dashboard -->
-        <div class="bg-white p-6 rounded-xl shadow-sm mb-6 flex justify-between items-center">
-            <div>
+        <!-- Public View Banner (Hidden by default) -->
+        <div id="public-banner" class="hidden bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+            <div class="flex">
+                <div class="ml-3">
+                    <p class="text-sm text-yellow-700">
+                        You are viewing a shared grade report. This is read-only.
+                        <a href="/" class="font-bold underline">Go to Home</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <!-- GPA Card -->
+            <div class="bg-white p-6 rounded-xl shadow-sm flex flex-col justify-center">
                 <h2 class="text-gray-500 text-sm uppercase tracking-wide">Cumulative GPA</h2>
                 <div class="text-4xl font-bold text-gray-900 mt-1" id="overall-gpa">0.00</div>
             </div>
-            <button onclick="openClassModal()" class="bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition">
-                + Add Class
-            </button>
+            
+            <!-- To-Do List (New) -->
+            <div class="bg-white p-6 rounded-xl shadow-sm col-span-2 overflow-y-auto max-h-48">
+                <h2 class="text-gray-500 text-sm uppercase tracking-wide mb-2">Upcoming Deadlines</h2>
+                <div id="todo-list" class="space-y-2 text-sm">
+                    <!-- Injected via JS -->
+                    <p class="text-gray-400">No upcoming assignments.</p>
+                </div>
+            </div>
         </div>
 
-        <!-- Class Tabs -->
-        <div class="border-b border-gray-200 mb-6 overflow-x-auto">
-            <nav class="-mb-px flex space-x-8" id="class-tabs">
-                <!-- Tabs injected by JS -->
-            </nav>
+        <!-- Controls -->
+        <div class="flex justify-between items-center mb-4">
+            <div class="border-b border-gray-200 flex-grow overflow-x-auto">
+                <nav class="-mb-px flex space-x-8" id="class-tabs">
+                    <!-- Tabs injected by JS -->
+                </nav>
+            </div>
+            <button id="add-class-btn" onclick="openClassModal()" class="ml-4 bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition whitespace-nowrap">
+                + Add Class
+            </button>
         </div>
 
         <!-- Class Content Area -->
@@ -71,7 +101,7 @@
     <!-- ADD/EDIT CLASS MODAL -->
     <div id="class-modal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
         <div class="modal-overlay absolute w-full h-full bg-gray-900 opacity-50"></div>
-        <div class="modal-container bg-white w-11/12 md:max-w-md mx-auto rounded-lg shadow-lg z-50 overflow-y-auto">
+        <div class="modal-container bg-white w-11/12 md:max-w-md mx-auto rounded-lg shadow-lg z-50 overflow-y-auto max-h-[90vh]">
             <div class="modal-content py-4 text-left px-6">
                 <div class="flex justify-between items-center pb-3">
                     <p class="text-2xl font-bold">Manage Class</p>
@@ -106,7 +136,7 @@
     <!-- ADD ASSIGNMENT MODAL -->
     <div id="assignment-modal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
         <div class="modal-overlay absolute w-full h-full bg-gray-900 opacity-50"></div>
-        <div class="modal-container bg-white w-11/12 md:max-w-md mx-auto rounded-lg shadow-lg z-50 overflow-y-auto">
+        <div class="modal-container bg-white w-11/12 md:max-w-md mx-auto rounded-lg shadow-lg z-50 overflow-y-auto max-h-[90vh]">
             <div class="modal-content py-4 text-left px-6">
                 <div class="flex justify-between items-center pb-3">
                     <p class="text-2xl font-bold">Assignment</p>
@@ -130,10 +160,15 @@
                         </select>
                     </div>
 
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Due Date (Optional)</label>
+                        <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" id="asg-date" type="date">
+                    </div>
+
                     <div class="flex gap-4 mb-4">
                         <div class="w-1/2">
                             <label class="block text-gray-700 text-sm font-bold mb-2">Score</label>
-                            <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" id="asg-score" type="number" step="0.1">
+                            <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" id="asg-score" type="number" step="0.1" placeholder="--" >
                         </div>
                         <div class="w-1/2">
                             <label class="block text-gray-700 text-sm font-bold mb-2">Total</label>
@@ -150,19 +185,57 @@
         </div>
     </div>
 
+    <!-- SHARE LINK MODAL -->
+    <div id="share-modal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
+        <div class="modal-overlay absolute w-full h-full bg-gray-900 opacity-50"></div>
+        <div class="modal-container bg-white w-11/12 md:max-w-md mx-auto rounded-lg shadow-lg z-50">
+            <div class="modal-content py-4 text-left px-6">
+                <p class="text-xl font-bold mb-2">Share Results</p>
+                <p class="text-sm text-gray-600 mb-4">Anyone with this link can view your grades (read-only).</p>
+                
+                <div class="flex items-center gap-2">
+                    <input type="text" id="share-url-input" class="bg-gray-100 border rounded w-full py-2 px-3 text-gray-600" readonly>
+                    <button onclick="copyShareLink()" class="bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700">Copy</button>
+                </div>
+                
+                <div class="mt-4 text-right">
+                    <button class="text-gray-500 hover:text-gray-700" onclick="toggleModal('share-modal')">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // --- SUPABASE CONFIGURATION ---
         const SUPABASE_URL = 'https://njgjgpiamweujgyknqtz.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_3bRvo_Zuppdi4ICnOtfjeA_VWfp6Zyx'; 
-        
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         // --- STATE MANAGEMENT ---
         let state = {
             classes: [], 
             activeTab: null,
-            user: null
+            user: null,
+            isReadOnly: false, // For shared view
+            shareId: null
         };
+
+        // --- INITIALIZATION ---
+        
+        async function init() {
+            // Check if URL has ?share=ID
+            const urlParams = new URLSearchParams(window.location.search);
+            const shareParam = urlParams.get('share');
+
+            if (shareParam) {
+                // READ ONLY MODE
+                state.isReadOnly = true;
+                loadSharedData(shareParam);
+            } else {
+                // NORMAL MODE
+                checkUser();
+            }
+        }
 
         // --- AUTHENTICATION ---
         async function checkUser() {
@@ -180,6 +253,16 @@
             const loginBtn = document.getElementById('login-btn');
             const userInfo = document.getElementById('user-info');
             const userEmail = document.getElementById('user-email');
+            const addClassBtn = document.getElementById('add-class-btn');
+
+            if (state.isReadOnly) {
+                // Hide auth stuff in read only mode
+                loginBtn.classList.add('hidden');
+                userInfo.classList.add('hidden');
+                addClassBtn.classList.add('hidden');
+                document.getElementById('public-banner').classList.remove('hidden');
+                return;
+            }
 
             if (state.user) {
                 loginBtn.classList.add('hidden');
@@ -195,7 +278,7 @@
             await supabaseClient.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: 'https://njgjgpiamweujgyknqtz.supabase.co/auth/v1/callback'
+                    redirectTo: window.location.href // Redirect back to current page
                 }
             });
         });
@@ -205,31 +288,39 @@
             state.user = null;
             state.classes = [];
             state.activeTab = null;
+            state.shareId = null;
             updateAuthUI();
             render();
             document.getElementById('class-tabs').innerHTML = '';
             document.getElementById('class-content').innerHTML = '<div class="text-center text-gray-400 mt-20"><p>Please login to see your data.</p></div>';
             document.getElementById('overall-gpa').innerText = '0.00';
+            document.getElementById('todo-list').innerHTML = '';
         });
 
         // --- DATA PERSISTENCE ---
 
         async function saveData() {
+            if(state.isReadOnly) return; // Prevent saving in read-only
+
             localStorage.setItem('edutrack_data', JSON.stringify(state.classes));
             
             if (state.user) {
                 document.getElementById('sync-status').innerText = 'Syncing...';
                 
+                // Get existing row to preserve share_id if it exists
                 const { data: existingData } = await supabaseClient
                     .from('user_data')
-                    .select('id')
+                    .select('id, share_id')
                     .eq('user_id', state.user.id)
                     .single();
 
+                const updatePayload = { data: state.classes, updated_at: new Date() };
+                
                 if (existingData) {
+                    state.shareId = existingData.share_id;
                     await supabaseClient
                         .from('user_data')
-                        .update({ data: state.classes, updated_at: new Date() })
+                        .update(updatePayload)
                         .eq('user_id', state.user.id);
                 } else {
                     await supabaseClient
@@ -256,12 +347,13 @@
             document.getElementById('sync-status').innerText = 'Loading...';
             const { data, error } = await supabaseClient
                 .from('user_data')
-                .select('data')
+                .select('data, share_id')
                 .eq('user_id', state.user.id)
                 .single();
 
-            if (data && data.data) {
-                state.classes = data.data;
+            if (data) {
+                if (data.data) state.classes = data.data;
+                state.shareId = data.share_id;
                 if(state.classes.length > 0) state.activeTab = state.classes[0].id;
                 localStorage.setItem('edutrack_data', JSON.stringify(state.classes));
                 render();
@@ -269,6 +361,58 @@
                 loadLocalData();
             }
             document.getElementById('sync-status').innerText = 'Synced';
+        }
+
+        async function loadSharedData(shareId) {
+            updateAuthUI(); // Show public banner
+            
+            // Fetch using the Share ID via the public policy
+            const { data, error } = await supabaseClient
+                .from('user_data')
+                .select('data')
+                .eq('share_id', shareId)
+                .single();
+
+            if (data && data.data) {
+                state.classes = data.data;
+                if(state.classes.length > 0) state.activeTab = state.classes[0].id;
+                render();
+            } else {
+                alert("Shared link is invalid or data not found.");
+            }
+        }
+
+        // --- SHARING LOGIC ---
+
+        async function generateShareLink() {
+            if (!state.user) return alert("Please login to share.");
+
+            let currentShareId = state.shareId;
+
+            // If no share ID exists, generate one and save it
+            if (!currentShareId) {
+                currentShareId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+                state.shareId = currentShareId;
+                
+                await supabaseClient
+                    .from('user_data')
+                    .update({ share_id: currentShareId })
+                    .eq('user_id', state.user.id);
+            }
+
+            // Construct URL
+            const url = `${window.location.origin}${window.location.pathname}?share=${currentShareId}`;
+            
+            document.getElementById('share-url-input').value = url;
+            toggleModal('share-modal');
+        }
+
+        function copyShareLink() {
+            const copyText = document.getElementById("share-url-input");
+            copyText.select();
+            document.execCommand("copy"); // Fallback for older browsers
+            // Or use navigator.clipboard.writeText(copyText.value);
+            alert("Link copied to clipboard!");
         }
 
         // --- CORE LOGIC (GPA & GRADES) ---
@@ -335,9 +479,73 @@
             document.getElementById('overall-gpa').innerText = finalGPA.toFixed(2);
         }
 
+        function renderTodoList() {
+            const listEl = document.getElementById('todo-list');
+            listEl.innerHTML = '';
+
+            let allAssignments = [];
+            state.classes.forEach(cls => {
+                cls.assignments.forEach(asg => {
+                    // Include if it has no score (not done) AND has a due date, OR if it has a future due date
+                    if ((!asg.score || asg.score === "") && asg.dueDate) {
+                        allAssignments.push({ ...asg, className: cls.name, classId: cls.id });
+                    }
+                });
+            });
+
+            // Sort by date
+            allAssignments.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+
+            if (allAssignments.length === 0) {
+                listEl.innerHTML = '<p class="text-gray-400 italic">No upcoming assignments.</p>';
+                return;
+            }
+
+            const today = new Date();
+            today.setHours(0,0,0,0);
+
+            allAssignments.forEach(asg => {
+                const dueDate = new Date(asg.dueDate);
+                dueDate.setHours(0,0,0,0); // Normalize time
+                
+                let badgeClass = 'badge-upcoming';
+                let timeText = asg.dueDate;
+
+                if (dueDate < today) {
+                    badgeClass = 'badge-overdue';
+                    timeText += ' (Overdue)';
+                } else if (dueDate.getTime() === today.getTime()) {
+                    badgeClass = 'bg-yellow-100 text-yellow-800';
+                    timeText = 'Today';
+                }
+
+                const item = document.createElement('div');
+                item.className = 'flex justify-between items-center bg-gray-50 p-2 rounded border border-gray-100';
+                item.innerHTML = `
+                    <div>
+                        <span class="font-medium text-gray-800">${asg.name}</span>
+                        <span class="text-xs text-gray-500 block">${asg.className}</span>
+                    </div>
+                    <span class="text-xs font-semibold px-2 py-1 rounded ${badgeClass}">${timeText}</span>
+                `;
+                // Add click to edit if not read only
+                if (!state.isReadOnly) {
+                    item.classList.add('cursor-pointer', 'hover:bg-gray-100');
+                    item.onclick = () => {
+                        state.activeTab = asg.classId;
+                        render(); // Switch tab
+                        editAssignment(asg.id); // Open modal
+                    };
+                }
+                listEl.appendChild(item);
+            });
+        }
+
         // --- UI RENDERING ---
 
         function render() {
+            renderTodoList();
+            
             const tabsContainer = document.getElementById('class-tabs');
             const contentContainer = document.getElementById('class-content');
             
@@ -372,24 +580,45 @@
                 } else {
                     assignmentsHtml = `<div class="bg-white shadow overflow-hidden sm:rounded-md mt-4"><ul class="divide-y divide-gray-200">`;
                     
+                    // Sort: Unscored/Upcoming first, then by date
+                    activeClass.assignments.sort((a,b) => {
+                         if (a.dueDate && b.dueDate) return new Date(b.dueDate) - new Date(a.dueDate);
+                         return 0;
+                    });
+
                     activeClass.assignments.forEach(asg => {
                         const cat = activeClass.categories.find(c => c.id === asg.categoryId);
                         const catName = cat ? cat.name : 'Unknown';
                         const scoreDisplay = (asg.score !== null && asg.score !== "") ? `${asg.score}/${asg.total}` : '-';
-                        const percent = (asg.score !== null && asg.score !== "") ? Math.round((asg.score/asg.total)*100) : 0;
+                        const percent = (asg.score !== null && asg.score !== "") ? Math.round((asg.score/asg.total)*100) : null;
                         
+                        let percentColor = 'text-gray-500';
+                        if (percent !== null) {
+                            percentColor = percent >= 90 ? 'text-green-600' : percent < 60 ? 'text-red-500' : 'text-gray-500';
+                        }
+
+                        // Determine functionality based on Read Only
+                        const clickAction = state.isReadOnly ? '' : `onclick="editAssignment('${asg.id}')"`;
+                        const cursorClass = state.isReadOnly ? '' : 'cursor-pointer hover:bg-gray-50 group';
+                        const editLabel = state.isReadOnly ? '' : '<span class="text-gray-300 text-sm group-hover:text-gray-500">Edit</span>';
+
+                        const dateBadge = asg.dueDate ? `<span class="ml-2 text-xs text-gray-400 border border-gray-200 rounded px-1">${asg.dueDate}</span>` : '';
+
                         assignmentsHtml += `
-                            <li class="px-4 py-4 sm:px-6 hover:bg-gray-50 flex justify-between items-center cursor-pointer group" onclick="editAssignment('${asg.id}')">
+                            <li class="px-4 py-4 sm:px-6 flex justify-between items-center ${cursorClass}" ${clickAction}>
                                 <div>
-                                    <p class="text-sm font-medium text-blue-600 truncate">${asg.name}</p>
+                                    <div class="flex items-center">
+                                        <p class="text-sm font-medium text-blue-600 truncate">${asg.name}</p>
+                                        ${dateBadge}
+                                    </div>
                                     <p class="text-xs text-gray-500">${catName}</p>
                                 </div>
                                 <div class="flex items-center gap-4">
                                     <div class="text-right">
                                         <p class="text-sm font-bold text-gray-900">${scoreDisplay}</p>
-                                        <p class="text-xs ${percent >= 90 ? 'text-green-600' : percent < 60 ? 'text-red-500' : 'text-gray-500'}">${percent}%</p>
+                                        <p class="text-xs ${percentColor}">${percent !== null ? percent + '%' : 'Pending'}</p>
                                     </div>
-                                    <span class="text-gray-300 text-sm group-hover:text-gray-500">Edit</span>
+                                    ${editLabel}
                                 </div>
                             </li>
                         `;
@@ -397,11 +626,16 @@
                     assignmentsHtml += `</ul></div>`;
                 }
 
+                // Header buttons (Edit Class, Add Assignment)
+                const editClassBtn = state.isReadOnly ? '' : `<button onclick="openClassModal('${activeClass.id}')" class="absolute top-4 right-4 text-gray-400 hover:text-blue-600 border border-gray-200 rounded px-2 text-xs font-semibold uppercase">Edit Class</button>`;
+                
+                const addAsgBtn = state.isReadOnly ? '' : `<button onclick="openAssignmentModal()" class="bg-blue-600 text-white text-sm px-3 py-1.5 rounded hover:bg-blue-700 shadow-sm">+ Add Assignment</button>`;
+
                 contentContainer.innerHTML = `
                     <div class="flex flex-col md:flex-row gap-6">
                         <div class="md:w-1/3 space-y-4">
                             <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 relative">
-                                <button onclick="openClassModal('${activeClass.id}')" class="absolute top-4 right-4 text-gray-400 hover:text-blue-600 border border-gray-200 rounded px-2 text-xs font-semibold uppercase">Edit Class</button>
+                                ${editClassBtn}
                                 <h3 class="text-gray-500 text-xs uppercase tracking-wide">Current Grade</h3>
                                 <div class="flex items-baseline mt-2">
                                     <span class="text-5xl font-extrabold ${gradeColorClass}">${currentGrade ? currentGrade.toFixed(2) : '--'}%</span>
@@ -430,9 +664,7 @@
                         <div class="md:w-2/3">
                             <div class="flex justify-between items-center mb-2">
                                 <h3 class="text-lg font-bold text-gray-800">Assignments</h3>
-                                <button onclick="openAssignmentModal()" class="bg-blue-600 text-white text-sm px-3 py-1.5 rounded hover:bg-blue-700 shadow-sm">
-                                    + Add Assignment
-                                </button>
+                                ${addAsgBtn}
                             </div>
                             ${assignmentsHtml}
                         </div>
@@ -452,6 +684,7 @@
         }
 
         function openClassModal(classId = null) {
+            if (state.isReadOnly) return;
             const form = document.getElementById('class-form');
             const deleteBtn = document.getElementById('delete-class-btn');
             const catInputs = document.getElementById('category-inputs');
@@ -539,6 +772,7 @@
         }
 
         function openAssignmentModal() {
+            if (state.isReadOnly) return;
             if (!state.activeTab) return alert("Select a class first");
             
             const activeClass = state.classes.find(c => c.id === state.activeTab);
@@ -566,6 +800,7 @@
         }
 
         function editAssignment(asgId) {
+            if (state.isReadOnly) return;
             const activeClass = state.classes.find(c => c.id === state.activeTab);
             const asg = activeClass.assignments.find(a => a.id === asgId);
             
@@ -576,6 +811,7 @@
             document.getElementById('asg-category').value = asg.categoryId;
             document.getElementById('asg-score').value = asg.score;
             document.getElementById('asg-total').value = asg.total;
+            document.getElementById('asg-date').value = asg.dueDate || '';
             document.getElementById('delete-asg-btn').classList.remove('hidden');
         }
         
@@ -602,6 +838,7 @@
             const catId = document.getElementById('asg-category').value;
             const score = document.getElementById('asg-score').value;
             const total = document.getElementById('asg-total').value;
+            const date = document.getElementById('asg-date').value;
 
             const cls = state.classes.find(c => c.id === classId);
             
@@ -611,6 +848,7 @@
                 asg.categoryId = catId;
                 asg.score = score;
                 asg.total = total;
+                asg.dueDate = date;
             } else {
                 cls.assignments.push({
                     id: 'asg_' + Date.now(),
@@ -618,7 +856,8 @@
                     name: name,
                     score: score,
                     total: total,
-                    date: new Date().toISOString()
+                    dueDate: date,
+                    created_at: new Date().toISOString()
                 });
             }
 
@@ -627,7 +866,8 @@
             closeAssignmentModal();
         });
 
-        checkUser();
+        // Initialize App
+        init();
 
     </script>
 </body>
