@@ -3,46 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EduTrack - Advanced Assignment Tracker</title>
-    <!-- Tailwind CSS for styling -->
+    <title>EduTrack - Smart Assignment Tracker</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Supabase Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-        .tab-active { border-bottom: 2px solid #3b82f6; color: #3b82f6; }
+        .tab-active { border-bottom: 2px solid #2563eb; color: #2563eb; font-weight: 600; }
         .tab-inactive { color: #6b7280; }
-        .grade-A { color: #10b981; }
-        .grade-B { color: #3b82f6; }
-        .grade-C { color: #f59e0b; }
+        .grade-A { color: #16a34a; }
+        .grade-B { color: #84cc16; }
+        .grade-C { color: #eab308; }
         .grade-D { color: #f97316; }
         .grade-F { color: #ef4444; }
-        
         /* Modal Transitions */
         .modal { transition: opacity 0.25s ease; }
-        body.modal-active { overflow-x: hidden; overflow-y: hidden !important; }
+        body.modal-active { overflow: hidden; }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
+<body class="text-gray-800">
 
     <!-- Navbar -->
     <nav class="bg-white shadow-sm p-4">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <h1 class="text-2xl font-bold text-gray-800"><i class="fa-solid fa-graduation-cap text-blue-600"></i> EduTrack</h1>
-            <div class="flex items-center gap-4">
-                <div id="gpa-display" class="font-bold text-gray-700 bg-gray-100 px-3 py-1 rounded">GPA: 0.00</div>
-                <button id="login-btn" onclick="signIn()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
-                    <i class="fa-brands fa-google"></i> Login
+            <h1 class="text-2xl font-bold text-blue-600 tracking-tight">EduTrack</h1>
+            <div id="auth-section">
+                <button id="login-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition hidden">
+                    Login with Google
                 </button>
-                <div id="user-profile" class="hidden flex items-center gap-2">
-                    <span id="user-email" class="text-sm text-gray-600"></span>
-                    <button onclick="saveToCloud()" class="bg-green-600 text-white px-3 py-1 text-sm rounded hover:bg-green-700">
-                        <i class="fa-solid fa-cloud-arrow-up"></i> Save
-                    </button>
-                    <button onclick="signOut()" class="text-red-500 text-sm hover:underline">Logout</button>
+                <div id="user-info" class="hidden flex items-center gap-4">
+                    <span id="user-email" class="text-sm font-medium"></span>
+                    <button id="logout-btn" class="text-sm text-red-500 hover:text-red-700">Logout</button>
+                    <span id="sync-status" class="text-xs text-gray-400">Synced</span>
                 </div>
             </div>
         </div>
@@ -51,281 +43,276 @@
     <!-- Main Content -->
     <div class="max-w-7xl mx-auto p-4 mt-6">
         
-        <!-- Controls -->
-        <div class="mb-6 flex justify-between items-center">
-            <button onclick="openModal('class-modal')" class="bg-indigo-600 text-white px-4 py-2 rounded shadow hover:bg-indigo-700 transition">
-                <i class="fa-solid fa-plus"></i> Add Class
+        <!-- GPA Dashboard -->
+        <div class="bg-white p-6 rounded-xl shadow-sm mb-6 flex justify-between items-center">
+            <div>
+                <h2 class="text-gray-500 text-sm uppercase tracking-wide">Cumulative GPA</h2>
+                <div class="text-4xl font-bold text-gray-900 mt-1" id="overall-gpa">0.00</div>
+            </div>
+            <button onclick="openClassModal()" class="bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition">
+                + Add Class
             </button>
         </div>
 
         <!-- Class Tabs -->
-        <div class="flex overflow-x-auto border-b border-gray-200 bg-white rounded-t-lg px-2" id="tabs-container">
-            <!-- Tabs injected by JS -->
+        <div class="border-b border-gray-200 mb-6 overflow-x-auto">
+            <nav class="-mb-px flex space-x-8" id="class-tabs">
+                <!-- Tabs injected by JS -->
+            </nav>
         </div>
 
-        <!-- Tab Content Area -->
-        <div class="bg-white rounded-b-lg shadow-md p-6 min-h-[500px]" id="tab-content">
+        <!-- Class Content Area -->
+        <div id="class-content" class="min-h-[400px]">
             <div class="text-center text-gray-400 mt-20">
-                <i class="fa-regular fa-folder-open text-6xl mb-4"></i>
-                <p>Select a class tab or add a new class to get started.</p>
+                <p>Select a class or add one to get started.</p>
             </div>
         </div>
     </div>
 
-    <!-- MODALS -->
-
-    <!-- Add Class Modal -->
+    <!-- ADD/EDIT CLASS MODAL -->
     <div id="class-modal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
         <div class="modal-overlay absolute w-full h-full bg-gray-900 opacity-50"></div>
-        <div class="modal-container bg-white w-11/12 md:max-w-md mx-auto rounded shadow-lg z-50 overflow-y-auto">
+        <div class="modal-container bg-white w-11/12 md:max-w-md mx-auto rounded-lg shadow-lg z-50 overflow-y-auto">
             <div class="modal-content py-4 text-left px-6">
                 <div class="flex justify-between items-center pb-3">
-                    <p class="text-2xl font-bold">Add New Class</p>
-                    <div class="modal-close cursor-pointer z-50" onclick="closeModal('class-modal')">
-                        <i class="fa-solid fa-times"></i>
+                    <p class="text-2xl font-bold">Manage Class</p>
+                    <div class="modal-close cursor-pointer z-50" onclick="closeClassModal()">
+                        <svg class="fill-current text-black" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18"><path d="M14.53 4.53l-1.06-1.06L9 7.94 4.53 3.47 3.47 4.53 7.94 9l-4.47 4.47 1.06 1.06L9 10.06l4.47 4.47 1.06-1.06L10.06 9z"></path></svg>
                     </div>
                 </div>
-                <div class="my-5">
-                    <label class="block text-gray-700 text-sm font-bold mb-2">Class Name</label>
-                    <input type="text" id="new-class-name" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="e.g. AP Calculus">
-                </div>
-                <div class="flex justify-end pt-2">
-                    <button onclick="addClass()" class="px-4 bg-blue-600 p-3 rounded-lg text-white hover:bg-blue-700">Create</button>
-                </div>
+                <form id="class-form">
+                    <input type="hidden" id="edit-class-id">
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Class Name</label>
+                        <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="class-name" type="text" placeholder="e.g. Calculus I" required>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Categories & Weights (%)</label>
+                        <div id="category-inputs" class="space-y-2">
+                            <!-- Categories injected here -->
+                        </div>
+                        <button type="button" onclick="addCategoryInput()" class="text-blue-500 text-sm mt-2 hover:underline">+ Add Category</button>
+                    </div>
+
+                    <div class="flex justify-end pt-2">
+                        <button type="button" onclick="deleteClass()" id="delete-class-btn" class="hidden text-red-500 mr-auto hover:text-red-700">Delete Class</button>
+                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save Class</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 
-    <!-- Edit Class / Categories Modal -->
-    <div id="settings-modal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
-        <div class="modal-overlay absolute w-full h-full bg-gray-900 opacity-50"></div>
-        <div class="modal-container bg-white w-11/12 md:max-w-lg mx-auto rounded shadow-lg z-50 overflow-y-auto">
-            <div class="modal-content py-4 text-left px-6">
-                <div class="flex justify-between items-center pb-3">
-                    <p class="text-2xl font-bold">Class Settings</p>
-                    <div class="modal-close cursor-pointer" onclick="closeModal('settings-modal')">
-                        <i class="fa-solid fa-times"></i>
-                    </div>
-                </div>
-                
-                <h3 class="font-bold text-gray-700 mb-2">Weighted Categories</h3>
-                <p class="text-xs text-gray-500 mb-4">Weights should add up to 100%.</p>
-                
-                <div id="categories-list" class="space-y-2 mb-4">
-                    <!-- Categories injected here -->
-                </div>
-
-                <div class="flex gap-2 mb-4">
-                    <input type="text" id="new-cat-name" placeholder="Category Name" class="border rounded p-2 flex-grow text-sm">
-                    <input type="number" id="new-cat-weight" placeholder="%" class="border rounded p-2 w-20 text-sm">
-                    <button onclick="addCategory()" class="bg-green-500 text-white px-3 rounded hover:bg-green-600"><i class="fa-solid fa-plus"></i></button>
-                </div>
-
-                <div class="border-t pt-4 mt-4 flex justify-between">
-                    <button onclick="deleteClass()" class="text-red-600 hover:text-red-800 text-sm font-bold">Delete Class</button>
-                    <button onclick="closeModal('settings-modal')" class="bg-gray-300 text-gray-800 px-4 py-2 rounded">Done</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Add Assignment Modal -->
+    <!-- ADD ASSIGNMENT MODAL -->
     <div id="assignment-modal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
         <div class="modal-overlay absolute w-full h-full bg-gray-900 opacity-50"></div>
-        <div class="modal-container bg-white w-11/12 md:max-w-md mx-auto rounded shadow-lg z-50 overflow-y-auto">
+        <div class="modal-container bg-white w-11/12 md:max-w-md mx-auto rounded-lg shadow-lg z-50 overflow-y-auto">
             <div class="modal-content py-4 text-left px-6">
                 <div class="flex justify-between items-center pb-3">
-                    <p class="text-2xl font-bold">Add Assignment</p>
-                    <div class="modal-close cursor-pointer" onclick="closeModal('assignment-modal')">
-                        <i class="fa-solid fa-times"></i>
+                    <p class="text-2xl font-bold">Assignment</p>
+                    <div class="modal-close cursor-pointer z-50" onclick="closeAssignmentModal()">
+                        <svg class="fill-current text-black" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18"><path d="M14.53 4.53l-1.06-1.06L9 7.94 4.53 3.47 3.47 4.53 7.94 9l-4.47 4.47 1.06 1.06L9 10.06l4.47 4.47 1.06-1.06L10.06 9z"></path></svg>
                     </div>
                 </div>
-                <div class="space-y-4">
-                    <div>
+                <form id="assignment-form">
+                    <input type="hidden" id="asg-class-id">
+                    <input type="hidden" id="asg-id">
+                    
+                    <div class="mb-4">
                         <label class="block text-gray-700 text-sm font-bold mb-2">Name</label>
-                        <input type="text" id="assign-name" class="shadow border rounded w-full py-2 px-3">
+                        <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" id="asg-name" type="text" required>
                     </div>
-                    <div>
+
+                    <div class="mb-4">
                         <label class="block text-gray-700 text-sm font-bold mb-2">Category</label>
-                        <select id="assign-category" class="shadow border rounded w-full py-2 px-3 bg-white"></select>
+                        <select id="asg-category" class="shadow border rounded w-full py-2 px-3 text-gray-700 bg-white" required>
+                            <!-- Options filled via JS -->
+                        </select>
                     </div>
-                    <div class="flex gap-4">
+
+                    <div class="flex gap-4 mb-4">
                         <div class="w-1/2">
                             <label class="block text-gray-700 text-sm font-bold mb-2">Score</label>
-                            <input type="number" id="assign-score" class="shadow border rounded w-full py-2 px-3">
+                            <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" id="asg-score" type="number" step="0.1">
                         </div>
                         <div class="w-1/2">
-                            <label class="block text-gray-700 text-sm font-bold mb-2">Total Points</label>
-                            <input type="number" id="assign-total" value="100" class="shadow border rounded w-full py-2 px-3">
+                            <label class="block text-gray-700 text-sm font-bold mb-2">Total</label>
+                            <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" id="asg-total" type="number" value="100" step="0.1">
                         </div>
                     </div>
-                </div>
-                <div class="flex justify-end pt-6">
-                    <button onclick="saveAssignment()" class="px-4 bg-blue-600 py-2 rounded text-white hover:bg-blue-700">Save Assignment</button>
-                </div>
+
+                    <div class="flex justify-end pt-2">
+                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save Assignment</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 
     <script>
-        // --- Configuration ---
+        // --- SUPABASE CONFIGURATION ---
+        // Note: Using the key provided. In production, be careful exposing keys, 
+        // though public keys are generally safe for client-side if RLS is on.
         const SUPABASE_URL = 'https://njgjgpiamweujgyknqtz.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_3bRvo_Zuppdi4ICnOtfjeA_VWfp6Zyx'; 
-        
-        // --- State Management ---
-        let classes = [];
-        let activeClassId = null;
-        let user = null;
-        
-        // Initialize Supabase
-        // Note: The key provided in prompt was 'sb_publishable...', usually keys are 'eyJ...'. 
-        // Assuming the user provided a valid key format, if not, this part will fail silently in console.
-        // I will use the exact string provided.
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // --- Initialization ---
-        window.onload = async function() {
-            // Load from local storage first for speed
-            const localData = localStorage.getItem('edutrack_data');
-            if (localData) {
-                classes = JSON.parse(localData);
-                renderTabs();
-                updateGPA();
-            }
-
-            // Check Supabase Auth
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) {
-                handleUserLogin(session.user);
-            }
-            
-            // Listen for auth changes
-            supabase.auth.onAuthStateChange((_event, session) => {
-                if (session) handleUserLogin(session.user);
-                else handleUserLogout();
-            });
+        // --- STATE MANAGEMENT ---
+        let state = {
+            classes: [], // Array of class objects
+            activeTab: null,
+            user: null
         };
 
-        // --- Auth Functions ---
-        async function signIn() {
+        // --- AUTHENTICATION ---
+        async function checkUser() {
+            const { data: { user } } = await supabase.auth.getUser();
+            state.user = user;
+            updateAuthUI();
+            if (user) {
+                loadDataFromSupabase();
+            } else {
+                loadLocalData(); // Fallback to local storage if not logged in
+            }
+        }
+
+        function updateAuthUI() {
+            const loginBtn = document.getElementById('login-btn');
+            const userInfo = document.getElementById('user-info');
+            const userEmail = document.getElementById('user-email');
+
+            if (state.user) {
+                loginBtn.classList.add('hidden');
+                userInfo.classList.remove('hidden');
+                userEmail.innerText = state.user.email;
+            } else {
+                loginBtn.classList.remove('hidden');
+                userInfo.classList.add('hidden');
+            }
+        }
+
+        document.getElementById('login-btn').addEventListener('click', async () => {
             await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
                     redirectTo: 'https://njgjgpiamweujgyknqtz.supabase.co/auth/v1/callback'
                 }
             });
-        }
+        });
 
-        async function signOut() {
+        document.getElementById('logout-btn').addEventListener('click', async () => {
             await supabase.auth.signOut();
-            classes = []; // Clear data on logout
-            localStorage.removeItem('edutrack_data');
-            renderTabs();
-            document.getElementById('tab-content').innerHTML = '';
-        }
+            state.user = null;
+            state.classes = [];
+            state.activeTab = null;
+            updateAuthUI();
+            render();
+            // Clear view
+            document.getElementById('class-tabs').innerHTML = '';
+            document.getElementById('class-content').innerHTML = '<div class="text-center text-gray-400 mt-20"><p>Please login to see your data.</p></div>';
+            document.getElementById('overall-gpa').innerText = '0.00';
+        });
 
-        async function handleUserLogin(userData) {
-            user = userData;
-            document.getElementById('login-btn').classList.add('hidden');
-            document.getElementById('user-profile').classList.remove('hidden');
-            document.getElementById('user-email').innerText = user.email;
+        // --- DATA PERSISTENCE ---
+
+        async function saveData() {
+            // 1. Save Local
+            localStorage.setItem('edutrack_data', JSON.stringify(state.classes));
             
-            // Fetch data from Supabase
-            await loadFromCloud();
-        }
+            // 2. Save Cloud (if logged in)
+            if (state.user) {
+                document.getElementById('sync-status').innerText = 'Syncing...';
+                
+                // Check if row exists
+                const { data: existingData } = await supabase
+                    .from('user_data')
+                    .select('id')
+                    .eq('user_id', state.user.id)
+                    .single();
 
-        function handleUserLogout() {
-            user = null;
-            document.getElementById('login-btn').classList.remove('hidden');
-            document.getElementById('user-profile').classList.add('hidden');
-        }
-
-        // --- Data Persistence ---
-        function saveData() {
-            // Save locally
-            localStorage.setItem('edutrack_data', JSON.stringify(classes));
-            renderTabs();
-            if(activeClassId) renderClassContent(activeClassId);
-            updateGPA();
-        }
-
-        async function saveToCloud() {
-            if (!user) return alert("Please login to save to cloud.");
-            
-            const { error } = await supabase
-                .from('user_data')
-                .upsert({ id: user.id, data: classes, updated_at: new Date() });
-
-            if (error) {
-                console.error('Error saving:', error);
-                alert('Error saving to cloud');
-            } else {
-                alert('Data saved to cloud!');
+                if (existingData) {
+                    await supabase
+                        .from('user_data')
+                        .update({ data: state.classes, updated_at: new Date() })
+                        .eq('user_id', state.user.id);
+                } else {
+                    await supabase
+                        .from('user_data')
+                        .insert([{ user_id: state.user.id, data: state.classes }]);
+                }
+                
+                setTimeout(() => {
+                    document.getElementById('sync-status').innerText = 'Synced';
+                }, 1000);
             }
         }
 
-        async function loadFromCloud() {
-            if (!user) return;
-            
+        function loadLocalData() {
+            const stored = localStorage.getItem('edutrack_data');
+            if (stored) {
+                state.classes = JSON.parse(stored);
+                if(state.classes.length > 0) state.activeTab = state.classes[0].id;
+                render();
+            }
+        }
+
+        async function loadDataFromSupabase() {
+            document.getElementById('sync-status').innerText = 'Loading...';
             const { data, error } = await supabase
                 .from('user_data')
                 .select('data')
-                .eq('id', user.id)
+                .eq('user_id', state.user.id)
                 .single();
 
             if (data && data.data) {
-                // Merge or replace logic. Here we replace for simplicity.
-                classes = data.data;
-                saveData(); // Sync to local
+                state.classes = data.data;
+                if(state.classes.length > 0) state.activeTab = state.classes[0].id;
+                // Update local storage to match cloud
+                localStorage.setItem('edutrack_data', JSON.stringify(state.classes));
+                render();
+            } else {
+                // If no cloud data, try local, but warn
+                loadLocalData();
             }
+            document.getElementById('sync-status').innerText = 'Synced';
         }
 
-        // --- Core Logic ---
+        // --- CORE LOGIC (GPA & GRADES) ---
 
-        function generateId() {
-            return Date.now().toString(36) + Math.random().toString(36).substr(2);
-        }
+        function calculateClassGrade(cls) {
+            let totalWeightUsed = 0;
+            let weightedSum = 0;
 
-        function addClass() {
-            const name = document.getElementById('new-class-name').value;
-            if (!name) return;
+            cls.categories.forEach(cat => {
+                // Filter assignments for this category that have scores
+                const assignments = cls.assignments.filter(a => a.categoryId === cat.id && a.score !== null && a.score !== "");
+                
+                if (assignments.length > 0) {
+                    let catTotalPoints = 0;
+                    let catEarnedPoints = 0;
 
-            const newClass = {
-                id: generateId(),
-                name: name,
-                categories: [
-                    { id: generateId(), name: 'Homework', weight: 40 },
-                    { id: generateId(), name: 'Exams', weight: 60 }
-                ],
-                assignments: []
-            };
+                    assignments.forEach(a => {
+                        catEarnedPoints += parseFloat(a.score);
+                        catTotalPoints += parseFloat(a.total);
+                    });
 
-            classes.push(newClass);
-            document.getElementById('new-class-name').value = '';
-            closeModal('class-modal');
-            
-            activeClassId = newClass.id;
-            saveData();
-        }
-
-        function renderTabs() {
-            const container = document.getElementById('tabs-container');
-            container.innerHTML = '';
-
-            classes.forEach(c => {
-                const isActive = c.id === activeClassId;
-                const tab = document.createElement('div');
-                tab.className = `cursor-pointer px-6 py-3 font-medium text-sm whitespace-nowrap transition-colors ${isActive ? 'tab-active bg-blue-50' : 'tab-inactive hover:bg-gray-50'}`;
-                tab.innerText = c.name;
-                tab.onclick = () => {
-                    activeClassId = c.id;
-                    saveData(); // Just to trigger rerender
-                };
-                container.appendChild(tab);
+                    if (catTotalPoints > 0) {
+                        const catPercentage = (catEarnedPoints / catTotalPoints);
+                        weightedSum += catPercentage * parseFloat(cat.weight);
+                        totalWeightUsed += parseFloat(cat.weight);
+                    }
+                }
             });
+
+            if (totalWeightUsed === 0) return null; // No grades yet
+
+            // Normalize if weights don't add up to 100 yet (optional, but good for in-progress grades)
+            return (weightedSum / totalWeightUsed) * 100;
         }
 
-        function getGradeLetter(percentage) {
+        function getLetterGrade(percentage) {
+            if (percentage === null) return 'N/A';
             if (percentage >= 90) return 'A';
             if (percentage >= 80) return 'B';
             if (percentage >= 70) return 'C';
@@ -333,220 +320,316 @@
             return 'F';
         }
 
-        function calculateClassGrade(classObj) {
-            let totalWeightedScore = 0;
-            let totalWeightUsed = 0;
+        function getGPAFromLetter(letter) {
+            if (letter === 'A') return 4.0;
+            if (letter === 'B') return 3.0;
+            if (letter === 'C') return 2.0;
+            if (letter === 'D') return 1.0;
+            return 0.0;
+        }
 
-            classObj.categories.forEach(cat => {
-                const catAssignments = classObj.assignments.filter(a => a.categoryId === cat.id);
-                if (catAssignments.length > 0) {
-                    let catPoints = 0;
-                    let catTotal = 0;
-                    catAssignments.forEach(a => {
-                        catPoints += parseFloat(a.score);
-                        catTotal += parseFloat(a.total);
-                    });
-                    
-                    if (catTotal > 0) {
-                        const catPercentage = catPoints / catTotal;
-                        totalWeightedScore += (catPercentage * cat.weight);
-                        totalWeightUsed += cat.weight;
-                    }
+        function calculateOverallGPA() {
+            let totalGPA = 0;
+            let count = 0;
+
+            state.classes.forEach(cls => {
+                const grade = calculateClassGrade(cls);
+                if (grade !== null) {
+                    totalGPA += getGPAFromLetter(getLetterGrade(grade));
+                    count++;
                 }
             });
 
-            if (totalWeightUsed === 0) return 100; // Default if no work
-            // Normalize to 100% based on used weight (so 50% homework filled still calculates out of 100% effectively if no exams yet)
-            // Or simpler: Grade = TotalWeighted / (TotalWeightUsed/100)
-            return (totalWeightedScore / totalWeightUsed) * 100;
+            const finalGPA = count === 0 ? 0 : (totalGPA / count);
+            document.getElementById('overall-gpa').innerText = finalGPA.toFixed(2);
         }
 
-        function renderClassContent(classId) {
-            const cls = classes.find(c => c.id === classId);
-            if (!cls) return;
+        // --- UI RENDERING ---
 
-            const currentGrade = calculateClassGrade(cls);
-            const letter = getGradeLetter(currentGrade);
-            const gradeColor = `grade-${letter}`;
-
-            const container = document.getElementById('tab-content');
-            container.innerHTML = `
-                <div class="flex justify-between items-start mb-8">
-                    <div>
-                        <h2 class="text-3xl font-bold text-gray-800">${cls.name}</h2>
-                        <div class="text-5xl font-bold mt-2 ${gradeColor}">${currentGrade.toFixed(2)}% <span class="text-2xl text-gray-400">${letter}</span></div>
-                    </div>
-                    <div class="flex gap-2">
-                         <button onclick="openSettings('${cls.id}')" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded">
-                            <i class="fa-solid fa-gear"></i> Settings
-                        </button>
-                        <button onclick="openAssignmentModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow">
-                            <i class="fa-solid fa-plus"></i> Assignment
-                        </button>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    ${cls.categories.map(cat => {
-                        const catAssigns = cls.assignments.filter(a => a.categoryId === cat.id);
-                        return `
-                        <div class="bg-gray-50 border rounded-lg p-4 shadow-sm">
-                            <div class="flex justify-between items-center mb-3 border-b pb-2">
-                                <h3 class="font-bold text-gray-700">${cat.name}</h3>
-                                <span class="text-xs bg-gray-200 px-2 py-1 rounded text-gray-600">${cat.weight}%</span>
-                            </div>
-                            <div class="space-y-3">
-                                ${catAssigns.length === 0 ? '<p class="text-sm text-gray-400 italic">No assignments</p>' : ''}
-                                ${catAssigns.map(a => `
-                                    <div class="flex justify-between items-center bg-white p-2 rounded border">
-                                        <div class="truncate pr-2">
-                                            <div class="text-sm font-medium">${a.name}</div>
-                                        </div>
-                                        <div class="flex items-center gap-2">
-                                            <span class="text-sm font-bold ${getGradeColor(a.score/a.total*100)}">${a.score}/${a.total}</span>
-                                            <button onclick="deleteAssignment('${a.id}')" class="text-red-400 hover:text-red-600"><i class="fa-solid fa-trash text-xs"></i></button>
-                                        </div>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </div>
-                        `;
-                    }).join('')}
-                </div>
-            `;
-        }
-
-        function getGradeColor(percent) {
-            if(percent >= 90) return 'text-green-600';
-            if(percent >= 80) return 'text-blue-600';
-            if(percent >= 70) return 'text-yellow-600';
-            if(percent >= 60) return 'text-orange-600';
-            return 'text-red-600';
-        }
-
-        function updateGPA() {
-            if (classes.length === 0) {
-                document.getElementById('gpa-display').innerText = "GPA: 0.00";
+        function render() {
+            const tabsContainer = document.getElementById('class-tabs');
+            const contentContainer = document.getElementById('class-content');
+            
+            tabsContainer.innerHTML = '';
+            
+            if (state.classes.length === 0) {
+                contentContainer.innerHTML = '<div class="text-center text-gray-400 mt-20"><p>No classes added yet.</p></div>';
+                calculateOverallGPA();
                 return;
             }
 
-            let totalPoints = 0;
-            classes.forEach(c => {
-                const grade = calculateClassGrade(c);
-                if (grade >= 90) totalPoints += 4.0;
-                else if (grade >= 80) totalPoints += 3.0;
-                else if (grade >= 70) totalPoints += 2.0;
-                else if (grade >= 60) totalPoints += 1.0;
-                else totalPoints += 0.0;
+            // Render Tabs
+            state.classes.forEach(cls => {
+                const isActive = cls.id === state.activeTab;
+                const tabBtn = document.createElement('a');
+                tabBtn.className = `cursor-pointer whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${isActive ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`;
+                tabBtn.innerText = cls.name;
+                tabBtn.onclick = () => { state.activeTab = cls.id; render(); };
+                tabsContainer.appendChild(tabBtn);
             });
 
-            const gpa = totalPoints / classes.length;
-            document.getElementById('gpa-display').innerText = `GPA: ${gpa.toFixed(2)}`;
-        }
+            // Render Content for Active Tab
+            const activeClass = state.classes.find(c => c.id === state.activeTab);
+            if (activeClass) {
+                const currentGrade = calculateClassGrade(activeClass);
+                const letterGrade = getLetterGrade(currentGrade);
+                const gradeColorClass = `grade-${letterGrade}`;
 
-        // --- Settings / Categories Logic ---
+                let assignmentsHtml = '';
+                
+                // Group assignments by category for cleaner view
+                if(activeClass.assignments.length === 0) {
+                     assignmentsHtml = `<div class="text-center text-gray-400 py-10">No assignments yet.</div>`;
+                } else {
+                    assignmentsHtml = `<div class="bg-white shadow overflow-hidden sm:rounded-md mt-4"><ul class="divide-y divide-gray-200">`;
+                    
+                    // Sort by newest added (simple ID sort or could add dates)
+                    activeClass.assignments.forEach(asg => {
+                        const cat = activeClass.categories.find(c => c.id === asg.categoryId);
+                        const catName = cat ? cat.name : 'Unknown';
+                        const scoreDisplay = (asg.score !== null && asg.score !== "") ? `${asg.score}/${asg.total}` : '-';
+                        const percent = (asg.score !== null && asg.score !== "") ? Math.round((asg.score/asg.total)*100) : 0;
+                        
+                        assignmentsHtml += `
+                            <li class="px-4 py-4 sm:px-6 hover:bg-gray-50 flex justify-between items-center cursor-pointer" onclick="editAssignment('${asg.id}')">
+                                <div>
+                                    <p class="text-sm font-medium text-blue-600 truncate">${asg.name}</p>
+                                    <p class="text-xs text-gray-500">${catName}</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-sm font-bold text-gray-900">${scoreDisplay}</p>
+                                    <p class="text-xs ${percent >= 90 ? 'text-green-600' : percent < 60 ? 'text-red-500' : 'text-gray-500'}">${percent}%</p>
+                                </div>
+                            </li>
+                        `;
+                    });
+                    assignmentsHtml += `</ul></div>`;
+                }
 
-        function openSettings(classId) {
-            const cls = classes.find(c => c.id === classId);
-            renderCategoriesList(cls);
-            openModal('settings-modal');
-        }
+                contentContainer.innerHTML = `
+                    <div class="flex flex-col md:flex-row gap-6">
+                        <!-- Left: Stats -->
+                        <div class="md:w-1/3 space-y-4">
+                            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 relative">
+                                <button onclick="openClassModal('${activeClass.id}')" class="absolute top-4 right-4 text-gray-400 hover:text-blue-600"><i class="fas fa-cog"></i></button>
+                                <h3 class="text-gray-500 text-xs uppercase tracking-wide">Current Grade</h3>
+                                <div class="flex items-baseline mt-2">
+                                    <span class="text-5xl font-extrabold ${gradeColorClass}">${currentGrade ? currentGrade.toFixed(2) : '--'}%</span>
+                                    <span class="ml-2 text-2xl font-medium text-gray-400">${letterGrade}</span>
+                                </div>
+                                <div class="mt-4 pt-4 border-t border-gray-100">
+                                    <h4 class="text-xs font-semibold text-gray-400 mb-2">Category Breakdown</h4>
+                                    <div class="space-y-2">
+                                        ${activeClass.categories.map(cat => {
+                                            // Calculate category specific average
+                                            const catAsgs = activeClass.assignments.filter(a => a.categoryId === cat.id && a.score);
+                                            let earned = 0, total = 0;
+                                            catAsgs.forEach(a => { earned += parseFloat(a.score); total += parseFloat(a.total); });
+                                            const avg = total > 0 ? Math.round((earned/total)*100) : 0;
+                                            return `
+                                                <div class="flex justify-between text-sm">
+                                                    <span class="text-gray-600">${cat.name} <span class="text-xs text-gray-400">(${cat.weight}%)</span></span>
+                                                    <span class="font-bold ${total > 0 ? '' : 'text-gray-300'}">${total > 0 ? avg + '%' : '--'}</span>
+                                                </div>
+                                            `;
+                                        }).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-        function renderCategoriesList(cls) {
-            const list = document.getElementById('categories-list');
-            list.innerHTML = cls.categories.map(cat => `
-                <div class="flex justify-between items-center bg-gray-100 p-2 rounded">
-                    <span>${cat.name} (${cat.weight}%)</span>
-                    <button onclick="removeCategory('${cls.id}', '${cat.id}')" class="text-red-500"><i class="fa-solid fa-times"></i></button>
-                </div>
-            `).join('');
-        }
-
-        function addCategory() {
-            const cls = classes.find(c => c.id === activeClassId);
-            const name = document.getElementById('new-cat-name').value;
-            const weight = parseFloat(document.getElementById('new-cat-weight').value);
-            
-            if (name && weight) {
-                cls.categories.push({ id: generateId(), name, weight });
-                document.getElementById('new-cat-name').value = '';
-                document.getElementById('new-cat-weight').value = '';
-                renderCategoriesList(cls);
-                saveData();
+                        <!-- Right: Assignments -->
+                        <div class="md:w-2/3">
+                            <div class="flex justify-between items-center mb-2">
+                                <h3 class="text-lg font-bold text-gray-800">Assignments</h3>
+                                <button onclick="openAssignmentModal()" class="bg-blue-600 text-white text-sm px-3 py-1.5 rounded hover:bg-blue-700 shadow-sm">
+                                    + Add Assignment
+                                </button>
+                            </div>
+                            ${assignmentsHtml}
+                        </div>
+                    </div>
+                `;
             }
+            calculateOverallGPA();
         }
 
-        function removeCategory(classId, catId) {
-            const cls = classes.find(c => c.id === classId);
-            cls.categories = cls.categories.filter(c => c.id !== catId);
-            // Also remove assignments in this category to prevent orphans
-            cls.assignments = cls.assignments.filter(a => a.categoryId !== catId);
-            renderCategoriesList(cls);
-            saveData();
+        // --- MODAL & FORM HANDLERS ---
+
+        function toggleModal(modalID) {
+            const modal = document.getElementById(modalID);
+            modal.classList.toggle('opacity-0');
+            modal.classList.toggle('pointer-events-none');
+            document.body.classList.toggle('modal-active');
         }
+
+        // --- Class Modal Logic ---
+        function openClassModal(classId = null) {
+            const form = document.getElementById('class-form');
+            const deleteBtn = document.getElementById('delete-class-btn');
+            const catInputs = document.getElementById('category-inputs');
+            catInputs.innerHTML = ''; // Clear previous
+
+            if (classId) {
+                // Edit Mode
+                const cls = state.classes.find(c => c.id === classId);
+                document.getElementById('edit-class-id').value = cls.id;
+                document.getElementById('class-name').value = cls.name;
+                cls.categories.forEach(cat => addCategoryInput(cat.name, cat.weight, cat.id));
+                deleteBtn.classList.remove('hidden');
+            } else {
+                // Add Mode
+                document.getElementById('edit-class-id').value = '';
+                document.getElementById('class-name').value = '';
+                form.reset();
+                addCategoryInput('Homework', 20);
+                addCategoryInput('Tests', 40);
+                addCategoryInput('Quizzes', 20);
+                addCategoryInput('Projects', 20);
+                deleteBtn.classList.add('hidden');
+            }
+            toggleModal('class-modal');
+        }
+
+        function closeClassModal() { toggleModal('class-modal'); }
+
+        function addCategoryInput(name = '', weight = '', id = null) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'flex gap-2 category-row';
+            const idVal = id ? id : 'new_' + Date.now() + Math.random();
+            wrapper.innerHTML = `
+                <input type="text" placeholder="Category Name" class="cat-name flex-grow shadow appearance-none border rounded py-2 px-3 text-gray-700" value="${name}" required>
+                <input type="number" placeholder="%" class="cat-weight w-20 shadow appearance-none border rounded py-2 px-3 text-gray-700" value="${weight}" required>
+                <input type="hidden" class="cat-id" value="${idVal}">
+                <button type="button" onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-700"><i class="fas fa-times"></i></button>
+            `;
+            document.getElementById('category-inputs').appendChild(wrapper);
+        }
+
+        document.getElementById('class-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const id = document.getElementById('edit-class-id').value;
+            const name = document.getElementById('class-name').value;
+            
+            // Gather categories
+            const categories = [];
+            document.querySelectorAll('.category-row').forEach(row => {
+                categories.push({
+                    id: row.querySelector('.cat-id').value,
+                    name: row.querySelector('.cat-name').value,
+                    weight: row.querySelector('.cat-weight').value
+                });
+            });
+
+            if (id) {
+                // Update
+                const cls = state.classes.find(c => c.id === id);
+                cls.name = name;
+                cls.categories = categories;
+            } else {
+                // Create
+                const newClass = {
+                    id: 'cls_' + Date.now(),
+                    name: name,
+                    categories: categories,
+                    assignments: []
+                };
+                state.classes.push(newClass);
+                state.activeTab = newClass.id;
+            }
+            
+            saveData();
+            render();
+            closeClassModal();
+        });
 
         function deleteClass() {
-            if(confirm("Are you sure you want to delete this class?")) {
-                classes = classes.filter(c => c.id !== activeClassId);
-                activeClassId = classes.length > 0 ? classes[0].id : null;
+            if(confirm('Are you sure? This will delete all assignments for this class.')) {
+                const id = document.getElementById('edit-class-id').value;
+                state.classes = state.classes.filter(c => c.id !== id);
+                state.activeTab = state.classes.length > 0 ? state.classes[0].id : null;
                 saveData();
-                closeModal('settings-modal');
+                render();
+                closeClassModal();
             }
         }
 
-        // --- Assignment Logic ---
-
+        // --- Assignment Modal Logic ---
         function openAssignmentModal() {
-            const cls = classes.find(c => c.id === activeClassId);
-            const select = document.getElementById('assign-category');
-            select.innerHTML = cls.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            if (!state.activeTab) return alert("Select a class first");
             
-            document.getElementById('assign-name').value = '';
-            document.getElementById('assign-score').value = '';
-            document.getElementById('assign-total').value = '100';
+            const activeClass = state.classes.find(c => c.id === state.activeTab);
+            const select = document.getElementById('asg-category');
+            select.innerHTML = '';
             
-            openModal('assignment-modal');
+            activeClass.categories.forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat.id;
+                opt.innerText = `${cat.name} (${cat.weight}%)`;
+                select.appendChild(opt);
+            });
+
+            document.getElementById('asg-class-id').value = activeClass.id;
+            document.getElementById('asg-id').value = ''; // Reset ID for new
+            document.getElementById('assignment-form').reset();
+            
+            toggleModal('assignment-modal');
         }
 
-        function saveAssignment() {
-            const cls = classes.find(c => c.id === activeClassId);
-            const name = document.getElementById('assign-name').value;
-            const catId = document.getElementById('assign-category').value;
-            const score = document.getElementById('assign-score').value;
-            const total = document.getElementById('assign-total').value;
+        function editAssignment(asgId) {
+            const activeClass = state.classes.find(c => c.id === state.activeTab);
+            const asg = activeClass.assignments.find(a => a.id === asgId);
+            
+            openAssignmentModal(); // Setup basic form
+            
+            // Fill Data
+            document.getElementById('asg-id').value = asg.id;
+            document.getElementById('asg-name').value = asg.name;
+            document.getElementById('asg-category').value = asg.categoryId;
+            document.getElementById('asg-score').value = asg.score;
+            document.getElementById('asg-total').value = asg.total;
+        }
 
-            if (name && catId && score && total) {
+        function closeAssignmentModal() { toggleModal('assignment-modal'); }
+
+        document.getElementById('assignment-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const classId = document.getElementById('asg-class-id').value;
+            const asgId = document.getElementById('asg-id').value;
+            const name = document.getElementById('asg-name').value;
+            const catId = document.getElementById('asg-category').value;
+            const score = document.getElementById('asg-score').value;
+            const total = document.getElementById('asg-total').value;
+
+            const cls = state.classes.find(c => c.id === classId);
+            
+            if (asgId) {
+                // Edit
+                const asg = cls.assignments.find(a => a.id === asgId);
+                asg.name = name;
+                asg.categoryId = catId;
+                asg.score = score;
+                asg.total = total;
+            } else {
+                // Add
                 cls.assignments.push({
-                    id: generateId(),
+                    id: 'asg_' + Date.now(),
                     categoryId: catId,
-                    name,
-                    score: parseFloat(score),
-                    total: parseFloat(total)
+                    name: name,
+                    score: score,
+                    total: total,
+                    date: new Date().toISOString()
                 });
-                closeModal('assignment-modal');
-                saveData();
             }
-        }
 
-        function deleteAssignment(assignId) {
-            const cls = classes.find(c => c.id === activeClassId);
-            cls.assignments = cls.assignments.filter(a => a.id !== assignId);
             saveData();
-        }
+            render();
+            closeAssignmentModal();
+        });
 
-        // --- Modal Utilities ---
+        // Initialize
+        checkUser();
 
-        function openModal(modalID) {
-            const modal = document.getElementById(modalID);
-            modal.classList.remove('opacity-0', 'pointer-events-none');
-            document.body.classList.add('modal-active');
-        }
-
-        function closeModal(modalID) {
-            const modal = document.getElementById(modalID);
-            modal.classList.add('opacity-0', 'pointer-events-none');
-            document.body.classList.remove('modal-active');
-        }
     </script>
 </body>
 </html>
