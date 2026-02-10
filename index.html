@@ -17,10 +17,13 @@
         .grade-F { color: #ef4444; }
         .modal { transition: opacity 0.25s ease; }
         body.modal-active { overflow: hidden; }
-        /* Badge for due dates */
-        .badge-upcoming { background-color: #e0f2fe; color: #0369a1; }
-        .badge-overdue { background-color: #fee2e2; color: #b91c1c; }
-        .badge-done { background-color: #dcfce7; color: #15803d; }
+        
+        /* Status Badges */
+        .status-not-started { background-color: #f3f4f6; color: #374151; }
+        .status-in-progress { background-color: #e0f2fe; color: #0284c7; }
+        .status-completed { background-color: #dcfce7; color: #16a34a; }
+        .status-submitted { background-color: #e0e7ff; color: #4338ca; }
+        .status-na { background-color: #f9fafb; color: #9ca3af; text-decoration: line-through; }
     </style>
 </head>
 <body class="text-gray-800">
@@ -30,13 +33,10 @@
         <div class="max-w-7xl mx-auto flex justify-between items-center">
             <h1 class="text-2xl font-bold text-blue-600 tracking-tight">EduTrack</h1>
             <div id="auth-section" class="flex items-center gap-3">
-                <button id="login-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition hidden">
-                    Login with Google
+                <button onclick="toggleModal('login-modal')" id="login-btn-nav" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition hidden">
+                    Login / Sign Up
                 </button>
                 <div id="user-info" class="hidden flex items-center gap-4">
-                    <button onclick="generateShareLink()" class="text-blue-600 hover:text-blue-800 font-medium text-sm border border-blue-200 px-3 py-1 rounded">
-                        <span id="share-btn-text">Share Results</span>
-                    </button>
                     <span id="user-email" class="text-sm font-medium hidden md:inline"></span>
                     <button id="logout-btn" class="text-sm text-red-500 hover:text-red-700">Logout</button>
                     <span id="sync-status" class="text-xs text-gray-400">Synced</span>
@@ -48,18 +48,6 @@
     <!-- Main Content -->
     <div class="max-w-7xl mx-auto p-4 mt-6">
         
-        <!-- Public View Banner (Hidden by default) -->
-        <div id="public-banner" class="hidden bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
-            <div class="flex">
-                <div class="ml-3">
-                    <p class="text-sm text-yellow-700">
-                        You are viewing a shared grade report. This is read-only.
-                        <a href="/" class="font-bold underline">Go to Home</a>
-                    </p>
-                </div>
-            </div>
-        </div>
-
         <!-- Dashboard Grid -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
             <!-- GPA Card -->
@@ -68,7 +56,7 @@
                 <div class="text-4xl font-bold text-gray-900 mt-1" id="overall-gpa">0.00</div>
             </div>
             
-            <!-- To-Do List (New) -->
+            <!-- To-Do List -->
             <div class="bg-white p-6 rounded-xl shadow-sm col-span-2 overflow-y-auto max-h-48">
                 <h2 class="text-gray-500 text-sm uppercase tracking-wide mb-2">Upcoming Deadlines</h2>
                 <div id="todo-list" class="space-y-2 text-sm">
@@ -98,6 +86,50 @@
         </div>
     </div>
 
+    <!-- LOGIN MODAL -->
+    <div id="login-modal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
+        <div class="modal-overlay absolute w-full h-full bg-gray-900 opacity-50"></div>
+        <div class="modal-container bg-white w-11/12 md:max-w-md mx-auto rounded-lg shadow-lg z-50 overflow-y-auto">
+            <div class="modal-content py-4 text-left px-6">
+                <div class="flex justify-between items-center pb-3">
+                    <p class="text-2xl font-bold">Welcome Back</p>
+                    <div class="modal-close cursor-pointer z-50 p-2" onclick="toggleModal('login-modal')">
+                        <span class="text-2xl">&times;</span>
+                    </div>
+                </div>
+
+                <!-- Google Login -->
+                <button id="google-login-btn" class="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition mb-4">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                    Sign in with Google
+                </button>
+
+                <div class="relative flex py-2 items-center">
+                    <div class="flex-grow border-t border-gray-300"></div>
+                    <span class="flex-shrink mx-4 text-gray-400 text-sm">Or with Email</span>
+                    <div class="flex-grow border-t border-gray-300"></div>
+                </div>
+
+                <!-- Email Form -->
+                <form id="email-auth-form" class="space-y-4">
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Email</label>
+                        <input type="email" id="auth-email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Password</label>
+                        <input type="password" id="auth-password" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
+                    </div>
+                    <div class="flex gap-2 pt-2">
+                        <button type="button" id="signin-btn" class="w-1/2 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">Sign In</button>
+                        <button type="button" id="signup-btn" class="w-1/2 bg-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-300">Sign Up</button>
+                    </div>
+                </form>
+                <div id="auth-message" class="text-center text-sm mt-3 text-red-500 min-h-[20px]"></div>
+            </div>
+        </div>
+    </div>
+
     <!-- ADD/EDIT CLASS MODAL -->
     <div id="class-modal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
         <div class="modal-overlay absolute w-full h-full bg-gray-900 opacity-50"></div>
@@ -106,7 +138,7 @@
                 <div class="flex justify-between items-center pb-3">
                     <p class="text-2xl font-bold">Manage Class</p>
                     <div class="modal-close cursor-pointer z-50 p-2" onclick="closeClassModal()">
-                        <svg class="fill-current text-black" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18"><path d="M14.53 4.53l-1.06-1.06L9 7.94 4.53 3.47 3.47 4.53 7.94 9l-4.47 4.47 1.06 1.06L9 10.06l4.47 4.47 1.06-1.06L10.06 9z"></path></svg>
+                        <span class="text-2xl">&times;</span>
                     </div>
                 </div>
                 <form id="class-form">
@@ -141,7 +173,7 @@
                 <div class="flex justify-between items-center pb-3">
                     <p class="text-2xl font-bold">Assignment</p>
                     <div class="modal-close cursor-pointer z-50 p-2" onclick="closeAssignmentModal()">
-                        <svg class="fill-current text-black" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18"><path d="M14.53 4.53l-1.06-1.06L9 7.94 4.53 3.47 3.47 4.53 7.94 9l-4.47 4.47 1.06 1.06L9 10.06l4.47 4.47 1.06-1.06L10.06 9z"></path></svg>
+                        <span class="text-2xl">&times;</span>
                     </div>
                 </div>
                 <form id="assignment-form">
@@ -153,11 +185,23 @@
                         <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" id="asg-name" type="text" required>
                     </div>
 
-                    <div class="mb-4">
-                        <label class="block text-gray-700 text-sm font-bold mb-2">Category</label>
-                        <select id="asg-category" class="shadow border rounded w-full py-2 px-3 text-gray-700 bg-white" required>
-                            <!-- Options filled via JS -->
-                        </select>
+                    <div class="flex gap-4 mb-4">
+                        <div class="w-1/2">
+                            <label class="block text-gray-700 text-sm font-bold mb-2">Category</label>
+                            <select id="asg-category" class="shadow border rounded w-full py-2 px-3 text-gray-700 bg-white" required>
+                                <!-- Options filled via JS -->
+                            </select>
+                        </div>
+                        <div class="w-1/2">
+                            <label class="block text-gray-700 text-sm font-bold mb-2">Status</label>
+                            <select id="asg-status" class="shadow border rounded w-full py-2 px-3 text-gray-700 bg-white">
+                                <option value="not-started">Not Started</option>
+                                <option value="in-progress">In Progress</option>
+                                <option value="completed">Completed</option>
+                                <option value="submitted">Submitted</option>
+                                <option value="na">N/A</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div class="mb-4">
@@ -185,26 +229,6 @@
         </div>
     </div>
 
-    <!-- SHARE LINK MODAL -->
-    <div id="share-modal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
-        <div class="modal-overlay absolute w-full h-full bg-gray-900 opacity-50"></div>
-        <div class="modal-container bg-white w-11/12 md:max-w-md mx-auto rounded-lg shadow-lg z-50">
-            <div class="modal-content py-4 text-left px-6">
-                <p class="text-xl font-bold mb-2">Share Results</p>
-                <p class="text-sm text-gray-600 mb-4">Anyone with this link can view your grades (read-only).</p>
-                
-                <div class="flex items-center gap-2">
-                    <input type="text" id="share-url-input" class="bg-gray-100 border rounded w-full py-2 px-3 text-gray-600" readonly>
-                    <button onclick="copyShareLink()" class="bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700">Copy</button>
-                </div>
-                
-                <div class="mt-4 text-right">
-                    <button class="text-gray-500 hover:text-gray-700" onclick="toggleModal('share-modal')">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <script>
         // --- SUPABASE CONFIGURATION ---
         const SUPABASE_URL = 'https://njgjgpiamweujgyknqtz.supabase.co';
@@ -215,27 +239,8 @@
         let state = {
             classes: [], 
             activeTab: null,
-            user: null,
-            isReadOnly: false, // For shared view
-            shareId: null
+            user: null
         };
-
-        // --- INITIALIZATION ---
-        
-        async function init() {
-            // Check if URL has ?share=ID
-            const urlParams = new URLSearchParams(window.location.search);
-            const shareParam = urlParams.get('share');
-
-            if (shareParam) {
-                // READ ONLY MODE
-                state.isReadOnly = true;
-                loadSharedData(shareParam);
-            } else {
-                // NORMAL MODE
-                checkUser();
-            }
-        }
 
         // --- AUTHENTICATION ---
         async function checkUser() {
@@ -250,37 +255,61 @@
         }
 
         function updateAuthUI() {
-            const loginBtn = document.getElementById('login-btn');
+            const loginBtn = document.getElementById('login-btn-nav');
             const userInfo = document.getElementById('user-info');
             const userEmail = document.getElementById('user-email');
-            const addClassBtn = document.getElementById('add-class-btn');
-
-            if (state.isReadOnly) {
-                // Hide auth stuff in read only mode
-                loginBtn.classList.add('hidden');
-                userInfo.classList.add('hidden');
-                addClassBtn.classList.add('hidden');
-                document.getElementById('public-banner').classList.remove('hidden');
-                return;
-            }
 
             if (state.user) {
                 loginBtn.classList.add('hidden');
                 userInfo.classList.remove('hidden');
                 userEmail.innerText = state.user.email;
+                toggleModal('login-modal', false); // Close modal if open
             } else {
                 loginBtn.classList.remove('hidden');
                 userInfo.classList.add('hidden');
             }
         }
 
-        document.getElementById('login-btn').addEventListener('click', async () => {
+        // GOOGLE LOGIN
+        document.getElementById('google-login-btn').addEventListener('click', async () => {
             await supabaseClient.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: window.location.href // Redirect back to current page
+                    redirectTo: window.location.href
                 }
             });
+        });
+
+        // EMAIL LOGIN
+        document.getElementById('signin-btn').addEventListener('click', async () => {
+            const email = document.getElementById('auth-email').value;
+            const password = document.getElementById('auth-password').value;
+            const msg = document.getElementById('auth-message');
+            msg.innerText = '';
+            
+            const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+            if (error) {
+                msg.innerText = error.message;
+            } else {
+                checkUser();
+            }
+        });
+
+        // EMAIL SIGN UP
+        document.getElementById('signup-btn').addEventListener('click', async () => {
+            const email = document.getElementById('auth-email').value;
+            const password = document.getElementById('auth-password').value;
+            const msg = document.getElementById('auth-message');
+            msg.innerText = '';
+
+            const { data, error } = await supabaseClient.auth.signUp({ email, password });
+            if (error) {
+                msg.innerText = error.message;
+            } else {
+                msg.innerText = "Check your email for the confirmation link.";
+                msg.classList.remove('text-red-500');
+                msg.classList.add('text-green-500');
+            }
         });
 
         document.getElementById('logout-btn').addEventListener('click', async () => {
@@ -288,7 +317,6 @@
             state.user = null;
             state.classes = [];
             state.activeTab = null;
-            state.shareId = null;
             updateAuthUI();
             render();
             document.getElementById('class-tabs').innerHTML = '';
@@ -300,24 +328,20 @@
         // --- DATA PERSISTENCE ---
 
         async function saveData() {
-            if(state.isReadOnly) return; // Prevent saving in read-only
-
             localStorage.setItem('edutrack_data', JSON.stringify(state.classes));
             
             if (state.user) {
                 document.getElementById('sync-status').innerText = 'Syncing...';
                 
-                // Get existing row to preserve share_id if it exists
                 const { data: existingData } = await supabaseClient
                     .from('user_data')
-                    .select('id, share_id')
+                    .select('id')
                     .eq('user_id', state.user.id)
                     .single();
 
                 const updatePayload = { data: state.classes, updated_at: new Date() };
                 
                 if (existingData) {
-                    state.shareId = existingData.share_id;
                     await supabaseClient
                         .from('user_data')
                         .update(updatePayload)
@@ -347,13 +371,12 @@
             document.getElementById('sync-status').innerText = 'Loading...';
             const { data, error } = await supabaseClient
                 .from('user_data')
-                .select('data, share_id')
+                .select('data')
                 .eq('user_id', state.user.id)
                 .single();
 
-            if (data) {
-                if (data.data) state.classes = data.data;
-                state.shareId = data.share_id;
+            if (data && data.data) {
+                state.classes = data.data;
                 if(state.classes.length > 0) state.activeTab = state.classes[0].id;
                 localStorage.setItem('edutrack_data', JSON.stringify(state.classes));
                 render();
@@ -361,58 +384,6 @@
                 loadLocalData();
             }
             document.getElementById('sync-status').innerText = 'Synced';
-        }
-
-        async function loadSharedData(shareId) {
-            updateAuthUI(); // Show public banner
-            
-            // Fetch using the Share ID via the public policy
-            const { data, error } = await supabaseClient
-                .from('user_data')
-                .select('data')
-                .eq('share_id', shareId)
-                .single();
-
-            if (data && data.data) {
-                state.classes = data.data;
-                if(state.classes.length > 0) state.activeTab = state.classes[0].id;
-                render();
-            } else {
-                alert("Shared link is invalid or data not found.");
-            }
-        }
-
-        // --- SHARING LOGIC ---
-
-        async function generateShareLink() {
-            if (!state.user) return alert("Please login to share.");
-
-            let currentShareId = state.shareId;
-
-            // If no share ID exists, generate one and save it
-            if (!currentShareId) {
-                currentShareId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-                state.shareId = currentShareId;
-                
-                await supabaseClient
-                    .from('user_data')
-                    .update({ share_id: currentShareId })
-                    .eq('user_id', state.user.id);
-            }
-
-            // Construct URL
-            const url = `${window.location.origin}${window.location.pathname}?share=${currentShareId}`;
-            
-            document.getElementById('share-url-input').value = url;
-            toggleModal('share-modal');
-        }
-
-        function copyShareLink() {
-            const copyText = document.getElementById("share-url-input");
-            copyText.select();
-            document.execCommand("copy"); // Fallback for older browsers
-            // Or use navigator.clipboard.writeText(copyText.value);
-            alert("Link copied to clipboard!");
         }
 
         // --- CORE LOGIC (GPA & GRADES) ---
@@ -479,6 +450,16 @@
             document.getElementById('overall-gpa').innerText = finalGPA.toFixed(2);
         }
 
+        function getStatusLabel(status) {
+            switch(status) {
+                case 'in-progress': return 'In Progress';
+                case 'completed': return 'Completed';
+                case 'submitted': return 'Submitted';
+                case 'na': return 'N/A';
+                default: return 'Not Started';
+            }
+        }
+
         function renderTodoList() {
             const listEl = document.getElementById('todo-list');
             listEl.innerHTML = '';
@@ -486,18 +467,22 @@
             let allAssignments = [];
             state.classes.forEach(cls => {
                 cls.assignments.forEach(asg => {
-                    // Include if it has no score (not done) AND has a due date, OR if it has a future due date
-                    if ((!asg.score || asg.score === "") && asg.dueDate) {
+                    // Include if it's not completed/submitted/na
+                    if (asg.status !== 'completed' && asg.status !== 'submitted' && asg.status !== 'na') {
                         allAssignments.push({ ...asg, className: cls.name, classId: cls.id });
                     }
                 });
             });
 
-            // Sort by date
-            allAssignments.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+            // Sort by date (assignments without dates go to the bottom)
+            allAssignments.sort((a, b) => {
+                if (!a.dueDate) return 1;
+                if (!b.dueDate) return -1;
+                return new Date(a.dueDate) - new Date(b.dueDate);
+            });
 
             if (allAssignments.length === 0) {
-                listEl.innerHTML = '<p class="text-gray-400 italic">No upcoming assignments.</p>';
+                listEl.innerHTML = '<p class="text-gray-400 italic">No pending assignments.</p>';
                 return;
             }
 
@@ -505,38 +490,38 @@
             today.setHours(0,0,0,0);
 
             allAssignments.forEach(asg => {
-                const dueDate = new Date(asg.dueDate);
-                dueDate.setHours(0,0,0,0); // Normalize time
-                
-                let badgeClass = 'badge-upcoming';
-                let timeText = asg.dueDate;
+                let timeText = asg.dueDate || 'No Date';
+                let timeColor = 'bg-gray-100 text-gray-600';
 
-                if (dueDate < today) {
-                    badgeClass = 'badge-overdue';
-                    timeText += ' (Overdue)';
-                } else if (dueDate.getTime() === today.getTime()) {
-                    badgeClass = 'bg-yellow-100 text-yellow-800';
-                    timeText = 'Today';
+                if (asg.dueDate) {
+                    const dueDate = new Date(asg.dueDate);
+                    dueDate.setHours(0,0,0,0);
+                    
+                    if (dueDate < today) {
+                        timeColor = 'bg-red-100 text-red-800';
+                        timeText += ' (Overdue)';
+                    } else if (dueDate.getTime() === today.getTime()) {
+                        timeColor = 'bg-yellow-100 text-yellow-800';
+                        timeText = 'Today';
+                    } else {
+                        timeColor = 'bg-blue-100 text-blue-800';
+                    }
                 }
 
                 const item = document.createElement('div');
-                item.className = 'flex justify-between items-center bg-gray-50 p-2 rounded border border-gray-100';
+                item.className = 'flex justify-between items-center bg-gray-50 p-2 rounded border border-gray-100 cursor-pointer hover:bg-gray-100';
+                item.onclick = () => {
+                    state.activeTab = asg.classId;
+                    render(); // Switch tab
+                    editAssignment(asg.id); // Open modal
+                };
                 item.innerHTML = `
                     <div>
                         <span class="font-medium text-gray-800">${asg.name}</span>
                         <span class="text-xs text-gray-500 block">${asg.className}</span>
                     </div>
-                    <span class="text-xs font-semibold px-2 py-1 rounded ${badgeClass}">${timeText}</span>
+                    <span class="text-xs font-semibold px-2 py-1 rounded ${timeColor}">${timeText}</span>
                 `;
-                // Add click to edit if not read only
-                if (!state.isReadOnly) {
-                    item.classList.add('cursor-pointer', 'hover:bg-gray-100');
-                    item.onclick = () => {
-                        state.activeTab = asg.classId;
-                        render(); // Switch tab
-                        editAssignment(asg.id); // Open modal
-                    };
-                }
                 listEl.appendChild(item);
             });
         }
@@ -580,7 +565,7 @@
                 } else {
                     assignmentsHtml = `<div class="bg-white shadow overflow-hidden sm:rounded-md mt-4"><ul class="divide-y divide-gray-200">`;
                     
-                    // Sort: Unscored/Upcoming first, then by date
+                    // Sort by due date
                     activeClass.assignments.sort((a,b) => {
                          if (a.dueDate && b.dueDate) return new Date(b.dueDate) - new Date(a.dueDate);
                          return 0;
@@ -596,29 +581,31 @@
                         if (percent !== null) {
                             percentColor = percent >= 90 ? 'text-green-600' : percent < 60 ? 'text-red-500' : 'text-gray-500';
                         }
-
-                        // Determine functionality based on Read Only
-                        const clickAction = state.isReadOnly ? '' : `onclick="editAssignment('${asg.id}')"`;
-                        const cursorClass = state.isReadOnly ? '' : 'cursor-pointer hover:bg-gray-50 group';
-                        const editLabel = state.isReadOnly ? '' : '<span class="text-gray-300 text-sm group-hover:text-gray-500">Edit</span>';
-
+                        
+                        // Status Badge
+                        const statusKey = asg.status || 'not-started';
+                        const statusBadgeHtml = `<span class="text-[10px] uppercase font-bold px-2 py-0.5 rounded status-${statusKey} mr-2">${getStatusLabel(statusKey)}</span>`;
+                        
                         const dateBadge = asg.dueDate ? `<span class="ml-2 text-xs text-gray-400 border border-gray-200 rounded px-1">${asg.dueDate}</span>` : '';
 
                         assignmentsHtml += `
-                            <li class="px-4 py-4 sm:px-6 flex justify-between items-center ${cursorClass}" ${clickAction}>
+                            <li class="px-4 py-4 sm:px-6 flex justify-between items-center cursor-pointer hover:bg-gray-50 group" onclick="editAssignment('${asg.id}')">
                                 <div>
+                                    <div class="flex items-center mb-1">
+                                        <p class="text-sm font-medium text-blue-600 truncate mr-2">${asg.name}</p>
+                                        ${statusBadgeHtml}
+                                    </div>
                                     <div class="flex items-center">
-                                        <p class="text-sm font-medium text-blue-600 truncate">${asg.name}</p>
+                                        <p class="text-xs text-gray-500">${catName}</p>
                                         ${dateBadge}
                                     </div>
-                                    <p class="text-xs text-gray-500">${catName}</p>
                                 </div>
                                 <div class="flex items-center gap-4">
                                     <div class="text-right">
                                         <p class="text-sm font-bold text-gray-900">${scoreDisplay}</p>
                                         <p class="text-xs ${percentColor}">${percent !== null ? percent + '%' : 'Pending'}</p>
                                     </div>
-                                    ${editLabel}
+                                    <span class="text-gray-300 text-sm group-hover:text-gray-500">Edit</span>
                                 </div>
                             </li>
                         `;
@@ -626,16 +613,11 @@
                     assignmentsHtml += `</ul></div>`;
                 }
 
-                // Header buttons (Edit Class, Add Assignment)
-                const editClassBtn = state.isReadOnly ? '' : `<button onclick="openClassModal('${activeClass.id}')" class="absolute top-4 right-4 text-gray-400 hover:text-blue-600 border border-gray-200 rounded px-2 text-xs font-semibold uppercase">Edit Class</button>`;
-                
-                const addAsgBtn = state.isReadOnly ? '' : `<button onclick="openAssignmentModal()" class="bg-blue-600 text-white text-sm px-3 py-1.5 rounded hover:bg-blue-700 shadow-sm">+ Add Assignment</button>`;
-
                 contentContainer.innerHTML = `
                     <div class="flex flex-col md:flex-row gap-6">
                         <div class="md:w-1/3 space-y-4">
                             <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 relative">
-                                ${editClassBtn}
+                                <button onclick="openClassModal('${activeClass.id}')" class="absolute top-4 right-4 text-gray-400 hover:text-blue-600 border border-gray-200 rounded px-2 text-xs font-semibold uppercase">Edit Class</button>
                                 <h3 class="text-gray-500 text-xs uppercase tracking-wide">Current Grade</h3>
                                 <div class="flex items-baseline mt-2">
                                     <span class="text-5xl font-extrabold ${gradeColorClass}">${currentGrade ? currentGrade.toFixed(2) : '--'}%</span>
@@ -664,7 +646,9 @@
                         <div class="md:w-2/3">
                             <div class="flex justify-between items-center mb-2">
                                 <h3 class="text-lg font-bold text-gray-800">Assignments</h3>
-                                ${addAsgBtn}
+                                <button onclick="openAssignmentModal()" class="bg-blue-600 text-white text-sm px-3 py-1.5 rounded hover:bg-blue-700 shadow-sm">
+                                    + Add Assignment
+                                </button>
                             </div>
                             ${assignmentsHtml}
                         </div>
@@ -676,15 +660,23 @@
 
         // --- MODAL & FORM HANDLERS ---
 
-        function toggleModal(modalID) {
+        function toggleModal(modalID, forceState = null) {
             const modal = document.getElementById(modalID);
-            modal.classList.toggle('opacity-0');
-            modal.classList.toggle('pointer-events-none');
-            document.body.classList.toggle('modal-active');
+            const isHidden = modal.classList.contains('opacity-0');
+            
+            // If forceState is provided: true = show, false = hide
+            const shouldShow = forceState !== null ? forceState : isHidden;
+
+            if (shouldShow) {
+                modal.classList.remove('opacity-0', 'pointer-events-none');
+                document.body.classList.add('modal-active');
+            } else {
+                modal.classList.add('opacity-0', 'pointer-events-none');
+                document.body.classList.remove('modal-active');
+            }
         }
 
         function openClassModal(classId = null) {
-            if (state.isReadOnly) return;
             const form = document.getElementById('class-form');
             const deleteBtn = document.getElementById('delete-class-btn');
             const catInputs = document.getElementById('category-inputs');
@@ -703,10 +695,10 @@
                 addCategoryInput('Assignments', 100);
                 deleteBtn.classList.add('hidden');
             }
-            toggleModal('class-modal');
+            toggleModal('class-modal', true);
         }
 
-        function closeClassModal() { toggleModal('class-modal'); }
+        function closeClassModal() { toggleModal('class-modal', false); }
 
         function addCategoryInput(name = '', weight = '', id = null) {
             const wrapper = document.createElement('div');
@@ -772,7 +764,6 @@
         }
 
         function openAssignmentModal() {
-            if (state.isReadOnly) return;
             if (!state.activeTab) return alert("Select a class first");
             
             const activeClass = state.classes.find(c => c.id === state.activeTab);
@@ -795,12 +786,13 @@
             document.getElementById('asg-id').value = ''; 
             document.getElementById('delete-asg-btn').classList.add('hidden');
             document.getElementById('assignment-form').reset();
+            // Default status
+            document.getElementById('asg-status').value = 'not-started';
             
-            toggleModal('assignment-modal');
+            toggleModal('assignment-modal', true);
         }
 
         function editAssignment(asgId) {
-            if (state.isReadOnly) return;
             const activeClass = state.classes.find(c => c.id === state.activeTab);
             const asg = activeClass.assignments.find(a => a.id === asgId);
             
@@ -812,6 +804,7 @@
             document.getElementById('asg-score').value = asg.score;
             document.getElementById('asg-total').value = asg.total;
             document.getElementById('asg-date').value = asg.dueDate || '';
+            document.getElementById('asg-status').value = asg.status || 'not-started';
             document.getElementById('delete-asg-btn').classList.remove('hidden');
         }
         
@@ -828,7 +821,7 @@
             }
         }
 
-        function closeAssignmentModal() { toggleModal('assignment-modal'); }
+        function closeAssignmentModal() { toggleModal('assignment-modal', false); }
 
         document.getElementById('assignment-form').addEventListener('submit', (e) => {
             e.preventDefault();
@@ -839,6 +832,7 @@
             const score = document.getElementById('asg-score').value;
             const total = document.getElementById('asg-total').value;
             const date = document.getElementById('asg-date').value;
+            const status = document.getElementById('asg-status').value;
 
             const cls = state.classes.find(c => c.id === classId);
             
@@ -849,6 +843,7 @@
                 asg.score = score;
                 asg.total = total;
                 asg.dueDate = date;
+                asg.status = status;
             } else {
                 cls.assignments.push({
                     id: 'asg_' + Date.now(),
@@ -857,6 +852,7 @@
                     score: score,
                     total: total,
                     dueDate: date,
+                    status: status,
                     created_at: new Date().toISOString()
                 });
             }
@@ -867,7 +863,7 @@
         });
 
         // Initialize App
-        init();
+        checkUser();
 
     </script>
 </body>
