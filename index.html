@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,50 +11,50 @@
             --supabase-key: 'sb_publishable_3bRvo_Zuppdi4ICnOtfjeA_VWfp6Zyx';
             --supabase-project: 'Edutrack';
         }
-        
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        
+
         body {
             background-color: #f5f7fa;
             color: #333;
             line-height: 1.6;
         }
-        
+
         header {
             background: linear-gradient(135deg, #2c3e50, #1a1a2e);
             color: white;
             padding: 1rem;
             text-align: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
-        
+
         h1 {
             font-size: 2.2rem;
             margin-bottom: 0.5rem;
         }
-        
+
         .subtitle {
             font-size: 1.1rem;
             opacity: 0.9;
         }
-        
+
         .container {
             max-width: 1200px;
             margin: 0 auto;
             padding: 2rem;
         }
-        
+
         .tabs {
             display: flex;
             border-bottom: 1px solid #ddd;
             margin-bottom: 2rem;
         }
-        
+
         .tab {
             padding: 0.75rem 1.5rem;
             margin: 0 0.25rem;
@@ -64,49 +65,49 @@
             font-weight: 600;
             transition: all 0.3s ease;
         }
-        
+
         .tab:hover {
             background: #f0f0f0;
         }
-        
+
         .tab.active {
             background: #fff;
             border-color: #ddd;
             border-bottom-color: transparent;
             font-weight: 700;
         }
-        
+
         .tab-content {
             display: none;
             padding: 1.5rem;
         }
-        
+
         .tab-content.active {
             display: block;
         }
-        
+
         .assignment-modal {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.7);
+            background: rgba(0, 0, 0, 0.7);
             display: none;
             justify-content: center;
             align-items: center;
             z-index: 1000;
         }
-        
+
         .modal-content {
             background: white;
             padding: 2rem;
             border-radius: 8px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
             max-width: 600px;
             width: 90%;
         }
-        
+
         .modal-header {
             display: flex;
             justify-content: space-between;
@@ -115,12 +116,12 @@
             padding-bottom: 1rem;
             border-bottom: 1px solid #eee;
         }
-        
+
         .modal-title {
             font-size: 1.4rem;
             font-weight: 600;
         }
-        
+
         .close-btn {
             background: none;
             border: none;
@@ -128,35 +129,37 @@
             font-size: 1.2rem;
             cursor: pointer;
         }
-        
+
         .form-group {
             margin-bottom: 1.5rem;
         }
-        
+
         label {
             display: block;
             margin-bottom: 0.5rem;
             font-weight: 600;
             color: #444;
         }
-        
-        input, select, textarea {
+
+        input,
+        select,
+        textarea {
             width: 100%;
             padding: 0.75rem;
             border: 1px solid #ddd;
             border-radius: 4px;
             font-size: 1rem;
         }
-        
+
         textarea {
             min-height: 150px;
             resize: vertical;
         }
-        
+
         .assignment-list {
             margin-top: 1.5rem;
         }
-        
+
         .assignment-item {
             display: flex;
             justify-content: space-between;
@@ -165,25 +168,25 @@
             border-bottom: 1px solid #eee;
             transition: all 0.3s ease;
         }
-        
+
         .assignment-item:hover {
             background: #f9f9f9;
         }
-        
+
         .assignment-title {
             font-weight: 600;
         }
-        
+
         .assignment-category {
             font-style: italic;
             color: #666;
         }
-        
+
         .assignment-actions {
             display: flex;
             gap: 0.5rem;
         }
-        
+
         .delete-btn {
             background: #ff6b6b;
             color: white;
@@ -193,11 +196,11 @@
             cursor: pointer;
             transition: all 0.3s ease;
         }
-        
+
         .delete-btn:hover {
             background: #ff5252;
         }
-        
+
         .edit-btn {
             background: #4CAF50;
             color: white;
@@ -207,23 +210,23 @@
             cursor: pointer;
             transition: all 0.3s ease;
         }
-        
+
         .edit-btn:hover {
             background: #45a049;
         }
-        
+
         .grade-input {
             width: 50px;
         }
-        
+
         .category-selector {
             width: 100%;
         }
-        
+
         .category-list {
             margin-top: 1rem;
         }
-        
+
         .category-item {
             display: flex;
             justify-content: space-between;
@@ -235,21 +238,21 @@
             cursor: pointer;
             transition: all 0.3s ease;
         }
-        
+
         .category-item:hover {
             background: #f0f0f0;
         }
-        
+
         .category-item.active {
             background: #e3f2fd;
             border-color: #1976d2;
         }
-        
+
         .category-weight {
             width: 50px;
             text-align: right;
         }
-        
+
         .gpa-display {
             font-size: 1.5rem;
             font-weight: 700;
@@ -257,14 +260,14 @@
             margin: 2rem 0;
             text-align: center;
         }
-        
+
         .gpa-info {
             text-align: center;
             margin-top: 1rem;
             font-size: 0.9rem;
             color: #666;
         }
-        
+
         .supabase-auth {
             background: #1976d2;
             color: white;
@@ -272,22 +275,22 @@
             text-align: center;
             margin-bottom: 2rem;
             border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
-        
+
         .auth-form {
             display: flex;
             gap: 1rem;
             margin-top: 1rem;
         }
-        
+
         .auth-input {
             flex: 1;
             padding: 0.75rem;
             border: 1px solid #ddd;
             border-radius: 4px;
         }
-        
+
         .auth-btn {
             background: #2196f3;
             color: white;
@@ -298,30 +301,30 @@
             font-weight: 600;
             transition: all 0.3s ease;
         }
-        
+
         .auth-btn:hover {
             background: #0d47a1;
         }
-        
+
         .error-message {
             color: #ff5252;
             font-size: 0.9rem;
             margin-top: 0.5rem;
         }
-        
+
         @media (max-width: 768px) {
             .tabs {
                 flex-direction: column;
             }
-            
+
             .tab {
                 margin-bottom: 0.25rem;
             }
-            
+
             .assignment-item {
                 flex-direction: column;
             }
-            
+
             .assignment-actions {
                 flex-direction: column;
                 gap: 0.5rem;
@@ -329,12 +332,13 @@
         }
     </style>
 </head>
+
 <body>
     <header>
         <h1>Edutrack Assignment Tracker</h1>
         <p class="subtitle">Your personal assignment management system with Supabase integration</p>
     </header>
-    
+
     <div class="container">
         <div class="tabs">
             <div class="tab active" data-tab="dashboard">Dashboard</div>
@@ -342,18 +346,18 @@
             <div class="tab" data-tab="categories">Categories</div>
             <div class="tab" data-tab="gpa">GPA</div>
         </div>
-        
+
         <div class="tab-content active" id="dashboard-content">
             <h2>Quick Overview</h2>
             <div class="gpa-display" id="gpa-display">0.00</div>
             <div class="gpa-info">Your current GPA is calculated based on all your classes</div>
-            
+
             <div class="assignment-list">
                 <h3>Upcoming Assignments</h3>
                 <div id="upcoming-assignments"></div>
             </div>
         </div>
-        
+
         <div class="tab-content" id="classes-content">
             <h2>Classes</h2>
             <div class="assignment-modal" id="assignment-modal">
@@ -362,49 +366,49 @@
                         <h3 class="modal-title" id="modal-title">Add New Assignment</h3>
                         <button class="close-btn" id="close-modal">×</button>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="assignment-title">Assignment Title</label>
                         <input type="text" id="assignment-title" placeholder="Math Homework 1">
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="assignment-due">Due Date</label>
                         <input type="date" id="assignment-due">
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="assignment-category">Category</label>
                         <select id="assignment-category" class="category-selector">
                             <option value="">Select Category</option>
                         </select>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="assignment-grade">Grade</label>
                         <input type="number" id="assignment-grade" min="0" max="100" placeholder="90">
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="assignment-weight">Weight</label>
                         <input type="number" id="assignment-weight" min="0" max="100" placeholder="10">
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="assignment-notes">Notes</label>
                         <textarea id="assignment-notes" placeholder="Any additional instructions..."></textarea>
                     </div>
-                    
+
                     <button class="btn" id="save-assignment">Save Assignment</button>
                 </div>
             </div>
-            
+
             <div class="assignment-list">
                 <h3>Class List</h3>
                 <div id="class-list"></div>
             </div>
         </div>
-        
+
         <div class="tab-content" id="categories-content">
             <h2>Categories</h2>
             <div class="assignment-modal" id="category-modal">
@@ -413,39 +417,39 @@
                         <h3 class="modal-title" id="category-title">Add New Category</h3>
                         <button class="close-btn" id="close-category-modal">×</button>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="category-name">Category Name</label>
                         <input type="text" id="category-name" placeholder="Homework">
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="category-weight">Weight (%)</label>
                         <input type="number" id="category-weight" min="0" max="100" placeholder="20">
                     </div>
-                    
+
                     <button class="btn" id="save-category">Save Category</button>
                 </div>
             </div>
-            
+
             <div class="category-list">
                 <h3>Category List</h3>
                 <div id="category-list"></div>
             </div>
         </div>
-        
+
         <div class="tab-content" id="gpa-content">
             <h2>GPA Calculation</h2>
             <div class="gpa-display" id="gpa-display">0.00</div>
             <div class="gpa-info">Your GPA is calculated based on weighted categories across all classes</div>
-            
+
             <div class="assignment-list">
                 <h3>Class Breakdown</h3>
                 <div id="class-breakdown"></div>
             </div>
         </div>
     </div>
-    
+
     <div class="supabase-auth">
         <h3>Authentication</h3>
         <p>Login to save your data to Supabase</p>
@@ -456,16 +460,16 @@
         </div>
         <div id="auth-error" class="error-message"></div>
     </div>
-    
+
     <script>
         // Supabase configuration
         const supabaseUrl = 'https://njgjgpiamweujgyknqtz.supabase.co';
         const supabaseKey = 'sb_publishable_3bRvo_Zuppdi4ICnOtfjeA_VWfp6Zyx';
         const supabaseProject = 'Edutrack';
-        
+
         // Initialize Supabase
-        const supabase = createSupabase();
-        
+        const supabase = createClient(supabaseUrl, supabaseKey, { project: supabaseProject });
+
         // DOM elements
         const tabs = document.querySelectorAll('.tab');
         const tabContents = document.querySelectorAll('.tab-content');
@@ -479,17 +483,17 @@
         const emailInput = document.getElementById('email');
         const passwordInput = document.getElementById('password');
         const authError = document.getElementById('auth-error');
-        
+
         // State variables
         let currentUser = null;
         let currentClassId = null;
         let currentCategoryId = null;
         let classes = [];
         let categories = [];
-        
+
         // Initialize the app
         initApp();
-        
+
         async function initApp() {
             // Check if user is logged in
             const session = await supabase.auth.getSession();
@@ -500,23 +504,23 @@
             } else {
                 document.querySelector('.supabase-auth').style.display = 'block';
             }
-            
+
             // Event listeners
             tabs.forEach(tab => {
                 tab.addEventListener('click', () => selectTab(tab.dataset.tab));
             });
-            
+
             closeModal.addEventListener('click', toggleModal);
             closeCategoryModal.addEventListener('click', toggleCategoryModal);
             saveAssignmentBtn.addEventListener('click', saveAssignment);
             saveCategoryBtn.addEventListener('click', saveCategory);
             loginBtn.addEventListener('click', login);
-            
+
             // Initialize modals
             modal.style.display = 'none';
             categoryModal.style.display = 'none';
         }
-        
+
         function selectTab(tabName) {
             tabs.forEach(tab => {
                 tab.classList.remove('active');
@@ -524,37 +528,37 @@
             tabContents.forEach(content => {
                 content.classList.remove('active');
             });
-            
+
             const selectedTab = document.querySelector(`.tab[data-tab="${tabName}"]`);
             selectedTab.classList.add('active');
-            
+
             const selectedContent = document.querySelector(`.tab-content[data-tab="${tabName}"]`);
             selectedContent.classList.add('active');
         }
-        
+
         function toggleModal() {
             modal.style.display = modal.style.display === 'block' ? 'none' : 'block';
         }
-        
+
         function toggleCategoryModal() {
             categoryModal.style.display = categoryModal.style.display === 'block' ? 'none' : 'block';
         }
-        
+
         async function login() {
             const email = emailInput.value;
             const password = passwordInput.value;
-            
+
             try {
                 const { data, error } = await supabase.auth.signIn({
                     email,
                     password
                 });
-                
+
                 if (error) {
                     authError.textContent = error.message;
                     return;
                 }
-                
+
                 authError.textContent = '';
                 currentUser = data.user;
                 loadClasses();
@@ -564,7 +568,7 @@
                 authError.textContent = 'Login failed';
             }
         }
-        
+
         async function loadClasses() {
             try {
                 const { data, error } = await supabase
@@ -572,16 +576,16 @@
                     .select('*')
                     .eq('user_id', currentUser.id)
                     .order('created_at', { ascending: false });
-                
+
                 if (error) throw error;
-                
+
                 classes = data;
                 renderClasses();
             } catch (err) {
                 console.error('Error loading classes:', err);
             }
         }
-        
+
         async function loadCategories() {
             try {
                 const { data, error } = await supabase
@@ -589,20 +593,20 @@
                     .select('*')
                     .eq('user_id', currentUser.id)
                     .order('created_at', { ascending: false });
-                
+
                 if (error) throw error;
-                
+
                 categories = data;
                 renderCategories();
             } catch (err) {
                 console.error('Error loading categories:', err);
             }
         }
-        
+
         function renderClasses() {
             const classList = document.getElementById('class-list');
             classList.innerHTML = '';
-            
+
             classes.forEach(cls => {
                 const classItem = document.createElement('div');
                 classItem.className = 'class-item';
@@ -614,19 +618,19 @@
                 `;
                 classList.appendChild(classItem);
             });
-            
+
             // Add event listeners to class items
             document.querySelectorAll('.edit-btn').forEach(btn => {
                 btn.addEventListener('click', () => editClass(btn.dataset.classId));
             });
-            
+
             document.querySelectorAll('.delete-btn').deleteBtn.addEventListener('click', () => deleteClass(btn.dataset.classId));
         }
-        
+
         function renderCategories() {
             const categoryList = document.getElementById('category-list');
             categoryList.innerHTML = '';
-            
+
             categories.forEach(cat => {
                 const categoryItem = document.createElement('div');
                 categoryItem.className = 'category-item';
@@ -637,57 +641,57 @@
                 categoryList.appendChild(categoryItem);
             });
         }
-        
+
         async function saveClass() {
             // Implementation for saving classes
         }
-        
+
         async function saveCategory() {
             // Implementation for saving categories
         }
-        
+
         async function saveAssignment() {
             // Implementation for saving assignments
         }
-        
+
         function editClass(classId) {
             currentClassId = classId;
             // Show modal for editing class
             toggleModal();
         }
-        
+
         function deleteClass(classId) {
             // Implementation for deleting classes
         }
-        
+
         // GPA calculation function
         function calculateGPA() {
             let totalWeightedScore = 0;
             let totalWeight = 0;
-            
+
             classes.forEach(cls => {
                 let classScore = 0;
                 let classWeight = 0;
-                
+
                 cls.assignments.forEach(assgn => {
                     classScore += (assgn.grade / 100) * (assgn.weight / 100);
                     classWeight += assgn.weight;
                 });
-                
+
                 totalWeightedScore += classScore * (classWeight / 100);
                 totalWeight += classWeight;
             });
-            
+
             return (totalWeightedScore / totalWeight) * 100;
         }
-        
+
         // Initialize the dashboard
         function initDashboard() {
             const gpaDisplay = document.getElementById('gpa-display');
             const gpa = calculateGPA();
             gpaDisplay.textContent = gpa.toFixed(2);
         }
-        
+
         // Initialize the app
         function initApp() {
             initDashboard();
@@ -696,4 +700,5 @@
         }
     </script>
 </body>
+
 </html>
