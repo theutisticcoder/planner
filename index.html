@@ -3,412 +3,607 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EduTrack Pro - Unified Academic Cloud</title>
+    <title>EduTrack | Assignment & Grade Tracker</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; scroll-behavior: smooth; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; animation: fadeIn 0.3s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
-        .glass { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.3); }
-        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-        .nav-active { background: #4f46e5 !important; color: white !important; box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.2); }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+        .tab-active { border-bottom: 2px solid #6366f1; color: #6366f1; }
+        input:focus, select:focus { outline: 2px solid #6366f1; border-color: transparent; }
     </style>
 </head>
-<body class="bg-[#f8fafc] text-slate-900 min-h-screen">
+<body class="min-h-screen text-slate-800">
 
-    <!-- Authentication Overlay -->
-    <div id="auth-overlay" class="fixed inset-0 z-[100] bg-slate-950 flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-md rounded-[2.5rem] p-10 shadow-2xl">
-            <div class="text-center mb-8">
-                <div class="bg-indigo-600 w-16 h-16 rounded-2xl flex items-center justify-center text-white mx-auto mb-4 shadow-xl">
-                    <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+    <!-- Auth Overlay -->
+    <div id="auth-overlay" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900 bg-opacity-70 p-4">
+        <div class="glass w-full max-w-md rounded-2xl p-8 shadow-2xl">
+            <h1 class="mb-2 text-center text-3xl font-bold text-indigo-600">EduTrack</h1>
+            <p class="mb-8 text-center text-slate-500">Sign in to sync your progress</p>
+            
+            <form id="auth-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700">Email</label>
+                    <input type="email" id="auth-email" required class="mt-1 w-full rounded-lg border border-slate-300 p-3" placeholder="student@university.edu">
                 </div>
-                <h2 class="text-3xl font-extrabold tracking-tight text-slate-900">EduTrack Pro</h2>
-                <p class="text-slate-500 mt-2 font-medium">Cloud Academic Management</p>
-            </div>
-            <div class="space-y-4">
-                <div class="space-y-1">
-                    <label class="text-[10px] font-black text-slate-400 uppercase ml-4">Email Address</label>
-                    <input id="auth-email" type="email" placeholder="name@university.edu" class="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 outline-none focus:ring-2 ring-indigo-500/20 font-medium">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700">Password</label>
+                    <input type="password" id="auth-password" required class="mt-1 w-full rounded-lg border border-slate-300 p-3" placeholder="••••••••">
                 </div>
-                <div class="space-y-1">
-                    <label class="text-[10px] font-black text-slate-400 uppercase ml-4">Password</label>
-                    <input id="auth-password" type="password" placeholder="••••••••" class="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 outline-none focus:ring-2 ring-indigo-500/20 font-medium">
+                <div class="flex flex-col gap-3 pt-4">
+                    <button type="submit" id="btn-login" class="w-full rounded-lg bg-indigo-600 p-3 font-semibold text-white transition hover:bg-indigo-700">Login</button>
+                    <button type="button" id="btn-signup" class="w-full rounded-lg border-2 border-indigo-600 p-3 font-semibold text-indigo-600 transition hover:bg-indigo-50">Create Account</button>
                 </div>
-                <button id="btn-auth" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold text-lg hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200">Sign In / Sign Up</button>
-                <p id="auth-status" class="text-center text-slate-400 text-xs py-2">Account is created automatically if it doesn't exist.</p>
-                <div id="auth-error" class="bg-red-50 text-red-500 text-xs font-bold p-4 rounded-xl hidden"></div>
-            </div>
+            </form>
+            <p id="auth-msg" class="mt-4 text-center text-sm font-medium"></p>
         </div>
     </div>
 
-    <!-- Main Application UI -->
-    <div id="app-container" class="hidden flex flex-col md:flex-row min-h-screen">
-        
-        <!-- Sidebar Navigation -->
-        <aside class="w-full md:w-80 bg-white border-r border-slate-200 flex flex-col p-6 sticky top-0 h-auto md:h-screen z-50">
-            <div class="flex items-center justify-between mb-10 px-2">
-                <div class="flex items-center gap-3">
-                    <div class="bg-indigo-600 p-2.5 rounded-2xl text-white shadow-md">
-                        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
-                    </div>
-                    <h1 class="font-extrabold text-2xl tracking-tight">EduTrack</h1>
+    <!-- Main Content -->
+    <div id="app-content" class="hidden">
+        <!-- Header -->
+        <header class="sticky top-0 z-40 border-b bg-white shadow-sm">
+            <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6">
+                <div class="flex items-center gap-2">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-white font-bold text-xl">E</div>
+                    <span class="text-xl font-bold tracking-tight">EduTrack</span>
                 </div>
-                <div id="sync-indicator" class="w-3 h-3 rounded-full bg-emerald-500 border-2 border-white shadow-sm transition-colors duration-500"></div>
-            </div>
-
-            <nav class="space-y-2 flex-1">
-                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all font-bold text-slate-500 hover:bg-slate-50 nav-btn">
-                    Dashboard
-                </button>
-                <button onclick="switchTab('semesters')" id="nav-semesters" class="w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all font-bold text-slate-500 hover:bg-slate-50 nav-btn">
-                    Semesters
-                </button>
-                <button onclick="switchTab('grades')" id="nav-grades" class="w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all font-bold text-slate-500 hover:bg-slate-50 nav-btn">
-                    Grade Tracker
-                </button>
-            </nav>
-
-            <div class="mt-auto pt-6 border-t space-y-4">
-                <div class="px-4">
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Active User</p>
-                    <p id="display-email" class="text-sm font-bold text-slate-700 truncate">Loading...</p>
+                <div class="flex items-center gap-4">
+                    <span id="user-display" class="hidden text-sm font-medium text-slate-500 sm:block"></span>
+                    <button onclick="handleLogout()" class="rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200">Logout</button>
                 </div>
-                <button onclick="handleLogout()" class="w-full text-slate-400 py-3 rounded-2xl font-bold text-xs hover:text-red-500 border border-transparent hover:border-red-50 transition-all">Sign Out</button>
             </div>
-        </aside>
-
-        <!-- Main Content Area -->
-        <main class="flex-1 p-6 md:p-12 lg:p-16 overflow-y-auto">
             
-            <!-- Dashboard Tab -->
-            <div id="tab-dashboard" class="tab-content active space-y-10">
-                <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                    <div>
-                        <h2 class="text-4xl font-extrabold tracking-tight text-slate-900">Academic Hub</h2>
-                        <p class="text-slate-500 font-medium mt-1">Live data synced to your cloud profile.</p>
-                    </div>
-                    <div class="bg-white border border-slate-100 px-10 py-6 rounded-[2.5rem] text-center shadow-sm">
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Cumulative GPA</p>
-                        <span id="cum-gpa" class="text-5xl font-black text-indigo-600">0.00</span>
-                    </div>
-                </header>
-                <div id="dashboard-sem-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <!-- Dynamic Semester Cards -->
+            <!-- Tab Navigation -->
+            <nav class="mx-auto max-w-7xl px-4 sm:px-6">
+                <div class="flex gap-8 overflow-x-auto text-sm font-medium">
+                    <button onclick="switchTab('dashboard')" id="tab-dashboard" class="tab-active whitespace-nowrap py-4">Dashboard</button>
+                    <button onclick="switchTab('masterlist')" id="tab-masterlist" class="whitespace-nowrap py-4">Assignment Masterlist</button>
+                    <button onclick="switchTab('classes')" id="tab-classes" class="whitespace-nowrap py-4">My Classes</button>
+                    <button onclick="switchTab('grades')" id="tab-grades" class="whitespace-nowrap py-4">Grade Tracker</button>
                 </div>
-            </div>
+            </nav>
+        </header>
 
-            <!-- Semesters Tab -->
-            <div id="tab-semesters" class="tab-content space-y-8">
+        <main class="mx-auto max-w-7xl p-4 sm:p-6">
+            <!-- Dashboard -->
+            <section id="view-dashboard" class="tab-view space-y-6">
+                <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
+                    <div class="rounded-2xl bg-white p-6 shadow-sm">
+                        <h3 class="text-sm font-medium text-slate-500">Total Progress</h3>
+                        <div class="mt-2 flex items-baseline gap-2">
+                            <span id="stats-total-completion" class="text-3xl font-bold">0%</span>
+                            <span class="text-xs text-slate-400">assignments done</span>
+                        </div>
+                    </div>
+                    <div class="rounded-2xl bg-white p-6 shadow-sm">
+                        <h3 class="text-sm font-medium text-slate-500">Due Soon</h3>
+                        <div class="mt-2 flex items-baseline gap-2">
+                            <span id="stats-due-soon" class="text-3xl font-bold text-orange-500">0</span>
+                            <span class="text-xs text-slate-400">next 7 days</span>
+                        </div>
+                    </div>
+                    <div class="rounded-2xl bg-white p-6 shadow-sm">
+                        <h3 class="text-sm font-medium text-slate-500">Current GPA</h3>
+                        <div class="mt-2 flex items-baseline gap-2">
+                            <span id="stats-gpa" class="text-3xl font-bold text-indigo-600">0.00</span>
+                            <span class="text-xs text-slate-400">cumulative</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                    <div class="rounded-2xl bg-white p-6 shadow-sm">
+                        <h3 class="mb-4 font-bold text-lg">Class Breakdown</h3>
+                        <div id="dashboard-class-list" class="space-y-4">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                    <div class="rounded-2xl bg-white p-6 shadow-sm">
+                        <h3 class="mb-4 font-bold text-lg">Upcoming Priorities</h3>
+                        <div id="dashboard-urgent-list" class="space-y-3">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Masterlist -->
+            <section id="view-masterlist" class="tab-view hidden space-y-6">
+                <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+                    <h2 class="text-2xl font-bold">Assignment Masterlist</h2>
+                    <button onclick="toggleModal('assignment-modal')" class="rounded-lg bg-indigo-600 px-4 py-2 font-semibold text-white hover:bg-indigo-700">+ Add Assignment</button>
+                </div>
+
+                <div class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-50 text-slate-600 uppercase text-xs font-semibold">
+                                <tr>
+                                    <th class="px-6 py-4">Status</th>
+                                    <th class="px-6 py-4">Due Date</th>
+                                    <th class="px-6 py-4">Class</th>
+                                    <th class="px-6 py-4">Assignment</th>
+                                    <th class="px-6 py-4 text-right">Points</th>
+                                    <th class="px-6 py-4 text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="masterlist-body" class="divide-y divide-slate-100">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Classes -->
+            <section id="view-classes" class="tab-view hidden space-y-6">
                 <div class="flex justify-between items-center">
-                    <h2 class="text-3xl font-extrabold">Semesters</h2>
-                    <button onclick="addSemester()" class="bg-indigo-600 text-white px-8 py-3.5 rounded-2xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all">+ Add Semester</button>
+                    <h2 class="text-2xl font-bold">My Classes</h2>
+                    <button onclick="toggleModal('class-modal')" class="rounded-lg bg-indigo-600 px-4 py-2 font-semibold text-white hover:bg-indigo-700">+ Add Class</button>
                 </div>
-                <div id="semester-list" class="space-y-12">
-                    <!-- Dynamic Semester Management Rows -->
+                <div id="classes-grid" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    <!-- Populated by JS -->
                 </div>
-            </div>
+            </section>
 
-            <!-- Grade Tracker Tab -->
-            <div id="tab-grades" class="tab-content space-y-10">
-                <h2 class="text-3xl font-extrabold">Detailed Course Breakdown</h2>
-                <div id="course-breakdown-container" class="space-y-12">
-                    <!-- Dynamic Course Sections with Assignments -->
+            <!-- Grades -->
+            <section id="view-grades" class="tab-view hidden space-y-6">
+                <h2 class="text-2xl font-bold">Grade Calculator & Categories</h2>
+                <div id="grades-container" class="space-y-8">
+                    <!-- Populated by JS: Class categories and weighting -->
                 </div>
-            </div>
-
+            </section>
         </main>
     </div>
 
+    <!-- Assignment Modal -->
+    <div id="assignment-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-slate-900 bg-opacity-50 p-4">
+        <div class="glass w-full max-w-lg rounded-2xl p-6 shadow-xl">
+            <h3 class="mb-4 text-xl font-bold">Add New Assignment</h3>
+            <form id="assignment-form" class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="col-span-2">
+                        <label class="block text-sm font-medium">Assignment Name</label>
+                        <input type="text" id="as-name" required class="mt-1 w-full rounded-lg border border-slate-300 p-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium">Class</label>
+                        <select id="as-class" required class="mt-1 w-full rounded-lg border border-slate-300 p-2"></select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium">Type/Category</label>
+                        <select id="as-category" required class="mt-1 w-full rounded-lg border border-slate-300 p-2">
+                            <option>Homework</option>
+                            <option>Exam</option>
+                            <option>Quiz</option>
+                            <option>Project</option>
+                            <option>Other</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium">Due Date</label>
+                        <input type="date" id="as-date" required class="mt-1 w-full rounded-lg border border-slate-300 p-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium">Points Earned</label>
+                        <input type="number" id="as-points-earned" step="0.01" class="mt-1 w-full rounded-lg border border-slate-300 p-2" placeholder="N/A">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium">Points Possible</label>
+                        <input type="number" id="as-points-possible" step="0.01" class="mt-1 w-full rounded-lg border border-slate-300 p-2" placeholder="100">
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 pt-4">
+                    <button type="button" onclick="toggleModal('assignment-modal')" class="px-4 py-2 text-slate-600">Cancel</button>
+                    <button type="submit" class="rounded-lg bg-indigo-600 px-6 py-2 font-semibold text-white">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Class Modal -->
+    <div id="class-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-slate-900 bg-opacity-50 p-4">
+        <div class="glass w-full max-w-md rounded-2xl p-6 shadow-xl">
+            <h3 class="mb-4 text-xl font-bold">Add New Class</h3>
+            <form id="class-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium">Class Name (e.g. CS101)</label>
+                    <input type="text" id="cl-name" required class="mt-1 w-full rounded-lg border border-slate-300 p-2">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium">Title/Description</label>
+                    <input type="text" id="cl-title" required class="mt-1 w-full rounded-lg border border-slate-300 p-2">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium">Credits</label>
+                        <input type="number" id="cl-credits" value="3" class="mt-1 w-full rounded-lg border border-slate-300 p-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium">Period</label>
+                        <input type="text" id="cl-period" placeholder="P1" class="mt-1 w-full rounded-lg border border-slate-300 p-2">
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 pt-4">
+                    <button type="button" onclick="toggleModal('class-modal')" class="px-4 py-2 text-slate-600">Cancel</button>
+                    <button type="submit" class="rounded-lg bg-indigo-600 px-6 py-2 font-semibold text-white">Add Class</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
-        // Configuration
-        const SB_URL = 'https://njgjgpiamweujgyknqtz.supabase.co';
-        const SB_KEY = 'sb_publishable_3bRvo_Zuppdi4ICnOtfjeA_VWfp6Zyx';
-        const supabase = window.supabase.createClient(SB_URL, SB_KEY);
+        // Supabase Configuration
+        const SUPABASE_URL = 'https://njgjgpiamweujgyknqtz.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_3bRvo_Zuppdi4ICnOtfjeA_VWfp6Zyx';
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // State
+        // App State
         let currentUser = null;
-        let appData = {
-            semesters: [],
-            assignments: []
-        };
+        let classes = [];
+        let assignments = [];
+        let currentTab = 'dashboard';
 
-        // --- AUTH LOGIC ---
-        async function init() {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) handleAuthSuccess(session.user);
-
-            supabase.auth.onAuthStateChange((event, session) => {
-                if (event === 'SIGNED_IN' && session) handleAuthSuccess(session.user);
-                if (event === 'SIGNED_OUT') window.location.reload();
-            });
-        }
-
-        async function handleAuthSuccess(user) {
-            currentUser = user;
-            document.getElementById('auth-overlay').style.display = 'none';
-            document.getElementById('app-container').classList.remove('hidden');
-            document.getElementById('display-email').innerText = user.email;
-            await loadUserData();
-            switchTab('dashboard');
-        }
-
-        document.getElementById('btn-auth').addEventListener('click', async () => {
-            const email = document.getElementById('auth-email').value;
-            const password = document.getElementById('auth-password').value;
-            const btn = document.getElementById('btn-auth');
-            const errorBox = document.getElementById('auth-error');
-
-            if (!email || !password) return;
-
-            btn.disabled = true;
-            btn.innerText = "Processing...";
-            errorBox.classList.add('hidden');
-
-            const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-
-            if (signInError) {
-                const { error: signUpError } = await supabase.auth.signUp({ email, password });
-                if (signUpError) {
-                    errorBox.innerText = signUpError.message;
-                    errorBox.classList.remove('hidden');
-                    btn.disabled = false;
-                    btn.innerText = "Sign In / Sign Up";
-                } else {
-                    document.getElementById('auth-status').innerText = "Account created! Check email if verification is required.";
-                    document.getElementById('auth-status').className = "text-center text-emerald-500 font-bold py-2";
-                }
+        // Initialize App
+        window.addEventListener('load', async () => {
+            const { data: { user } } = await _supabase.auth.getUser();
+            if (user) {
+                onUserLoaded(user);
             }
         });
 
-        const handleLogout = () => supabase.auth.signOut();
+        // --- AUTH LOGIC ---
+        const authForm = document.getElementById('auth-form');
+        const authMsg = document.getElementById('auth-msg');
 
-        // --- DATA SYNC ---
-        async function loadUserData() {
-            const { data } = await supabase.from('user_data').select('payload').eq('id', currentUser.id).maybeSingle();
-            if (data?.payload) {
-                appData = data.payload;
-            } else {
-                appData = {
-                    semesters: [{ id: 's1', name: 'Fall 2024', courses: [] }],
-                    assignments: []
-                };
-            }
-            render();
+        document.getElementById('btn-login').onclick = async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('auth-email').value;
+            const password = document.getElementById('auth-password').value;
+            authMsg.innerText = "Logging in...";
+            
+            const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
+            if (error) authMsg.innerText = "Error: " + error.message;
+            else onUserLoaded(data.user);
+        };
+
+        document.getElementById('btn-signup').onclick = async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('auth-email').value;
+            const password = document.getElementById('auth-password').value;
+            authMsg.innerText = "Creating account...";
+
+            const { data, error } = await _supabase.auth.signUp({ email, password });
+            if (error) authMsg.innerText = "Error: " + error.message;
+            else authMsg.innerText = "Check your email for confirmation!";
+        };
+
+        async function onUserLoaded(user) {
+            currentUser = user;
+            document.getElementById('auth-overlay').classList.add('hidden');
+            document.getElementById('app-content').classList.remove('hidden');
+            document.getElementById('user-display').innerText = user.email;
+            
+            await loadData();
+            renderAll();
         }
 
-        async function sync() {
+        async function handleLogout() {
+            await _supabase.auth.signOut();
+            window.location.reload();
+        }
+
+        // --- DATA LOGIC ---
+        async function loadData() {
+            // In a real production app, you'd create these tables in Supabase:
+            // tables: classes (id, user_id, name, title, credits, period, weights: jsonb)
+            // tables: assignments (id, user_id, class_id, name, category, due_date, points_earned, points_possible, completed)
+            
+            // For this environment, we simulate table storage via Supabase 'users' metadata or private data buckets if available.
+            // Since we can't create tables dynamically via browser JS, we'll use a single JSON object in user metadata for persistence
+            // or local storage as fallback if metadata write fails.
+            
+            const { data: { user } } = await _supabase.auth.getUser();
+            if (user?.user_metadata?.edu_data) {
+                const stored = user.user_metadata.edu_data;
+                classes = stored.classes || [];
+                assignments = stored.assignments || [];
+            } else {
+                // Initialize defaults
+                classes = [
+                    { id: '1', name: 'CS101', title: 'Intro to Programming', credits: 4, period: 'P1', weights: { 'Homework': 20, 'Exam': 50, 'Project': 30 } },
+                    { id: '2', name: 'ENG202', title: 'British Literature', credits: 3, period: 'P2', weights: { 'Homework': 50, 'Exam': 50 } }
+                ];
+                assignments = [];
+            }
+        }
+
+        async function saveData() {
             if (!currentUser) return;
-            const indicator = document.getElementById('sync-indicator');
-            indicator.classList.replace('bg-emerald-500', 'bg-amber-500');
-
-            await supabase.from('user_data').upsert({
-                id: currentUser.id,
-                payload: appData,
-                updated_at: new Date()
+            const edu_data = { classes, assignments };
+            await _supabase.auth.updateUser({
+                data: { edu_data }
             });
+        }
 
-            setTimeout(() => {
-                indicator.classList.replace('bg-amber-500', 'bg-emerald-500');
-            }, 600);
-            render();
+        // --- UI LOGIC ---
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab-view').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`view-${tab}`).classList.remove('hidden');
+            
+            document.querySelectorAll('nav button').forEach(el => el.classList.remove('tab-active'));
+            document.getElementById(`tab-${tab}`).classList.add('tab-active');
+            
+            renderAll();
+        }
+
+        function toggleModal(id) {
+            const el = document.getElementById(id);
+            el.classList.toggle('hidden');
+            if (id === 'assignment-modal' && !el.classList.contains('hidden')) {
+                const select = document.getElementById('as-class');
+                select.innerHTML = classes.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            }
         }
 
         // --- CALCULATIONS ---
-        function getCourseGrade(courseId) {
-            const course = appData.semesters.flatMap(s => s.courses).find(c => c.id === courseId);
-            if (!course) return 0;
-            const tasks = appData.assignments.filter(a => a.courseId === courseId);
-            if (!tasks.length) return 0;
+        function calculateGrade(classId) {
+            const classObj = classes.find(c => c.id === classId);
+            if (!classObj) return 0;
+            
+            const classAssignments = assignments.filter(a => a.class_id === classId && a.points_possible > 0 && a.points_earned !== null);
+            if (classAssignments.length === 0) return 100;
 
-            let earned = 0;
-            let possible = 0;
-            course.weights.forEach(w => {
-                const catTasks = tasks.filter(t => t.category === w.name);
-                if (catTasks.length) {
-                    const avg = catTasks.reduce((acc, t) => acc + (t.score / t.total), 0) / catTasks.length;
-                    earned += avg * w.percent;
-                    possible += w.percent;
+            const categories = classObj.weights || {};
+            let totalWeightedGrade = 0;
+            let totalWeightUsed = 0;
+
+            for (const [cat, weight] of Object.entries(categories)) {
+                const catAssignments = classAssignments.filter(a => a.category === cat);
+                if (catAssignments.length > 0) {
+                    const earned = catAssignments.reduce((sum, a) => sum + parseFloat(a.points_earned || 0), 0);
+                    const possible = catAssignments.reduce((sum, a) => sum + parseFloat(a.points_possible), 0);
+                    totalWeightedGrade += (earned / possible) * weight;
+                    totalWeightUsed += weight;
                 }
-            });
-            return possible > 0 ? (earned / possible) * 100 : 0;
+            }
+
+            return totalWeightUsed > 0 ? (totalWeightedGrade / totalWeightUsed) * 100 : 100;
         }
 
-        function getSemGPA(semId) {
-            const sem = appData.semesters.find(s => s.id === semId);
-            if (!sem || !sem.courses.length) return "0.00";
+        function getGPAPoints(percent) {
+            if (percent >= 93) return 4.0;
+            if (percent >= 90) return 3.7;
+            if (percent >= 87) return 3.3;
+            if (percent >= 83) return 3.0;
+            if (percent >= 80) return 2.7;
+            if (percent >= 77) return 2.3;
+            if (percent >= 73) return 2.0;
+            if (percent >= 70) return 1.7;
+            if (percent >= 60) return 1.0;
+            return 0.0;
+        }
+
+        function calculateCumulativeGPA() {
             let totalPoints = 0;
             let totalCredits = 0;
-            sem.courses.forEach(c => {
-                const g = getCourseGrade(c.id);
-                const p = g >= 90 ? 4 : g >= 80 ? 3 : g >= 70 ? 2 : g >= 60 ? 1 : 0;
-                totalPoints += p * c.credits;
-                totalCredits += c.credits;
+            classes.forEach(c => {
+                const grade = calculateGrade(c.id);
+                const points = getGPAPoints(grade);
+                totalPoints += points * (c.credits || 0);
+                totalCredits += (c.credits || 0);
             });
             return totalCredits > 0 ? (totalPoints / totalCredits).toFixed(2) : "0.00";
         }
 
-        // --- UI ACTIONS ---
-        window.switchTab = (id) => {
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('nav-active'));
-            document.getElementById('tab-' + id).classList.add('active');
-            document.getElementById('nav-' + id).classList.add('nav-active');
-        };
+        // --- RENDERING ---
+        function renderAll() {
+            if (currentTab === 'dashboard') renderDashboard();
+            if (currentTab === 'masterlist') renderMasterlist();
+            if (currentTab === 'classes') renderClasses();
+            if (currentTab === 'grades') renderGrades();
+            updateStats();
+        }
 
-        window.addSemester = () => {
-            appData.semesters.push({ id: 's-' + Date.now(), name: 'New Semester', courses: [] });
-            sync();
-        };
+        function updateStats() {
+            const completed = assignments.filter(a => a.completed).length;
+            const total = assignments.length;
+            const completion = total > 0 ? Math.round((completed / total) * 100) : 0;
+            document.getElementById('stats-total-completion').innerText = `${completion}%`;
 
-        window.addCourse = (semId) => {
-            const sem = appData.semesters.find(s => s.id === semId);
-            sem.courses.push({
-                id: 'c-' + Date.now(),
-                name: 'New Course',
-                credits: 3,
-                weights: [{ name: 'Default', percent: 100 }]
-            });
-            sync();
-        };
+            const now = new Date();
+            const weekLater = new Date();
+            weekLater.setDate(now.getDate() + 7);
+            const dueSoon = assignments.filter(a => !a.completed && new Date(a.due_date) <= weekLater).length;
+            document.getElementById('stats-due-soon').innerText = dueSoon;
 
-        window.addTask = (courseId) => {
-            const course = appData.semesters.flatMap(s => s.courses).find(c => c.id === courseId);
-            appData.assignments.push({
-                id: 'a-' + Date.now(),
-                courseId,
-                title: 'New Assignment',
-                category: course.weights[0].name,
-                score: 0,
-                total: 100
-            });
-            sync();
-        };
+            document.getElementById('stats-gpa').innerText = calculateCumulativeGPA();
+        }
 
-        // --- RENDER ENGINE ---
-        function render() {
-            // Dashboard Grid
-            const dashGrid = document.getElementById('dashboard-sem-grid');
-            dashGrid.innerHTML = appData.semesters.map(s => `
-                <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
-                    <h3 class="font-extrabold text-xl mb-1">${s.name}</h3>
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">${s.courses.length} Courses</p>
-                    <div class="flex items-end justify-between">
-                        <div class="space-y-2">
-                            ${s.courses.slice(0, 3).map(c => `<div class="flex items-center gap-2"><div class="w-1.5 h-1.5 rounded-full bg-indigo-500"></div><span class="text-xs font-bold text-slate-600">${c.name}</span></div>`).join('')}
-                        </div>
-                        <div class="text-right">
-                            <p class="text-[10px] font-bold text-slate-400 uppercase">GPA</p>
-                            <p class="text-3xl font-black text-indigo-600 leading-none">${getSemGPA(s.id)}</p>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-
-            // Cumulative GPA
-            const allGpas = appData.semesters.map(s => parseFloat(getSemGPA(s.id)));
-            const avgGpa = allGpas.length ? (allGpas.reduce((a, b) => a + b, 0) / allGpas.length).toFixed(2) : "0.00";
-            document.getElementById('cum-gpa').innerText = avgGpa;
-
-            // Semester Manager
-            const semList = document.getElementById('semester-list');
-            semList.innerHTML = appData.semesters.map(s => `
-                <div class="space-y-4">
-                    <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col md:flex-row md:items-center gap-4">
-                        <input value="${s.name}" onchange="appData.semesters.find(x=>x.id==='${s.id}').name=this.value;sync()" class="text-xl font-bold bg-transparent border-none outline-none flex-1">
-                        <div class="flex items-center gap-6 px-6 border-l border-slate-100">
-                             <div class="text-center">
-                                <p class="text-[10px] font-bold text-slate-400 uppercase">GPA</p>
-                                <p class="text-lg font-black text-indigo-600">${getSemGPA(s.id)}</p>
-                             </div>
-                             <button onclick="appData.semesters=appData.semesters.filter(x=>x.id!=='${s.id}');sync()" class="text-slate-300 hover:text-red-500 transition-colors">
-                                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-                             </button>
-                        </div>
-                    </div>
-                    <div class="flex flex-wrap gap-4">
-                        ${s.courses.map(c => `
-                            <div class="bg-white px-6 py-4 rounded-2xl border border-slate-100 flex items-center gap-4 shadow-sm group">
-                                <input value="${c.name}" onchange="c.name=this.value;sync()" class="font-bold text-sm bg-transparent outline-none w-28">
-                                <input type="number" value="${c.credits}" onchange="c.credits=parseInt(this.value);sync()" class="w-8 text-center text-xs font-bold bg-slate-50 rounded p-1">
-                                <button onclick="const sem=appData.semesters.find(x=>x.id==='${s.id}');sem.courses=sem.courses.filter(x=>x.id!=='${c.id}');sync()" class="text-slate-200 group-hover:text-red-400 transition-colors">
-                                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                                </button>
-                            </div>
-                        `).join('')}
-                        <button onclick="addCourse('${s.id}')" class="px-6 py-4 rounded-2xl border-2 border-dashed border-slate-200 text-slate-400 font-bold hover:border-indigo-400 hover:text-indigo-600 transition-all">+ Course</button>
-                    </div>
-                </div>
-            `).join('');
-
-            // Detailed Grade Tracker
-            const gradeContainer = document.getElementById('course-breakdown-container');
-            const allCourses = appData.semesters.flatMap(s => s.courses);
-            gradeContainer.innerHTML = allCourses.map(c => `
-                <div class="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden">
-                    <div class="p-8 bg-slate-50/50 border-b flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        function renderDashboard() {
+            const classList = document.getElementById('dashboard-class-list');
+            classList.innerHTML = classes.map(c => {
+                const grade = calculateGrade(c.id).toFixed(1);
+                const color = grade >= 90 ? 'text-green-600' : grade >= 80 ? 'text-blue-600' : 'text-orange-600';
+                return `
+                    <div class="flex items-center justify-between border-b pb-2">
                         <div>
-                            <h3 class="text-2xl font-extrabold text-slate-900">${c.name}</h3>
-                            <div class="flex items-center gap-4 mt-1">
-                                <p class="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Weighted Score: ${getCourseGrade(c.id).toFixed(1)}%</p>
-                                <span class="w-1 h-1 rounded-full bg-slate-300"></span>
-                                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">${c.credits} Credits</p>
-                            </div>
+                            <p class="font-bold">${c.name}</p>
+                            <p class="text-xs text-slate-400">${c.title}</p>
                         </div>
-                        <button onclick="addTask('${c.id}')" class="bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold text-xs shadow-lg shadow-indigo-100 hover:scale-105 transition-transform">+ Add Task</button>
+                        <span class="text-xl font-bold ${color}">${grade}%</span>
                     </div>
-                    <div class="p-8 grid grid-cols-1 lg:grid-cols-4 gap-12">
-                        <div class="space-y-4">
-                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Grade Weights</p>
-                            ${c.weights.map((w, i) => `
-                                <div class="flex gap-2">
-                                    <input value="${w.name}" onchange="c.weights[${i}].name=this.value;sync()" class="flex-1 text-xs font-bold p-3 bg-slate-50 rounded-xl outline-none border border-transparent focus:border-slate-200">
-                                    <input type="number" value="${w.percent}" onchange="c.weights[${i}].percent=parseInt(this.value);sync()" class="w-16 text-xs font-bold p-3 bg-slate-50 rounded-xl text-center outline-none border border-transparent focus:border-slate-200">
-                                </div>
-                            `).join('')}
-                            <button onclick="c.weights.push({name:'New', percent:0});sync()" class="text-[10px] font-black text-indigo-500 uppercase">+ Add Category</button>
-                        </div>
-                        <div class="lg:col-span-3">
-                            <table class="w-full">
-                                <thead>
-                                    <tr class="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                        <th class="text-left pb-4">Assignment</th>
-                                        <th class="text-left pb-4">Category</th>
-                                        <th class="text-center pb-4">Score</th>
-                                        <th class="text-center pb-4">Max</th>
-                                        <th class="w-8 pb-4"></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${appData.assignments.filter(a => a.courseId === c.id).map(a => `
-                                        <tr class="border-t border-slate-50 group">
-                                            <td class="py-4"><input value="${a.title}" onchange="appData.assignments.find(x=>x.id==='${a.id}').title=this.value;sync()" class="text-sm font-bold bg-transparent outline-none w-full"></td>
-                                            <td class="py-4">
-                                                <select onchange="appData.assignments.find(x=>x.id==='${a.id}').category=this.value;sync()" class="bg-slate-50 text-[10px] font-black p-2 rounded-lg outline-none uppercase">
-                                                    ${c.weights.map(w => `<option ${a.category === w.name ? 'selected' : ''}>${w.name}</option>`).join('')}
-                                                </select>
-                                            </td>
-                                            <td class="py-4 text-center"><input type="number" value="${a.score}" onchange="appData.assignments.find(x=>x.id==='${a.id}').score=parseFloat(this.value);sync()" class="w-12 text-center text-sm font-bold bg-slate-50 p-2 rounded-lg outline-none"></td>
-                                            <td class="py-4 text-center"><input type="number" value="${a.total}" onchange="appData.assignments.find(x=>x.id==='${a.id}').total=parseFloat(this.value);sync()" class="w-12 text-center text-sm font-bold bg-slate-50 p-2 rounded-lg outline-none"></td>
-                                            <td class="py-4 text-right">
-                                                <button onclick="appData.assignments=appData.assignments.filter(x=>x.id!=='${a.id}');sync()" class="text-slate-200 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100">
-                                                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        </div>
+                `;
+            }).join('');
+
+            const urgentList = document.getElementById('dashboard-urgent-list');
+            const pending = assignments.filter(a => !a.completed).sort((a,b) => new Date(a.due_date) - new Date(b.due_date)).slice(0, 5);
+            urgentList.innerHTML = pending.length ? pending.map(a => `
+                <div class="flex items-center gap-3 rounded-lg border p-3 hover:bg-slate-50">
+                    <div class="h-2 w-2 rounded-full bg-indigo-500"></div>
+                    <div class="flex-1">
+                        <p class="text-sm font-semibold">${a.name}</p>
+                        <p class="text-xs text-slate-500">${classes.find(c => c.id === a.class_id)?.name} • Due ${a.due_date}</p>
+                    </div>
+                    <button onclick="toggleComplete('${a.id}')" class="text-xs font-bold text-indigo-600 uppercase">Check</button>
+                </div>
+            `).join('') : '<p class="text-slate-400 text-sm italic">All caught up!</p>';
+        }
+
+        function renderMasterlist() {
+            const body = document.getElementById('masterlist-body');
+            body.innerHTML = assignments.sort((a,b) => new Date(a.due_date) - new Date(b.due_date)).map(a => {
+                const cls = classes.find(c => c.id === a.class_id);
+                return `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="px-6 py-4">
+                            <input type="checkbox" ${a.completed ? 'checked' : ''} onchange="toggleComplete('${a.id}')" class="h-5 w-5 rounded border-slate-300 text-indigo-600">
+                        </td>
+                        <td class="px-6 py-4 font-medium">${a.due_date}</td>
+                        <td class="px-6 py-4 text-slate-500">${cls?.name || 'Unknown'}</td>
+                        <td class="px-6 py-4">
+                            <div class="font-semibold">${a.name}</div>
+                            <div class="text-xs text-slate-400">${a.category}</div>
+                        </td>
+                        <td class="px-6 py-4 text-right tabular-nums">
+                            ${a.points_earned !== null ? `${a.points_earned} / ${a.points_possible}` : `-- / ${a.points_possible}`}
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <button onclick="deleteAssignment('${a.id}')" class="text-slate-300 hover:text-red-500">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderClasses() {
+            const grid = document.getElementById('classes-grid');
+            grid.innerHTML = classes.map(c => `
+                <div class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+                    <div class="mb-4 flex items-center justify-between">
+                        <span class="rounded bg-indigo-100 px-2 py-1 text-xs font-bold text-indigo-700">${c.period}</span>
+                        <button onclick="deleteClass('${c.id}')" class="text-slate-300 hover:text-red-500">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </div>
+                    <h3 class="text-xl font-bold">${c.name}</h3>
+                    <p class="text-slate-500 text-sm">${c.title}</p>
+                    <div class="mt-4 flex items-center justify-between text-sm">
+                        <span class="text-slate-400">Credits: ${c.credits}</span>
+                        <span class="font-bold text-indigo-600">${calculateGrade(c.id).toFixed(1)}%</span>
                     </div>
                 </div>
             `).join('');
         }
 
-        window.onload = init;
+        function renderGrades() {
+            const container = document.getElementById('grades-container');
+            container.innerHTML = classes.map(c => {
+                const catHtml = Object.entries(c.weights || {}).map(([cat, val]) => `
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="text-sm font-medium w-24">${cat}:</span>
+                        <input type="number" value="${val}" onchange="updateWeight('${c.id}', '${cat}', this.value)" class="w-16 rounded border p-1 text-sm">
+                        <span class="text-slate-400">%</span>
+                    </div>
+                `).join('');
+
+                return `
+                    <div class="rounded-2xl bg-white p-6 shadow-sm border border-slate-100">
+                        <div class="flex justify-between mb-4">
+                            <h3 class="text-lg font-bold">${c.name} - Weighted Categories</h3>
+                            <button onclick="addCategory('${c.id}')" class="text-indigo-600 text-sm font-semibold">+ Add Category</button>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>${catHtml}</div>
+                            <div class="bg-slate-50 rounded-lg p-4 text-sm text-slate-600">
+                                <p class="font-semibold mb-2">Weighting Instructions:</p>
+                                <p>Ensure percentages add up to 100%. If they don't, the system will scale them proportionally based on what has been entered.</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // --- HANDLERS ---
+        document.getElementById('assignment-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const newAs = {
+                id: Date.now().toString(),
+                name: document.getElementById('as-name').value,
+                class_id: document.getElementById('as-class').value,
+                category: document.getElementById('as-category').value,
+                due_date: document.getElementById('as-date').value,
+                points_earned: document.getElementById('as-points-earned').value ? parseFloat(document.getElementById('as-points-earned').value) : null,
+                points_possible: parseFloat(document.getElementById('as-points-possible').value) || 100,
+                completed: false
+            };
+            assignments.push(newAs);
+            await saveData();
+            toggleModal('assignment-modal');
+            renderAll();
+            e.target.reset();
+        };
+
+        document.getElementById('class-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const newCl = {
+                id: Date.now().toString(),
+                name: document.getElementById('cl-name').value,
+                title: document.getElementById('cl-title').value,
+                credits: parseInt(document.getElementById('cl-credits').value) || 3,
+                period: document.getElementById('cl-period').value,
+                weights: { 'Homework': 50, 'Exam': 50 }
+            };
+            classes.push(newCl);
+            await saveData();
+            toggleModal('class-modal');
+            renderAll();
+            e.target.reset();
+        };
+
+        async function toggleComplete(id) {
+            const as = assignments.find(a => a.id === id);
+            if (as) as.completed = !as.completed;
+            await saveData();
+            renderAll();
+        }
+
+        async function deleteAssignment(id) {
+            assignments = assignments.filter(a => a.id !== id);
+            await saveData();
+            renderAll();
+        }
+
+        async function deleteClass(id) {
+            if (confirm("Delete this class? All linked assignments will remain but lose their class connection.")) {
+                classes = classes.filter(c => c.id !== id);
+                await saveData();
+                renderAll();
+            }
+        }
+
+        async function updateWeight(classId, category, val) {
+            const cls = classes.find(c => c.id === classId);
+            if (cls) cls.weights[category] = parseFloat(val);
+            await saveData();
+            renderAll();
+        }
+
+        async function addCategory(classId) {
+            const cat = prompt("Enter new category name (e.g., Participation):");
+            if (cat) {
+                const cls = classes.find(c => c.id === classId);
+                if (cls) cls.weights[cat] = 0;
+                await saveData();
+                renderAll();
+            }
+        }
     </script>
 </body>
 </html>
