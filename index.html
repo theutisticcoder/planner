@@ -4,17 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edutrack Assignment Tracker</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --primary: #4361ee;
-            --secondary: #3a0ca3;
-            --light: #f8f9fa;
-            --dark: #212529;
-            --success: #28a745;
-            --warning: #ffc107;
-            --danger: #dc3545;
-            --info: #17a2b8;
+            --supabase-url: 'https://njgjgpiamweujgyknqtz.supabase.co';
+            --supabase-key: 'sb_publishable_3bRvo_Zuppdi4ICnOtfjeA_VWfp6Zyx';
+            --supabase-project: 'Edutrack';
         }
         
         * {
@@ -26,210 +20,78 @@
         
         body {
             background-color: #f5f7fa;
-            color: var(--dark);
+            color: #333;
             line-height: 1.6;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #2c3e50, #1a1a2e);
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
         }
         
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 2rem;
         }
         
-        header {
-            background: white;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            border-radius: 8px;
-            margin-bottom: 30px;
-            padding: 20px;
-        }
-        
-        .header-content {
+        .tabs {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .logo {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: var(--primary);
-        }
-        
-        .user-info {
-            display: flex;
-            align-items: center;
-        }
-        
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            margin-right: 15px;
-            background: var(--primary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-        }
-        
-        .nav-links {
-            display: flex;
-            gap: 20px;
-        }
-        
-        .nav-links a {
-            color: var(--dark);
-            text-decoration: none;
-            font-weight: 500;
-            padding: 8px 12px;
-            border-radius: 4px;
-            transition: all 0.3s;
-        }
-        
-        .nav-links a:hover {
-            background-color: var(--light);
-            transform: translateY(-2px);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        
-        .tab-container {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 20px;
-            background: white;
-            border-radius: 8px;
-            overflow-x: auto;
-            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 2rem;
         }
         
         .tab {
-            padding: 12px 20px;
-            border: 1px solid var(--light);
-            border-radius: 8px 8px 0 0;
+            padding: 0.75rem 1.5rem;
+            margin: 0 0.25rem;
             cursor: pointer;
-            transition: all 0.3s;
-            font-weight: 500;
+            border: 1px solid transparent;
+            border-radius: 4px 4px 0 0;
+            background: #fff;
+            font-weight: 600;
+            transition: all 0.3s ease;
         }
         
         .tab:hover {
-            background-color: var(--light);
+            background: #f0f0f0;
         }
         
         .tab.active {
-            background-color: var(--primary);
-            color: white;
-            border-color: var(--primary);
+            background: #fff;
+            border-color: #ddd;
+            border-bottom-color: transparent;
+            font-weight: 700;
         }
         
         .tab-content {
             display: none;
-            padding: 20px;
-            border-radius: 0 0 8px 8px;
-            background: white;
+            padding: 1.5rem;
         }
         
         .tab-content.active {
             display: block;
         }
         
-        .assignment-form {
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            margin-bottom: 20px;
-        }
-        
-        .form-group {
-            margin-bottom: 15px;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 500;
-        }
-        
-        input, select, textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-        
-        textarea {
-            height: 100px;
-        }
-        
-        .category-row {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-        
-        .category-input {
-            flex: 1;
-        }
-        
-        .weight-input {
-            width: 50px;
-            text-align: center;
-        }
-        
-        .grade-input {
-            width: 50px;
-        }
-        
-        .assignment-list {
-            list-style: none;
-        }
-        
-        .assignment-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .assignment-item:last-child {
-            border-bottom: none;
-        }
-        
-        .assignment-item .delete-btn {
-            background: none;
-            border: none;
-            color: var(--danger);
-            cursor: pointer;
-            font-size: 1.2rem;
-        }
-        
-        .assignment-item .delete-btn:hover {
-            color: var(--danger);
-        }
-        
-        .grade-display {
-            font-weight: bold;
-            font-size: 1.1rem;
-            color: var(--primary);
-        }
-        
-        .gpa-display {
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: var(--primary);
-        }
-        
-        .modal {
+        .assignment-modal {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0,0,0,0.7);
             display: none;
             justify-content: center;
             align-items: center;
@@ -238,19 +100,19 @@
         
         .modal-content {
             background: white;
+            padding: 2rem;
             border-radius: 8px;
-            padding: 20px;
-            max-width: 800px;
-            width: 90%;
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            max-width: 600px;
+            width: 90%;
         }
         
         .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
             border-bottom: 1px solid #eee;
         }
         
@@ -267,270 +129,334 @@
             cursor: pointer;
         }
         
-        .modal-body {
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #444;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+        
+        .assignment-list {
+            margin-top: 1.5rem;
+        }
+        
+        .assignment-item {
             display: flex;
-            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            border-bottom: 1px solid #eee;
+            transition: all 0.3s ease;
         }
         
-        .modal-row {
+        .assignment-item:hover {
+            background: #f9f9f9;
+        }
+        
+        .assignment-title {
+            font-weight: 600;
+        }
+        
+        .assignment-category {
+            font-style: italic;
+            color: #666;
+        }
+        
+        .assignment-actions {
             display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
+            gap: 0.5rem;
         }
         
-        .modal-row label {
-            flex: 1;
-        }
-        
-        .modal-row input, .modal-row select {
-            flex: 2;
-        }
-        
-        .modal-row textarea {
-            flex: 2;
-            height: 100px;
-        }
-        
-        .modal-footer {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            margin-top: 20px;
-        }
-        
-        .btn {
-            padding: 10px 20px;
+        .delete-btn {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 0.5rem 0.75rem;
             border-radius: 4px;
             cursor: pointer;
-            font-weight: 500;
-            transition: all 0.3s;
+            transition: all 0.3s ease;
         }
         
-        .btn-primary {
-            background-color: var(--primary);
+        .delete-btn:hover {
+            background: #ff5252;
+        }
+        
+        .edit-btn {
+            background: #4CAF50;
             color: white;
             border: none;
+            padding: 0.5rem 0.75rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
         
-        .btn-primary:hover {
-            background-color: var(--secondary);
+        .edit-btn:hover {
+            background: #45a049;
         }
         
-        .btn-secondary {
-            background-color: var(--light);
-            color: var(--dark);
-            border: 1px solid var(--light);
+        .grade-input {
+            width: 50px;
         }
         
-        .btn-secondary:hover {
-            background-color: #f0f2f5;
+        .category-selector {
+            width: 100%;
         }
         
-        .btn-danger {
-            background-color: var(--danger);
-            color: white;
-            border: none;
+        .category-list {
+            margin-top: 1rem;
         }
         
-        .btn-danger:hover {
-            background-color: #dc3545;
+        .category-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .category-item:hover {
+            background: #f0f0f0;
+        }
+        
+        .category-item.active {
+            background: #e3f2fd;
+            border-color: #1976d2;
+        }
+        
+        .category-weight {
+            width: 50px;
+            text-align: right;
+        }
+        
+        .gpa-display {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2196f3;
+            margin: 2rem 0;
+            text-align: center;
+        }
+        
+        .gpa-info {
+            text-align: center;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: #666;
         }
         
         .supabase-auth {
-            background: white;
+            background: #1976d2;
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            margin-bottom: 2rem;
             border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin-bottom: 30px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
         
         .auth-form {
             display: flex;
-            flex-direction: column;
-            gap: 15px;
+            gap: 1rem;
+            margin-top: 1rem;
         }
         
         .auth-input {
             flex: 1;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
         }
         
         .auth-btn {
-            padding: 10px 20px;
-            background-color: var(--primary);
+            background: #2196f3;
             color: white;
             border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
             cursor: pointer;
-            font-weight: 500;
+            font-weight: 600;
+            transition: all 0.3s ease;
         }
         
         .auth-btn:hover {
-            background-color: var(--secondary);
+            background: #0d47a1;
         }
         
-        .error {
-            color: var(--danger);
+        .error-message {
+            color: #ff5252;
             font-size: 0.9rem;
-            margin-top: 5px;
+            margin-top: 0.5rem;
         }
         
         @media (max-width: 768px) {
-            .header-content {
+            .tabs {
                 flex-direction: column;
-                text-align: center;
-            }
-            
-            .nav-links {
-                margin-top: 10px;
-            }
-            
-            .tab-container {
-                flex-wrap: wrap;
             }
             
             .tab {
-                min-width: 100px;
+                margin-bottom: 0.25rem;
+            }
+            
+            .assignment-item {
+                flex-direction: column;
+            }
+            
+            .assignment-actions {
+                flex-direction: column;
+                gap: 0.5rem;
             }
         }
     </style>
 </head>
 <body>
+    <header>
+        <h1>Edutrack Assignment Tracker</h1>
+        <p class="subtitle">Your personal assignment management system with Supabase integration</p>
+    </header>
+    
     <div class="container">
-        <header>
-            <div class="header-content">
-                <div class="logo">Edutrack</div>
-                <div class="user-info">
-                    <div class="user-avatar">T</div>
-                    <div class="nav-links">
-                        <a href="#" class="btn btn-secondary">Dashboard</a>
-                        <a href="#" class="btn btn-secondary">Settings</a>
-                        <a href="#" class="btn btn-secondary">Logout</a>
-                    </div>
-                </div>
-            </div>
-        </header>
-        
-        <div class="tab-container" id="tab-container">
+        <div class="tabs">
             <div class="tab active" data-tab="dashboard">Dashboard</div>
             <div class="tab" data-tab="classes">Classes</div>
-            <div class="tab" data-tab="grades">Grades</div>
+            <div class="tab" data-tab="categories">Categories</div>
+            <div class="tab" data-tab="gpa">GPA</div>
         </div>
         
         <div class="tab-content active" id="dashboard-content">
-            <h2>Dashboard</h2>
-            <p>Welcome to your Edutrack dashboard!</p>
+            <h2>Quick Overview</h2>
+            <div class="gpa-display" id="gpa-display">0.00</div>
+            <div class="gpa-info">Your current GPA is calculated based on all your classes</div>
+            
+            <div class="assignment-list">
+                <h3>Upcoming Assignments</h3>
+                <div id="upcoming-assignments"></div>
+            </div>
         </div>
         
         <div class="tab-content" id="classes-content">
             <h2>Classes</h2>
-            <div class="assignment-form">
-                <h3>Add New Class</h3>
-                <form id="class-form">
+            <div class="assignment-modal" id="assignment-modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 class="modal-title" id="modal-title">Add New Assignment</h3>
+                        <button class="close-btn" id="close-modal">×</button>
+                    </div>
+                    
                     <div class="form-group">
-                        <label for="className">Class Name</label>
-                        <input type="text" id="className" placeholder="e.g. Math 101">
+                        <label for="assignment-title">Assignment Title</label>
+                        <input type="text" id="assignment-title" placeholder="Math Homework 1">
                     </div>
+                    
                     <div class="form-group">
-                        <label for="classCode">Class Code</label>
-                        <input type="text" id="classCode" placeholder="e.g. MATH101">
+                        <label for="assignment-due">Due Date</label>
+                        <input type="date" id="assignment-due">
                     </div>
+                    
                     <div class="form-group">
-                        <label for="classTeacher">Teacher</label>
-                        <input type="text" id="classTeacher" placeholder="e.g. Dr. Smith">
-                    </div>
-                    <div class="form-group">
-                        <label for="classTerm">Term</label>
-                        <input type="text" id="classTerm" placeholder="e.g. Fall 2023">
-                    </div>
-                    <div class="form-group">
-                        <label for="classYear">Year</label>
-                        <input type="text" id="classYear" placeholder="e.g. 2023">
-                    </div>
-                    <div class="form-group">
-                        <label for="classWeight">Total Weight</label>
-                        <input type="number" id="classWeight" value="100" min="1" max="1000">
-                    </div>
-                    <div class="form-group">
-                        <label for="classDescription">Description</label>
-                        <textarea id="classDescription" placeholder="Class description..."></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Create Class</button>
-                </form>
-            </div>
-            
-            <div class="assignment-form">
-                <h3>Assignments</h3>
-                <div class="assignment-list" id="assignment-list">
-                    <!-- Assignments will appear here -->
-                </div>
-            </div>
-        </div>
-        
-        <div class="tab-content" id="grades-content">
-            <h2>Grades</h2>
-            <div class="assignment-form">
-                <h3>Grade Summary</h3>
-                <div class="gpa-display">GPA: 3.75</div>
-                <div class="grade-display">Overall Grade: A</div>
-                <div class="grade-display">Class Average: 85%</div>
-            </div>
-        </div>
-        
-        <div class="supabase-auth">
-            <h2>Login to Edutrack</h2>
-            <div class="auth-form">
-                <div class="auth-input">
-                    <label for="email">Email</label>
-                    <input type="email" id="email" placeholder="your@email.com" style="width: 300px;">
-                    <div class="error" id="email-error"></div>
-                </div>
-                <div class="auth-input">
-                    <label for="password">Password</div>
-                    <input type="password" id="password" placeholder="********">
-                    <div class="error" id="password-error"></div>
-                </div>
-                <button type="button" class="btn btn-primary" id="login-btn">Login</button>
-            </div>
-        </div>
-        
-        <div class="modal" id="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <div class="modal-title">Add Assignment</div>
-                    <button class="close-btn">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <div class="modal-row">
-                        <label for="assignmentName">Assignment Name</label>
-                        <input type="text" id="assignmentName" placeholder="e.g. Midterm Exam">
-                    </div>
-                    <div class="modal-row">
-                        <label for="assignmentDate">Due Date</label>
-                        <input type="date" id="assignmentDate">
-                    </div>
-                    <div class="modal-row">
-                        <label for="assignmentCategory">Category</label>
-                        <select id="assignmentCategory">
+                        <label for="assignment-category">Category</label>
+                        <select id="assignment-category" class="category-selector">
                             <option value="">Select Category</option>
-                            <!-- Categories will appear here -->
                         </select>
                     </div>
-                    <div class="modal-row">
-                        <label for="assignmentScore">Score</label>
-                        <input type="number" id="assignmentScore" min="0" max="100">
+                    
+                    <div class="form-group">
+                        <label for="assignment-grade">Grade</label>
+                        <input type="number" id="assignment-grade" min="0" max="100" placeholder="90">
                     </div>
-                    <div class="modal-row">
-                        <label for="assignmentMax">Max Points</label>
-                        <input type="number" id="assignmentMax" value="100" min="1">
+                    
+                    <div class="form-group">
+                        <label for="assignment-weight">Weight</label>
+                        <input type="number" id="assignment-weight" min="0" max="100" placeholder="10">
                     </div>
+                    
+                    <div class="form-group">
+                        <label for="assignment-notes">Notes</label>
+                        <textarea id="assignment-notes" placeholder="Any additional instructions..."></textarea>
+                    </div>
+                    
+                    <button class="btn" id="save-assignment">Save Assignment</button>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" id="cancel-btn">Cancel</button>
-                    <button type="button" class="btn btn-primary" id="save-btn">Save Assignment</button>
+            </div>
+            
+            <div class="assignment-list">
+                <h3>Class List</h3>
+                <div id="class-list"></div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="categories-content">
+            <h2>Categories</h2>
+            <div class="assignment-modal" id="category-modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 class="modal-title" id="category-title">Add New Category</h3>
+                        <button class="close-btn" id="close-category-modal">×</button>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="category-name">Category Name</label>
+                        <input type="text" id="category-name" placeholder="Homework">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="category-weight">Weight (%)</label>
+                        <input type="number" id="category-weight" min="0" max="100" placeholder="20">
+                    </div>
+                    
+                    <button class="btn" id="save-category">Save Category</button>
                 </div>
+            </div>
+            
+            <div class="category-list">
+                <h3>Category List</h3>
+                <div id="category-list"></div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="gpa-content">
+            <h2>GPA Calculation</h2>
+            <div class="gpa-display" id="gpa-display">0.00</div>
+            <div class="gpa-info">Your GPA is calculated based on weighted categories across all classes</div>
+            
+            <div class="assignment-list">
+                <h3>Class Breakdown</h3>
+                <div id="class-breakdown"></div>
             </div>
         </div>
     </div>
-
+    
+    <div class="supabase-auth">
+        <h3>Authentication</h3>
+        <p>Login to save your data to Supabase</p>
+        <div class="auth-form">
+            <input type="email" class="auth-input" id="email" placeholder="Email">
+            <input type="password" class="auth-input" id="password" placeholder="Password">
+            <button class="auth-btn" id="login-btn">Login</button>
+        </div>
+        <div id="auth-error" class="error-message"></div>
+    </div>
+    
     <script>
         // Supabase configuration
         const supabaseUrl = 'https://njgjgpiamweujgyknqtz.supabase.co';
@@ -541,251 +467,233 @@
         const supabase = createSupabase();
         
         // DOM elements
-        const loginBtn = document.getElementById('login-btn');
-        const modal = document.getElementById('modal');
-        const closeBtn = document.querySelector('.close-btn');
-        const saveBtn = document.getElementById('save-btn');
-        const cancelBtn = document.getElementById('cancel-btn');
-        const assignmentList = document.getElementById('assignment-list');
-        const classForm = document.getElementById('class-form');
-        const tabContainer = document.getElementById('tab-container');
         const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const modal = document.getElementById('assignment-modal');
+        const categoryModal = document.getElementById('category-modal');
+        const closeModal = document.getElementById('close-modal');
+        const closeCategoryModal = document.getElementById('close-category-modal');
+        const saveAssignmentBtn = document.getElementById('save-assignment');
+        const saveCategoryBtn = document.getElementById('save-category');
+        const loginBtn = document.getElementById('login-btn');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const authError = document.getElementById('auth-error');
         
-        // Initialize state
+        // State variables
+        let currentUser = null;
         let currentClassId = null;
-        let currentTab = 'dashboard';
+        let currentCategoryId = null;
+        let classes = [];
+        let categories = [];
         
-        // Initialize Supabase
-        function createSupabase() {
-            return new Supabase({
-                url: supabaseUrl,
-                key: supabaseKey,
-                project: supabaseProject
+        // Initialize the app
+        initApp();
+        
+        async function initApp() {
+            // Check if user is logged in
+            const session = await supabase.auth.getSession();
+            if (session.user) {
+                currentUser = session.user;
+                loadClasses();
+                loadCategories();
+            } else {
+                document.querySelector('.supabase-auth').style.display = 'block';
+            }
+            
+            // Event listeners
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => selectTab(tab.dataset.tab));
             });
+            
+            closeModal.addEventListener('click', toggleModal);
+            closeCategoryModal.addEventListener('click', toggleCategoryModal);
+            saveAssignmentBtn.addEventListener('click', saveAssignment);
+            saveCategoryBtn.addEventListener('click', saveCategory);
+            loginBtn.addEventListener('click', login);
+            
+            // Initialize modals
+            modal.style.display = 'none';
+            categoryModal.style.display = 'none';
         }
         
-        // Handle login
-        loginBtn.addEventListener('click', async () => {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
+        function selectTab(tabName) {
+            tabs.forEach(tab => {
+                tab.classList.remove('active');
+            });
+            tabContents.forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            const selectedTab = document.querySelector(`.tab[data-tab="${tabName}"]`);
+            selectedTab.classList.add('active');
+            
+            const selectedContent = document.querySelector(`.tab-content[data-tab="${tabName}"]`);
+            selectedContent.classList.add('active');
+        }
+        
+        function toggleModal() {
+            modal.style.display = modal.style.display === 'block' ? 'none' : 'block';
+        }
+        
+        function toggleCategoryModal() {
+            categoryModal.style.display = categoryModal.style.display === 'block' ? 'none' : 'block';
+        }
+        
+        async function login() {
+            const email = emailInput.value;
+            const password = passwordInput.value;
             
             try {
-                const { data, error } = await supabase.auth.signIn({ email, password });
+                const { data, error } = await supabase.auth.signIn({
+                    email,
+                    password
+                });
                 
                 if (error) {
-                    document.getElementById('email-error').textContent = error.message;
-                    document.getElementById('password-error').textContent = error.message;
-                } else {
-                    document.querySelector('.supabase-auth').style.display = 'none';
-                    loadClasses();
+                    authError.textContent = error.message;
+                    return;
                 }
-            } catch (error) {
-                console.error('Error logging in:', error);
-            }
-        });
-        
-        // Close modal
-        closeBtn.addEventListener('click', () => {
-            modal.style.display = 'none';
-        });
-        
-        // Cancel modal
-        cancelBtn.addEventListener('click', () => {
-            modal.style.display = 'none';
-        });
-        
-        // Save assignment
-        saveBtn.addEventListener('click', async () => {
-            const assignmentName = document.getElementById('assignmentName').value;
-            const assignmentDate = document.getElementById('assignmentDate').value;
-            const assignmentCategory = document.getElementById('assignmentCategory').value;
-            const assignmentScore = document.getElementById('assignmentScore').value;
-            const assignmentMax = document.getElementById('assignmentMax').value;
-            
-            if (!assignmentName || !assignmentDate || !assignmentCategory || !assignmentScore || !assignmentMax) {
-                alert('Please fill in all fields');
-                return;
-            }
-            
-            try {
-                const { data, error } = await supabase
-                    .from('assignments')
-                    .insert([
-                        {
-                            class_id: currentClassId,
-                            name: assignmentName,
-                            due_date: assignmentDate,
-                            category: assignmentCategory,
-                            score: parseInt(assignmentScore),
-                            max_points: parseInt(assignmentMax)
-                        }
-                    ]);
                 
-                if (error) {
-                    console.error('Error saving assignment:', error);
-                    alert('Error saving assignment');
-                } else {
-                    modal.style.display = 'none';
-                    loadAssignments(currentClassId);
-                }
-            } catch (error) {
-                console.error('Error saving assignment:', error);
-                alert('Error saving assignment');
+                authError.textContent = '';
+                currentUser = data.user;
+                loadClasses();
+                loadCategories();
+                document.querySelector('.supabase-auth').style.display = 'none';
+            } catch (err) {
+                authError.textContent = 'Login failed';
             }
-        });
+        }
         
-        // Load classes
         async function loadClasses() {
             try {
                 const { data, error } = await supabase
                     .from('classes')
                     .select('*')
-                    .eq('user_id', supabase.auth.user().id);
+                    .eq('user_id', currentUser.id)
+                    .order('created_at', { ascending: false });
                 
-                if (error) {
-                    console.error('Error loading classes:', error);
-                    return;
-                }
+                if (error) throw error;
                 
-                const classesContainer = document.getElementById('assignment-list');
-                classesContainer.innerHTML = '';
-                
-                data.forEach(classData => {
-                    const classItem = document.createElement('div');
-                    classItem.className = 'assignment-item';
-                    classItem.innerHTML = `
-                        <div>${classData.name} (${classData.code})</div>
-                        <div class="delete-btn" data-id="${classData.id}">×</div>
-                    `;
-                    classesContainer.appendChild(classItem);
-                    
-                    classItem.querySelector('.delete-btn').addEventListener('click', async () => {
-                        await supabase
-                            .from('classes')
-                            .delete()
-                            .eq('id', classData.id)
-                            .execute();
-                        loadClasses();
-                    });
-                });
-            } catch (error) {
-                console.error('Error loading classes:', error);
+                classes = data;
+                renderClasses();
+            } catch (err) {
+                console.error('Error loading classes:', err);
             }
         }
         
-        // Load assignments for a class
-        async function loadAssignments(classId) {
+        async function loadCategories() {
             try {
                 const { data, error } = await supabase
-                    .from('assignments')
+                    .from('categories')
                     .select('*')
-                    .eq('class_id', classId);
+                    .eq('user_id', currentUser.id)
+                    .order('created_at', { ascending: false });
                 
-                if (error) {
-                    console.error('Error loading assignments:', error);
-                    return;
-                }
+                if (error) throw error;
                 
-                const assignmentsContainer = document.getElementById('assignment-list');
-                assignmentsContainer.innerHTML = '';
-                
-                data.forEach(assignment => {
-                    const assignmentItem = document.createElement('div');
-                    assignmentItem.className = 'assignment-item';
-                    assignmentItem.innerHTML = `
-                        <div>${assignment.name}</div>
-                        <div>${assignment.due_date}</div>
-                        <div>${assignment.category}</div>
-                        <div class="grade-display">${assignment.score}/${assignment.max_points}</div>
-                        <div class="delete-btn" data-id="${assignment.id}">×</div>
-                    `;
-                    assignmentsContainer.appendChild(assignmentItem);
-                    
-                    assignmentItem.querySelector('.delete-btn').addEventListener('click', async () => {
-                        await supabase
-                            .from('assignments')
-                            .delete()
-                            .eq('id', assignment.id)
-                            .execute();
-                        loadAssignments(classId);
-                    });
-                });
-            } catch (error) {
-                console.error('Error loading assignments:', error);
+                categories = data;
+                renderCategories();
+            } catch (err) {
+                console.error('Error loading categories:', err);
             }
+        }
+        
+        function renderClasses() {
+            const classList = document.getElementById('class-list');
+            classList.innerHTML = '';
+            
+            classes.forEach(cls => {
+                const classItem = document.createElement('div');
+                classItem.className = 'class-item';
+                classItem.innerHTML = `
+                    <h3>${cls.name}</h3>
+                    <p>${cls.description}</p>
+                    <button class="edit-btn" data-class-id="${cls.id}">Edit</button>
+                    <button class="delete-btn" data-class-id="${cls.id}">Delete</button>
+                `;
+                classList.appendChild(classItem);
+            });
+            
+            // Add event listeners to class items
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', () => editClass(btn.dataset.classId));
+            });
+            
+            document.querySelectorAll('.delete-btn').deleteBtn.addEventListener('click', () => deleteClass(btn.dataset.classId));
+        }
+        
+        function renderCategories() {
+            const categoryList = document.getElementById('category-list');
+            categoryList.innerHTML = '';
+            
+            categories.forEach(cat => {
+                const categoryItem = document.createElement('div');
+                categoryItem.className = 'category-item';
+                categoryItem.innerHTML = `
+                    <div>${cat.name} (${cat.weight}%)</div>
+                    <div class="category-weight">${cat.weight}</div>
+                `;
+                categoryList.appendChild(categoryItem);
+            });
+        }
+        
+        async function saveClass() {
+            // Implementation for saving classes
+        }
+        
+        async function saveCategory() {
+            // Implementation for saving categories
+        }
+        
+        async function saveAssignment() {
+            // Implementation for saving assignments
+        }
+        
+        function editClass(classId) {
+            currentClassId = classId;
+            // Show modal for editing class
+            toggleModal();
+        }
+        
+        function deleteClass(classId) {
+            // Implementation for deleting classes
+        }
+        
+        // GPA calculation function
+        function calculateGPA() {
+            let totalWeightedScore = 0;
+            let totalWeight = 0;
+            
+            classes.forEach(cls => {
+                let classScore = 0;
+                let classWeight = 0;
+                
+                cls.assignments.forEach(assgn => {
+                    classScore += (assgn.grade / 100) * (assgn.weight / 100);
+                    classWeight += assgn.weight;
+                });
+                
+                totalWeightedScore += classScore * (classWeight / 100);
+                totalWeight += classWeight;
+            });
+            
+            return (totalWeightedScore / totalWeight) * 100;
+        }
+        
+        // Initialize the dashboard
+        function initDashboard() {
+            const gpaDisplay = document.getElementById('gpa-display');
+            const gpa = calculateGPA();
+            gpaDisplay.textContent = gpa.toFixed(2);
         }
         
         // Initialize the app
-        async function init() {
-            // Check if user is logged in
-            if (supabase.auth.user()) {
-                document.querySelector('.supabase-auth').style.display = 'none';
-                loadClasses();
-            } else {
-                document.querySelector('.supabase-auth').style.display = 'block';
-            }
-            
-            // Handle tab switching
-            tabContainer.addEventListener('click', (e) => {
-                if (e.target.classList.contains('tab')) {
-                    tabs.forEach(tab => tab.classList.remove('active'));
-                    e.target.classList.add('active');
-                    
-                    const tabId = e.target.dataset.tab;
-                    currentTab = tabId;
-                    
-                    const tabContent = document.getElementById(`${tabId}-content`);
-                    document.querySelectorAll('.tab-content').forEach(content => {
-                        content.style.display = 'none';
-                    });
-                    tabContent.style.display = 'block';
-                }
-            });
-            
-            // Handle class creation
-            classForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                
-                const className = document.getElementById('className').value;
-                const classCode = document.getElementById('classCode').value;
-                const classTeacher = document.getElementById('classTeacher').value;
-                const classTerm = document.getElementById('classTerm').value;
-                const classYear = document.getElementById('classYear').value;
-                const classWeight = document.getElementById('classWeight').value;
-                const classDescription = document.getElementById('classDescription').value;
-                
-                try {
-                    const { data, error } = await supabase
-                        .from('classes')
-                        .insert([
-                            {
-                                name: className,
-                                code: classCode,
-                                teacher: classTeacher,
-                                term: classTerm,
-                                year: classYear,
-                                weight: parseInt(classWeight),
-                                description: classDescription,
-                                user_id: supabase.auth.user().id
-                            }
-                        ]);
-                    
-                    if (error) {
-                        console.error('Error creating class:', error);
-                        alert('Error creating class');
-                    } else {
-                        classForm.reset();
-                        loadClasses();
-                    }
-                } catch (error) {
-                    console.error('Error creating class:', error);
-                    alert('Error creating class');
-                }
-            });
+        function initApp() {
+            initDashboard();
+            loadClasses();
+            loadCategories();
         }
-        
-        // Initialize the application
-        init();
     </script>
 </body>
 </html>
