@@ -7,7 +7,7 @@
     <title>Edutrack Assignment Tracker</title>
     <style>
         :root {
-            --supabase-url: 'https://njgjgpiamweujgyknqtz.supabase.co';
+            --supabase-url: 'https://njgjgpiamweujgyknqtz._supabase.co';
             --supabase-key: 'sb_publishable_3bRvo_Zuppdi4ICnOtfjeA_VWfp6Zyx';
             --supabase-project: 'Edutrack';
         }
@@ -465,7 +465,7 @@
 
     <script>
         // Supabase configuration
-        const supabaseUrl = 'https://njgjgpiamweujgyknqtz.supabase.co';
+        const supabaseUrl = 'https://njgjgpiamweujgyknqtz._supabase.co';
         const supabaseKey = 'sb_publishable_3bRvo_Zuppdi4ICnOtfjeA_VWfp6Zyx';
         const supabaseProject = 'Edutrack';
 
@@ -500,7 +500,7 @@
 
         async function initApp() {
             // Check if user is logged in
-            const session = await supabase.auth.getSession();
+            const session = await _supabase.auth.getSession();
             if (session.user) {
                 currentUser = session.user;
                 loadClasses();
@@ -553,7 +553,7 @@
             const password = passwordInput.value;
 
             try {
-                const { data, error } = await supabase.auth.signIn({
+                const { data, error } = await _supabase.auth.signIn({
                     email,
                     password
                 });
