@@ -3,607 +3,788 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EduTrack | Assignment & Grade Tracker</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <title>Edutrack Assignment Tracker</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
-        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
-        .tab-active { border-bottom: 2px solid #6366f1; color: #6366f1; }
-        input:focus, select:focus { outline: 2px solid #6366f1; border-color: transparent; }
+        :root {
+            --primary: #4361ee;
+            --secondary: #3a0ca3;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --success: #28a745;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --info: #17a2b8;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            margin-bottom: 30px;
+            padding: 20px;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 15px;
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .nav-links a {
+            color: var(--dark);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+        
+        .nav-links a:hover {
+            background-color: var(--light);
+            transform: translateY(-2px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .tab-container {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            background: white;
+            border-radius: 8px;
+            overflow-x: auto;
+            padding: 10px;
+        }
+        
+        .tab {
+            padding: 12px 20px;
+            border: 1px solid var(--light);
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+        
+        .tab:hover {
+            background-color: var(--light);
+        }
+        
+        .tab.active {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 20px;
+            border-radius: 0 0 8px 8px;
+            background: white;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .assignment-form {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        textarea {
+            height: 100px;
+        }
+        
+        .category-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .category-input {
+            flex: 1;
+        }
+        
+        .weight-input {
+            width: 50px;
+            text-align: center;
+        }
+        
+        .grade-input {
+            width: 50px;
+        }
+        
+        .assignment-list {
+            list-style: none;
+        }
+        
+        .assignment-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .assignment-item:last-child {
+            border-bottom: none;
+        }
+        
+        .assignment-item .delete-btn {
+            background: none;
+            border: none;
+            color: var(--danger);
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+        
+        .assignment-item .delete-btn:hover {
+            color: var(--danger);
+        }
+        
+        .grade-display {
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: var(--primary);
+        }
+        
+        .gpa-display {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            max-width: 800px;
+            width: 90%;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .modal-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            color: #666;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+        
+        .modal-body {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .modal-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .modal-row label {
+            flex: 1;
+        }
+        
+        .modal-row input, .modal-row select {
+            flex: 2;
+        }
+        
+        .modal-row textarea {
+            flex: 2;
+            height: 100px;
+        }
+        
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--secondary);
+        }
+        
+        .btn-secondary {
+            background-color: var(--light);
+            color: var(--dark);
+            border: 1px solid var(--light);
+        }
+        
+        .btn-secondary:hover {
+            background-color: #f0f2f5;
+        }
+        
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+            border: none;
+        }
+        
+        .btn-danger:hover {
+            background-color: #dc3545;
+        }
+        
+        .supabase-auth {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .auth-form {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .auth-input {
+            flex: 1;
+        }
+        
+        .auth-btn {
+            padding: 10px 20px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .auth-btn:hover {
+            background-color: var(--secondary);
+        }
+        
+        .error {
+            color: var(--danger);
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+        
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .nav-links {
+                margin-top: 10px;
+            }
+            
+            .tab-container {
+                flex-wrap: wrap;
+            }
+            
+            .tab {
+                min-width: 100px;
+            }
+        }
     </style>
 </head>
-<body class="min-h-screen text-slate-800">
-
-    <!-- Auth Overlay -->
-    <div id="auth-overlay" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900 bg-opacity-70 p-4">
-        <div class="glass w-full max-w-md rounded-2xl p-8 shadow-2xl">
-            <h1 class="mb-2 text-center text-3xl font-bold text-indigo-600">EduTrack</h1>
-            <p class="mb-8 text-center text-slate-500">Sign in to sync your progress</p>
-            
-            <form id="auth-form" class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-slate-700">Email</label>
-                    <input type="email" id="auth-email" required class="mt-1 w-full rounded-lg border border-slate-300 p-3" placeholder="student@university.edu">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-700">Password</label>
-                    <input type="password" id="auth-password" required class="mt-1 w-full rounded-lg border border-slate-300 p-3" placeholder="••••••••">
-                </div>
-                <div class="flex flex-col gap-3 pt-4">
-                    <button type="submit" id="btn-login" class="w-full rounded-lg bg-indigo-600 p-3 font-semibold text-white transition hover:bg-indigo-700">Login</button>
-                    <button type="button" id="btn-signup" class="w-full rounded-lg border-2 border-indigo-600 p-3 font-semibold text-indigo-600 transition hover:bg-indigo-50">Create Account</button>
-                </div>
-            </form>
-            <p id="auth-msg" class="mt-4 text-center text-sm font-medium"></p>
-        </div>
-    </div>
-
-    <!-- Main Content -->
-    <div id="app-content" class="hidden">
-        <!-- Header -->
-        <header class="sticky top-0 z-40 border-b bg-white shadow-sm">
-            <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6">
-                <div class="flex items-center gap-2">
-                    <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-white font-bold text-xl">E</div>
-                    <span class="text-xl font-bold tracking-tight">EduTrack</span>
-                </div>
-                <div class="flex items-center gap-4">
-                    <span id="user-display" class="hidden text-sm font-medium text-slate-500 sm:block"></span>
-                    <button onclick="handleLogout()" class="rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200">Logout</button>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <div class="logo">Edutrack</div>
+                <div class="user-info">
+                    <div class="user-avatar">T</div>
+                    <div class="nav-links">
+                        <a href="#" class="btn btn-secondary">Dashboard</a>
+                        <a href="#" class="btn btn-secondary">Settings</a>
+                        <a href="#" class="btn btn-secondary">Logout</a>
+                    </div>
                 </div>
             </div>
-            
-            <!-- Tab Navigation -->
-            <nav class="mx-auto max-w-7xl px-4 sm:px-6">
-                <div class="flex gap-8 overflow-x-auto text-sm font-medium">
-                    <button onclick="switchTab('dashboard')" id="tab-dashboard" class="tab-active whitespace-nowrap py-4">Dashboard</button>
-                    <button onclick="switchTab('masterlist')" id="tab-masterlist" class="whitespace-nowrap py-4">Assignment Masterlist</button>
-                    <button onclick="switchTab('classes')" id="tab-classes" class="whitespace-nowrap py-4">My Classes</button>
-                    <button onclick="switchTab('grades')" id="tab-grades" class="whitespace-nowrap py-4">Grade Tracker</button>
-                </div>
-            </nav>
         </header>
-
-        <main class="mx-auto max-w-7xl p-4 sm:p-6">
-            <!-- Dashboard -->
-            <section id="view-dashboard" class="tab-view space-y-6">
-                <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
-                    <div class="rounded-2xl bg-white p-6 shadow-sm">
-                        <h3 class="text-sm font-medium text-slate-500">Total Progress</h3>
-                        <div class="mt-2 flex items-baseline gap-2">
-                            <span id="stats-total-completion" class="text-3xl font-bold">0%</span>
-                            <span class="text-xs text-slate-400">assignments done</span>
-                        </div>
+        
+        <div class="tab-container" id="tab-container">
+            <div class="tab active" data-tab="dashboard">Dashboard</div>
+            <div class="tab" data-tab="classes">Classes</div>
+            <div class="tab" data-tab="grades">Grades</div>
+        </div>
+        
+        <div class="tab-content active" id="dashboard-content">
+            <h2>Dashboard</h2>
+            <p>Welcome to your Edutrack dashboard!</p>
+        </div>
+        
+        <div class="tab-content" id="classes-content">
+            <h2>Classes</h2>
+            <div class="assignment-form">
+                <h3>Add New Class</h3>
+                <form id="class-form">
+                    <div class="form-group">
+                        <label for="className">Class Name</label>
+                        <input type="text" id="className" placeholder="e.g. Math 101">
                     </div>
-                    <div class="rounded-2xl bg-white p-6 shadow-sm">
-                        <h3 class="text-sm font-medium text-slate-500">Due Soon</h3>
-                        <div class="mt-2 flex items-baseline gap-2">
-                            <span id="stats-due-soon" class="text-3xl font-bold text-orange-500">0</span>
-                            <span class="text-xs text-slate-400">next 7 days</span>
-                        </div>
+                    <div class="form-group">
+                        <label for="classCode">Class Code</label>
+                        <input type="text" id="classCode" placeholder="e.g. MATH101">
                     </div>
-                    <div class="rounded-2xl bg-white p-6 shadow-sm">
-                        <h3 class="text-sm font-medium text-slate-500">Current GPA</h3>
-                        <div class="mt-2 flex items-baseline gap-2">
-                            <span id="stats-gpa" class="text-3xl font-bold text-indigo-600">0.00</span>
-                            <span class="text-xs text-slate-400">cumulative</span>
-                        </div>
+                    <div class="form-group">
+                        <label for="classTeacher">Teacher</label>
+                        <input type="text" id="classTeacher" placeholder="e.g. Dr. Smith">
                     </div>
+                    <div class="form-group">
+                        <label for="classTerm">Term</label>
+                        <input type="text" id="classTerm" placeholder="e.g. Fall 2023">
+                    </div>
+                    <div class="form-group">
+                        <label for="classYear">Year</label>
+                        <input type="text" id="classYear" placeholder="e.g. 2023">
+                    </div>
+                    <div class="form-group">
+                        <label for="classWeight">Total Weight</label>
+                        <input type="number" id="classWeight" value="100" min="1" max="1000">
+                    </div>
+                    <div class="form-group">
+                        <label for="classDescription">Description</label>
+                        <textarea id="classDescription" placeholder="Class description..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Create Class</button>
+                </form>
+            </div>
+            
+            <div class="assignment-form">
+                <h3>Assignments</h3>
+                <div class="assignment-list" id="assignment-list">
+                    <!-- Assignments will appear here -->
                 </div>
-
-                <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                    <div class="rounded-2xl bg-white p-6 shadow-sm">
-                        <h3 class="mb-4 font-bold text-lg">Class Breakdown</h3>
-                        <div id="dashboard-class-list" class="space-y-4">
-                            <!-- Populated by JS -->
-                        </div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="grades-content">
+            <h2>Grades</h2>
+            <div class="assignment-form">
+                <h3>Grade Summary</h3>
+                <div class="gpa-display">GPA: 3.75</div>
+                <div class="grade-display">Overall Grade: A</div>
+                <div class="grade-display">Class Average: 85%</div>
+            </div>
+        </div>
+        
+        <div class="supabase-auth">
+            <h2>Login to Edutrack</h2>
+            <div class="auth-form">
+                <div class="auth-input">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" placeholder="your@email.com">
+                    <div class="error" id="email-error"></div>
+                </div>
+                <div class="auth-input">
+                    <label for="password">Password</div>
+                    <input type="password" id="password" placeholder="********">
+                    <div class="error" id="password-error"></div>
+                </div>
+                <button type="button" class="btn btn-primary" id="login-btn">Login</button>
+            </div>
+        </div>
+        
+        <div class="modal" id="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="modal-title">Add Assignment</div>
+                    <button class="close-btn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="modal-row">
+                        <label for="assignmentName">Assignment Name</label>
+                        <input type="text" id="assignmentName" placeholder="e.g. Midterm Exam">
                     </div>
-                    <div class="rounded-2xl bg-white p-6 shadow-sm">
-                        <h3 class="mb-4 font-bold text-lg">Upcoming Priorities</h3>
-                        <div id="dashboard-urgent-list" class="space-y-3">
-                            <!-- Populated by JS -->
-                        </div>
+                    <div class="modal-row">
+                        <label for="assignmentDate">Due Date</label>
+                        <input type="date" id="assignmentDate">
                     </div>
-                </div>
-            </section>
-
-            <!-- Masterlist -->
-            <section id="view-masterlist" class="tab-view hidden space-y-6">
-                <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-                    <h2 class="text-2xl font-bold">Assignment Masterlist</h2>
-                    <button onclick="toggleModal('assignment-modal')" class="rounded-lg bg-indigo-600 px-4 py-2 font-semibold text-white hover:bg-indigo-700">+ Add Assignment</button>
-                </div>
-
-                <div class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-sm">
-                            <thead class="bg-slate-50 text-slate-600 uppercase text-xs font-semibold">
-                                <tr>
-                                    <th class="px-6 py-4">Status</th>
-                                    <th class="px-6 py-4">Due Date</th>
-                                    <th class="px-6 py-4">Class</th>
-                                    <th class="px-6 py-4">Assignment</th>
-                                    <th class="px-6 py-4 text-right">Points</th>
-                                    <th class="px-6 py-4 text-center">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="masterlist-body" class="divide-y divide-slate-100">
-                                <!-- Populated by JS -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Classes -->
-            <section id="view-classes" class="tab-view hidden space-y-6">
-                <div class="flex justify-between items-center">
-                    <h2 class="text-2xl font-bold">My Classes</h2>
-                    <button onclick="toggleModal('class-modal')" class="rounded-lg bg-indigo-600 px-4 py-2 font-semibold text-white hover:bg-indigo-700">+ Add Class</button>
-                </div>
-                <div id="classes-grid" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                    <!-- Populated by JS -->
-                </div>
-            </section>
-
-            <!-- Grades -->
-            <section id="view-grades" class="tab-view hidden space-y-6">
-                <h2 class="text-2xl font-bold">Grade Calculator & Categories</h2>
-                <div id="grades-container" class="space-y-8">
-                    <!-- Populated by JS: Class categories and weighting -->
-                </div>
-            </section>
-        </main>
-    </div>
-
-    <!-- Assignment Modal -->
-    <div id="assignment-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-slate-900 bg-opacity-50 p-4">
-        <div class="glass w-full max-w-lg rounded-2xl p-6 shadow-xl">
-            <h3 class="mb-4 text-xl font-bold">Add New Assignment</h3>
-            <form id="assignment-form" class="space-y-4">
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="col-span-2">
-                        <label class="block text-sm font-medium">Assignment Name</label>
-                        <input type="text" id="as-name" required class="mt-1 w-full rounded-lg border border-slate-300 p-2">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium">Class</label>
-                        <select id="as-class" required class="mt-1 w-full rounded-lg border border-slate-300 p-2"></select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium">Type/Category</label>
-                        <select id="as-category" required class="mt-1 w-full rounded-lg border border-slate-300 p-2">
-                            <option>Homework</option>
-                            <option>Exam</option>
-                            <option>Quiz</option>
-                            <option>Project</option>
-                            <option>Other</option>
+                    <div class="modal-row">
+                        <label for="assignmentCategory">Category</label>
+                        <select id="assignmentCategory">
+                            <option value="">Select Category</option>
+                            <!-- Categories will appear here -->
                         </select>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium">Due Date</label>
-                        <input type="date" id="as-date" required class="mt-1 w-full rounded-lg border border-slate-300 p-2">
+                    <div class="modal-row">
+                        <label for="assignmentScore">Score</label>
+                        <input type="number" id="assignmentScore" min="0" max="100">
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium">Points Earned</label>
-                        <input type="number" id="as-points-earned" step="0.01" class="mt-1 w-full rounded-lg border border-slate-300 p-2" placeholder="N/A">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium">Points Possible</label>
-                        <input type="number" id="as-points-possible" step="0.01" class="mt-1 w-full rounded-lg border border-slate-300 p-2" placeholder="100">
+                    <div class="modal-row">
+                        <label for="assignmentMax">Max Points</label>
+                        <input type="number" id="assignmentMax" value="100" min="1">
                     </div>
                 </div>
-                <div class="flex justify-end gap-3 pt-4">
-                    <button type="button" onclick="toggleModal('assignment-modal')" class="px-4 py-2 text-slate-600">Cancel</button>
-                    <button type="submit" class="rounded-lg bg-indigo-600 px-6 py-2 font-semibold text-white">Save</button>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="cancel-btn">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="save-btn">Save Assignment</button>
                 </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Class Modal -->
-    <div id="class-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-slate-900 bg-opacity-50 p-4">
-        <div class="glass w-full max-w-md rounded-2xl p-6 shadow-xl">
-            <h3 class="mb-4 text-xl font-bold">Add New Class</h3>
-            <form id="class-form" class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium">Class Name (e.g. CS101)</label>
-                    <input type="text" id="cl-name" required class="mt-1 w-full rounded-lg border border-slate-300 p-2">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium">Title/Description</label>
-                    <input type="text" id="cl-title" required class="mt-1 w-full rounded-lg border border-slate-300 p-2">
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium">Credits</label>
-                        <input type="number" id="cl-credits" value="3" class="mt-1 w-full rounded-lg border border-slate-300 p-2">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium">Period</label>
-                        <input type="text" id="cl-period" placeholder="P1" class="mt-1 w-full rounded-lg border border-slate-300 p-2">
-                    </div>
-                </div>
-                <div class="flex justify-end gap-3 pt-4">
-                    <button type="button" onclick="toggleModal('class-modal')" class="px-4 py-2 text-slate-600">Cancel</button>
-                    <button type="submit" class="rounded-lg bg-indigo-600 px-6 py-2 font-semibold text-white">Add Class</button>
-                </div>
-            </form>
+            </div>
         </div>
     </div>
 
     <script>
-        // Supabase Configuration
-        const SUPABASE_URL = 'https://njgjgpiamweujgyknqtz.supabase.co';
-        const SUPABASE_KEY = 'sb_publishable_3bRvo_Zuppdi4ICnOtfjeA_VWfp6Zyx';
-        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-        // App State
-        let currentUser = null;
-        let classes = [];
-        let assignments = [];
+        // Supabase configuration
+        const supabaseUrl = 'https://njgjgpiamweujgyknqtz.supabase.co';
+        const supabaseKey = 'sb_publishable_3bRvo_Zuppdi4ICnOtfjeA_VWfp6Zyx';
+        const supabaseProject = 'Edutrack';
+        
+        // Initialize Supabase
+        const supabase = createSupabase();
+        
+        // DOM elements
+        const loginBtn = document.getElementById('login-btn');
+        const modal = document.getElementById('modal');
+        const closeBtn = document.querySelector('.close-btn');
+        const saveBtn = document.getElementById('save-btn');
+        const cancelBtn = document.getElementById('cancel-btn');
+        const assignmentList = document.getElementById('assignment-list');
+        const classForm = document.getElementById('class-form');
+        const tabContainer = document.getElementById('tab-container');
+        const tabs = document.querySelectorAll('.tab');
+        
+        // Initialize state
+        let currentClassId = null;
         let currentTab = 'dashboard';
-
-        // Initialize App
-        window.addEventListener('load', async () => {
-            const { data: { user } } = await _supabase.auth.getUser();
-            if (user) {
-                onUserLoaded(user);
+        
+        // Initialize Supabase
+        function createSupabase() {
+            return new Supabase({
+                url: supabaseUrl,
+                key: supabaseKey,
+                project: supabaseProject
+            });
+        }
+        
+        // Handle login
+        loginBtn.addEventListener('click', async () => {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                const { data, error } = await supabase.auth.signIn({ email, password });
+                
+                if (error) {
+                    document.getElementById('email-error').textContent = error.message;
+                    document.getElementById('password-error').textContent = error.message;
+                } else {
+                    document.querySelector('.supabase-auth').style.display = 'none';
+                    loadClasses();
+                }
+            } catch (error) {
+                console.error('Error logging in:', error);
             }
         });
-
-        // --- AUTH LOGIC ---
-        const authForm = document.getElementById('auth-form');
-        const authMsg = document.getElementById('auth-msg');
-
-        document.getElementById('btn-login').onclick = async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('auth-email').value;
-            const password = document.getElementById('auth-password').value;
-            authMsg.innerText = "Logging in...";
+        
+        // Close modal
+        closeBtn.addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
+        
+        // Cancel modal
+        cancelBtn.addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
+        
+        // Save assignment
+        saveBtn.addEventListener('click', async () => {
+            const assignmentName = document.getElementById('assignmentName').value;
+            const assignmentDate = document.getElementById('assignmentDate').value;
+            const assignmentCategory = document.getElementById('assignmentCategory').value;
+            const assignmentScore = document.getElementById('assignmentScore').value;
+            const assignmentMax = document.getElementById('assignmentMax').value;
             
-            const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
-            if (error) authMsg.innerText = "Error: " + error.message;
-            else onUserLoaded(data.user);
-        };
-
-        document.getElementById('btn-signup').onclick = async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('auth-email').value;
-            const password = document.getElementById('auth-password').value;
-            authMsg.innerText = "Creating account...";
-
-            const { data, error } = await _supabase.auth.signUp({ email, password });
-            if (error) authMsg.innerText = "Error: " + error.message;
-            else authMsg.innerText = "Check your email for confirmation!";
-        };
-
-        async function onUserLoaded(user) {
-            currentUser = user;
-            document.getElementById('auth-overlay').classList.add('hidden');
-            document.getElementById('app-content').classList.remove('hidden');
-            document.getElementById('user-display').innerText = user.email;
-            
-            await loadData();
-            renderAll();
-        }
-
-        async function handleLogout() {
-            await _supabase.auth.signOut();
-            window.location.reload();
-        }
-
-        // --- DATA LOGIC ---
-        async function loadData() {
-            // In a real production app, you'd create these tables in Supabase:
-            // tables: classes (id, user_id, name, title, credits, period, weights: jsonb)
-            // tables: assignments (id, user_id, class_id, name, category, due_date, points_earned, points_possible, completed)
-            
-            // For this environment, we simulate table storage via Supabase 'users' metadata or private data buckets if available.
-            // Since we can't create tables dynamically via browser JS, we'll use a single JSON object in user metadata for persistence
-            // or local storage as fallback if metadata write fails.
-            
-            const { data: { user } } = await _supabase.auth.getUser();
-            if (user?.user_metadata?.edu_data) {
-                const stored = user.user_metadata.edu_data;
-                classes = stored.classes || [];
-                assignments = stored.assignments || [];
-            } else {
-                // Initialize defaults
-                classes = [
-                    { id: '1', name: 'CS101', title: 'Intro to Programming', credits: 4, period: 'P1', weights: { 'Homework': 20, 'Exam': 50, 'Project': 30 } },
-                    { id: '2', name: 'ENG202', title: 'British Literature', credits: 3, period: 'P2', weights: { 'Homework': 50, 'Exam': 50 } }
-                ];
-                assignments = [];
+            if (!assignmentName || !assignmentDate || !assignmentCategory || !assignmentScore || !assignmentMax) {
+                alert('Please fill in all fields');
+                return;
             }
-        }
-
-        async function saveData() {
-            if (!currentUser) return;
-            const edu_data = { classes, assignments };
-            await _supabase.auth.updateUser({
-                data: { edu_data }
-            });
-        }
-
-        // --- UI LOGIC ---
-        function switchTab(tab) {
-            currentTab = tab;
-            document.querySelectorAll('.tab-view').forEach(el => el.classList.add('hidden'));
-            document.getElementById(`view-${tab}`).classList.remove('hidden');
             
-            document.querySelectorAll('nav button').forEach(el => el.classList.remove('tab-active'));
-            document.getElementById(`tab-${tab}`).classList.add('tab-active');
-            
-            renderAll();
-        }
-
-        function toggleModal(id) {
-            const el = document.getElementById(id);
-            el.classList.toggle('hidden');
-            if (id === 'assignment-modal' && !el.classList.contains('hidden')) {
-                const select = document.getElementById('as-class');
-                select.innerHTML = classes.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-            }
-        }
-
-        // --- CALCULATIONS ---
-        function calculateGrade(classId) {
-            const classObj = classes.find(c => c.id === classId);
-            if (!classObj) return 0;
-            
-            const classAssignments = assignments.filter(a => a.class_id === classId && a.points_possible > 0 && a.points_earned !== null);
-            if (classAssignments.length === 0) return 100;
-
-            const categories = classObj.weights || {};
-            let totalWeightedGrade = 0;
-            let totalWeightUsed = 0;
-
-            for (const [cat, weight] of Object.entries(categories)) {
-                const catAssignments = classAssignments.filter(a => a.category === cat);
-                if (catAssignments.length > 0) {
-                    const earned = catAssignments.reduce((sum, a) => sum + parseFloat(a.points_earned || 0), 0);
-                    const possible = catAssignments.reduce((sum, a) => sum + parseFloat(a.points_possible), 0);
-                    totalWeightedGrade += (earned / possible) * weight;
-                    totalWeightUsed += weight;
+            try {
+                const { data, error } = await supabase
+                    .from('assignments')
+                    .insert([
+                        {
+                            class_id: currentClassId,
+                            name: assignmentName,
+                            due_date: assignmentDate,
+                            category: assignmentCategory,
+                            score: parseInt(assignmentScore),
+                            max_points: parseInt(assignmentMax)
+                        }
+                    ]);
+                
+                if (error) {
+                    console.error('Error saving assignment:', error);
+                    alert('Error saving assignment');
+                } else {
+                    modal.style.display = 'none';
+                    loadAssignments(currentClassId);
                 }
+            } catch (error) {
+                console.error('Error saving assignment:', error);
+                alert('Error saving assignment');
             }
-
-            return totalWeightUsed > 0 ? (totalWeightedGrade / totalWeightUsed) * 100 : 100;
+        });
+        
+        // Load classes
+        async function loadClasses() {
+            try {
+                const { data, error } = await supabase
+                    .from('classes')
+                    .select('*')
+                    .eq('user_id', supabase.auth.user().id);
+                
+                if (error) {
+                    console.error('Error loading classes:', error);
+                    return;
+                }
+                
+                const classesContainer = document.getElementById('assignment-list');
+                classesContainer.innerHTML = '';
+                
+                data.forEach(classData => {
+                    const classItem = document.createElement('div');
+                    classItem.className = 'assignment-item';
+                    classItem.innerHTML = `
+                        <div>${classData.name} (${classData.code})</div>
+                        <div class="delete-btn" data-id="${classData.id}">×</div>
+                    `;
+                    classesContainer.appendChild(classItem);
+                    
+                    classItem.querySelector('.delete-btn').addEventListener('click', async () => {
+                        await supabase
+                            .from('classes')
+                            .delete()
+                            .eq('id', classData.id)
+                            .execute();
+                        loadClasses();
+                    });
+                });
+            } catch (error) {
+                console.error('Error loading classes:', error);
+            }
         }
-
-        function getGPAPoints(percent) {
-            if (percent >= 93) return 4.0;
-            if (percent >= 90) return 3.7;
-            if (percent >= 87) return 3.3;
-            if (percent >= 83) return 3.0;
-            if (percent >= 80) return 2.7;
-            if (percent >= 77) return 2.3;
-            if (percent >= 73) return 2.0;
-            if (percent >= 70) return 1.7;
-            if (percent >= 60) return 1.0;
-            return 0.0;
+        
+        // Load assignments for a class
+        async function loadAssignments(classId) {
+            try {
+                const { data, error } = await supabase
+                    .from('assignments')
+                    .select('*')
+                    .eq('class_id', classId);
+                
+                if (error) {
+                    console.error('Error loading assignments:', error);
+                    return;
+                }
+                
+                const assignmentsContainer = document.getElementById('assignment-list');
+                assignmentsContainer.innerHTML = '';
+                
+                data.forEach(assignment => {
+                    const assignmentItem = document.createElement('div');
+                    assignmentItem.className = 'assignment-item';
+                    assignmentItem.innerHTML = `
+                        <div>${assignment.name}</div>
+                        <div>${assignment.due_date}</div>
+                        <div>${assignment.category}</div>
+                        <div class="grade-display">${assignment.score}/${assignment.max_points}</div>
+                        <div class="delete-btn" data-id="${assignment.id}">×</div>
+                    `;
+                    assignmentsContainer.appendChild(assignmentItem);
+                    
+                    assignmentItem.querySelector('.delete-btn').addEventListener('click', async () => {
+                        await supabase
+                            .from('assignments')
+                            .delete()
+                            .eq('id', assignment.id)
+                            .execute();
+                        loadAssignments(classId);
+                    });
+                });
+            } catch (error) {
+                console.error('Error loading assignments:', error);
+            }
         }
-
-        function calculateCumulativeGPA() {
-            let totalPoints = 0;
-            let totalCredits = 0;
-            classes.forEach(c => {
-                const grade = calculateGrade(c.id);
-                const points = getGPAPoints(grade);
-                totalPoints += points * (c.credits || 0);
-                totalCredits += (c.credits || 0);
+        
+        // Initialize the app
+        async function init() {
+            // Check if user is logged in
+            if (supabase.auth.user()) {
+                document.querySelector('.supabase-auth').style.display = 'none';
+                loadClasses();
+            } else {
+                document.querySelector('.supabase-auth').style.display = 'block';
+            }
+            
+            // Handle tab switching
+            tabContainer.addEventListener('click', (e) => {
+                if (e.target.classList.contains('tab')) {
+                    tabs.forEach(tab => tab.classList.remove('active'));
+                    e.target.classList.add('active');
+                    
+                    const tabId = e.target.dataset.tab;
+                    currentTab = tabId;
+                    
+                    const tabContent = document.getElementById(`${tabId}-content`);
+                    document.querySelectorAll('.tab-content').forEach(content => {
+                        content.style.display = 'none';
+                    });
+                    tabContent.style.display = 'block';
+                }
             });
-            return totalCredits > 0 ? (totalPoints / totalCredits).toFixed(2) : "0.00";
+            
+            // Handle class creation
+            classForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const className = document.getElementById('className').value;
+                const classCode = document.getElementById('classCode').value;
+                const classTeacher = document.getElementById('classTeacher').value;
+                const classTerm = document.getElementById('classTerm').value;
+                const classYear = document.getElementById('classYear').value;
+                const classWeight = document.getElementById('classWeight').value;
+                const classDescription = document.getElementById('classDescription').value;
+                
+                try {
+                    const { data, error } = await supabase
+                        .from('classes')
+                        .insert([
+                            {
+                                name: className,
+                                code: classCode,
+                                teacher: classTeacher,
+                                term: classTerm,
+                                year: classYear,
+                                weight: parseInt(classWeight),
+                                description: classDescription,
+                                user_id: supabase.auth.user().id
+                            }
+                        ]);
+                    
+                    if (error) {
+                        console.error('Error creating class:', error);
+                        alert('Error creating class');
+                    } else {
+                        classForm.reset();
+                        loadClasses();
+                    }
+                } catch (error) {
+                    console.error('Error creating class:', error);
+                    alert('Error creating class');
+                }
+            });
         }
-
-        // --- RENDERING ---
-        function renderAll() {
-            if (currentTab === 'dashboard') renderDashboard();
-            if (currentTab === 'masterlist') renderMasterlist();
-            if (currentTab === 'classes') renderClasses();
-            if (currentTab === 'grades') renderGrades();
-            updateStats();
-        }
-
-        function updateStats() {
-            const completed = assignments.filter(a => a.completed).length;
-            const total = assignments.length;
-            const completion = total > 0 ? Math.round((completed / total) * 100) : 0;
-            document.getElementById('stats-total-completion').innerText = `${completion}%`;
-
-            const now = new Date();
-            const weekLater = new Date();
-            weekLater.setDate(now.getDate() + 7);
-            const dueSoon = assignments.filter(a => !a.completed && new Date(a.due_date) <= weekLater).length;
-            document.getElementById('stats-due-soon').innerText = dueSoon;
-
-            document.getElementById('stats-gpa').innerText = calculateCumulativeGPA();
-        }
-
-        function renderDashboard() {
-            const classList = document.getElementById('dashboard-class-list');
-            classList.innerHTML = classes.map(c => {
-                const grade = calculateGrade(c.id).toFixed(1);
-                const color = grade >= 90 ? 'text-green-600' : grade >= 80 ? 'text-blue-600' : 'text-orange-600';
-                return `
-                    <div class="flex items-center justify-between border-b pb-2">
-                        <div>
-                            <p class="font-bold">${c.name}</p>
-                            <p class="text-xs text-slate-400">${c.title}</p>
-                        </div>
-                        <span class="text-xl font-bold ${color}">${grade}%</span>
-                    </div>
-                `;
-            }).join('');
-
-            const urgentList = document.getElementById('dashboard-urgent-list');
-            const pending = assignments.filter(a => !a.completed).sort((a,b) => new Date(a.due_date) - new Date(b.due_date)).slice(0, 5);
-            urgentList.innerHTML = pending.length ? pending.map(a => `
-                <div class="flex items-center gap-3 rounded-lg border p-3 hover:bg-slate-50">
-                    <div class="h-2 w-2 rounded-full bg-indigo-500"></div>
-                    <div class="flex-1">
-                        <p class="text-sm font-semibold">${a.name}</p>
-                        <p class="text-xs text-slate-500">${classes.find(c => c.id === a.class_id)?.name} • Due ${a.due_date}</p>
-                    </div>
-                    <button onclick="toggleComplete('${a.id}')" class="text-xs font-bold text-indigo-600 uppercase">Check</button>
-                </div>
-            `).join('') : '<p class="text-slate-400 text-sm italic">All caught up!</p>';
-        }
-
-        function renderMasterlist() {
-            const body = document.getElementById('masterlist-body');
-            body.innerHTML = assignments.sort((a,b) => new Date(a.due_date) - new Date(b.due_date)).map(a => {
-                const cls = classes.find(c => c.id === a.class_id);
-                return `
-                    <tr class="hover:bg-slate-50 transition">
-                        <td class="px-6 py-4">
-                            <input type="checkbox" ${a.completed ? 'checked' : ''} onchange="toggleComplete('${a.id}')" class="h-5 w-5 rounded border-slate-300 text-indigo-600">
-                        </td>
-                        <td class="px-6 py-4 font-medium">${a.due_date}</td>
-                        <td class="px-6 py-4 text-slate-500">${cls?.name || 'Unknown'}</td>
-                        <td class="px-6 py-4">
-                            <div class="font-semibold">${a.name}</div>
-                            <div class="text-xs text-slate-400">${a.category}</div>
-                        </td>
-                        <td class="px-6 py-4 text-right tabular-nums">
-                            ${a.points_earned !== null ? `${a.points_earned} / ${a.points_possible}` : `-- / ${a.points_possible}`}
-                        </td>
-                        <td class="px-6 py-4 text-center">
-                            <button onclick="deleteAssignment('${a.id}')" class="text-slate-300 hover:text-red-500">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-        }
-
-        function renderClasses() {
-            const grid = document.getElementById('classes-grid');
-            grid.innerHTML = classes.map(c => `
-                <div class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-                    <div class="mb-4 flex items-center justify-between">
-                        <span class="rounded bg-indigo-100 px-2 py-1 text-xs font-bold text-indigo-700">${c.period}</span>
-                        <button onclick="deleteClass('${c.id}')" class="text-slate-300 hover:text-red-500">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                        </button>
-                    </div>
-                    <h3 class="text-xl font-bold">${c.name}</h3>
-                    <p class="text-slate-500 text-sm">${c.title}</p>
-                    <div class="mt-4 flex items-center justify-between text-sm">
-                        <span class="text-slate-400">Credits: ${c.credits}</span>
-                        <span class="font-bold text-indigo-600">${calculateGrade(c.id).toFixed(1)}%</span>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function renderGrades() {
-            const container = document.getElementById('grades-container');
-            container.innerHTML = classes.map(c => {
-                const catHtml = Object.entries(c.weights || {}).map(([cat, val]) => `
-                    <div class="flex items-center gap-2 mb-2">
-                        <span class="text-sm font-medium w-24">${cat}:</span>
-                        <input type="number" value="${val}" onchange="updateWeight('${c.id}', '${cat}', this.value)" class="w-16 rounded border p-1 text-sm">
-                        <span class="text-slate-400">%</span>
-                    </div>
-                `).join('');
-
-                return `
-                    <div class="rounded-2xl bg-white p-6 shadow-sm border border-slate-100">
-                        <div class="flex justify-between mb-4">
-                            <h3 class="text-lg font-bold">${c.name} - Weighted Categories</h3>
-                            <button onclick="addCategory('${c.id}')" class="text-indigo-600 text-sm font-semibold">+ Add Category</button>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>${catHtml}</div>
-                            <div class="bg-slate-50 rounded-lg p-4 text-sm text-slate-600">
-                                <p class="font-semibold mb-2">Weighting Instructions:</p>
-                                <p>Ensure percentages add up to 100%. If they don't, the system will scale them proportionally based on what has been entered.</p>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        // --- HANDLERS ---
-        document.getElementById('assignment-form').onsubmit = async (e) => {
-            e.preventDefault();
-            const newAs = {
-                id: Date.now().toString(),
-                name: document.getElementById('as-name').value,
-                class_id: document.getElementById('as-class').value,
-                category: document.getElementById('as-category').value,
-                due_date: document.getElementById('as-date').value,
-                points_earned: document.getElementById('as-points-earned').value ? parseFloat(document.getElementById('as-points-earned').value) : null,
-                points_possible: parseFloat(document.getElementById('as-points-possible').value) || 100,
-                completed: false
-            };
-            assignments.push(newAs);
-            await saveData();
-            toggleModal('assignment-modal');
-            renderAll();
-            e.target.reset();
-        };
-
-        document.getElementById('class-form').onsubmit = async (e) => {
-            e.preventDefault();
-            const newCl = {
-                id: Date.now().toString(),
-                name: document.getElementById('cl-name').value,
-                title: document.getElementById('cl-title').value,
-                credits: parseInt(document.getElementById('cl-credits').value) || 3,
-                period: document.getElementById('cl-period').value,
-                weights: { 'Homework': 50, 'Exam': 50 }
-            };
-            classes.push(newCl);
-            await saveData();
-            toggleModal('class-modal');
-            renderAll();
-            e.target.reset();
-        };
-
-        async function toggleComplete(id) {
-            const as = assignments.find(a => a.id === id);
-            if (as) as.completed = !as.completed;
-            await saveData();
-            renderAll();
-        }
-
-        async function deleteAssignment(id) {
-            assignments = assignments.filter(a => a.id !== id);
-            await saveData();
-            renderAll();
-        }
-
-        async function deleteClass(id) {
-            if (confirm("Delete this class? All linked assignments will remain but lose their class connection.")) {
-                classes = classes.filter(c => c.id !== id);
-                await saveData();
-                renderAll();
-            }
-        }
-
-        async function updateWeight(classId, category, val) {
-            const cls = classes.find(c => c.id === classId);
-            if (cls) cls.weights[category] = parseFloat(val);
-            await saveData();
-            renderAll();
-        }
-
-        async function addCategory(classId) {
-            const cat = prompt("Enter new category name (e.g., Participation):");
-            if (cat) {
-                const cls = classes.find(c => c.id === classId);
-                if (cls) cls.weights[cat] = 0;
-                await saveData();
-                renderAll();
-            }
-        }
+        
+        // Initialize the application
+        init();
     </script>
 </body>
 </html>
