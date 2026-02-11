@@ -1064,7 +1064,7 @@
                 listEl.innerHTML = '<p class="text-gray-400 italic">No pending assignments.</p>';
                 return;
             }
-            const today = new Date(Date.now())
+            const today = new Date()
             allAssignments.forEach(asg => {
                 let timeText = asg.dueDate || 'No Date';
                 let timeColor = 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300';
