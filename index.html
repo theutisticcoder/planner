@@ -6,6 +6,8 @@
     <title>EduTrack - Smart Assignment Tracker</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Library for PDF Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
         .tab-active { border-bottom: 2px solid #2563eb; color: #2563eb; font-weight: 600; }
@@ -33,10 +35,24 @@
         <div class="max-w-7xl mx-auto flex justify-between items-center">
             <h1 class="text-2xl font-bold text-blue-600 tracking-tight">EduTrack</h1>
             <div id="auth-section" class="flex items-center gap-3">
-                <button onclick="toggleModal('login-modal')" id="login-btn-nav" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition hidden">
+                <button onclick="toggleModal('login-modal', true)" id="login-btn-nav" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition hidden">
                     Login / Sign Up
                 </button>
                 <div id="user-info" class="hidden flex items-center gap-4">
+                    <!-- Data Tools Dropdown Trigger -->
+                    <div class="relative group">
+                        <button class="text-sm font-medium text-gray-600 hover:text-blue-600 flex items-center gap-1">
+                            Data Tools ▾
+                        </button>
+                        <div class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 hidden group-hover:block border border-gray-100">
+                            <button onclick="exportCSV()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left">Export CSV</button>
+                            <label class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left cursor-pointer">
+                                Import CSV
+                                <input type="file" id="csv-upload" class="hidden" accept=".csv" onchange="importCSV(this)">
+                            </label>
+                        </div>
+                    </div>
+
                     <span id="user-email" class="text-sm font-medium hidden md:inline"></span>
                     <button id="logout-btn" class="text-sm text-red-500 hover:text-red-700">Logout</button>
                     <span id="sync-status" class="text-xs text-gray-400">Synced</span>
@@ -46,12 +62,15 @@
     </nav>
 
     <!-- Main Content -->
-    <div class="max-w-7xl mx-auto p-4 mt-6">
+    <div class="max-w-7xl mx-auto p-4 mt-6" id="main-app-container">
         
         <!-- Dashboard Grid -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
             <!-- GPA Card -->
-            <div class="bg-white p-6 rounded-xl shadow-sm flex flex-col justify-center">
+            <div class="bg-white p-6 rounded-xl shadow-sm flex flex-col justify-center relative">
+                <button onclick="exportPDF()" class="absolute top-4 right-4 text-gray-400 hover:text-red-600 text-xs border border-gray-200 p-1 rounded" title="Download PDF Report">
+                    PDF Report
+                </button>
                 <h2 class="text-gray-500 text-sm uppercase tracking-wide">Cumulative GPA</h2>
                 <div class="text-4xl font-bold text-gray-900 mt-1" id="overall-gpa">0.00</div>
             </div>
@@ -93,7 +112,7 @@
             <div class="modal-content py-4 text-left px-6">
                 <div class="flex justify-between items-center pb-3">
                     <p class="text-2xl font-bold">Welcome Back</p>
-                    <div class="modal-close cursor-pointer z-50 p-2" onclick="toggleModal('login-modal')">
+                    <div class="modal-close cursor-pointer z-50 p-2" onclick="toggleModal('login-modal', false)">
                         <span class="text-2xl">&times;</span>
                     </div>
                 </div>
@@ -306,9 +325,12 @@
             if (error) {
                 msg.innerText = error.message;
             } else {
-                msg.innerText = "Check your email for the confirmation link.";
+                // Modified message to simply confirm signup success
+                msg.innerText = "Sign up successful! You are logged in.";
                 msg.classList.remove('text-red-500');
                 msg.classList.add('text-green-500');
+                // Auto login might happen depending on Supabase config, but checkUser handles session
+                setTimeout(checkUser, 1500);
             }
         });
 
@@ -324,6 +346,135 @@
             document.getElementById('overall-gpa').innerText = '0.00';
             document.getElementById('todo-list').innerHTML = '';
         });
+
+        // --- IMPORT / EXPORT LOGIC ---
+
+        function exportCSV() {
+            if (state.classes.length === 0) return alert("No data to export.");
+
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Type,ClassID,ClassName,CatID,CatName,CatWeight,AsgID,AsgName,AsgScore,AsgTotal,AsgDate,AsgStatus\n";
+
+            state.classes.forEach(cls => {
+                // Export Categories
+                cls.categories.forEach(cat => {
+                    csvContent += `Category,${cls.id},"${cls.name}",${cat.id},"${cat.name}",${cat.weight},,,,,,\n`;
+                });
+                
+                // Export Assignments
+                cls.assignments.forEach(asg => {
+                    const cat = cls.categories.find(c => c.id === asg.categoryId);
+                    const catName = cat ? cat.name : "Unknown";
+                    // Handle commas in names
+                    csvContent += `Assignment,${cls.id},"${cls.name}",${asg.categoryId},"${catName}",,${asg.id},"${asg.name}",${asg.score || ''},${asg.total || ''},${asg.dueDate || ''},${asg.status || ''}\n`;
+                });
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "edutrack_export.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function importCSV(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                const rows = text.split('\n').slice(1); // Skip header
+                const newClasses = [];
+                const classMap = {}; // Helper to group by ID
+
+                rows.forEach(row => {
+                    if (!row.trim()) return;
+                    
+                    // Rudimentary CSV parsing (handles simple commas, but robust parsing usually requires a lib)
+                    // Assuming standard export format from above function
+                    // We'll use a regex to handle quoted strings properly
+                    const cols = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || [];
+                    const cleanCols = cols.map(c => c.replace(/^"|"$/g, '').trim()); // Remove quotes
+
+                    // Mapping based on header: 
+                    // 0:Type, 1:ClassID, 2:ClassName, 3:CatID, 4:CatName, 5:CatWeight, 
+                    // 6:AsgID, 7:AsgName, 8:AsgScore, 9:AsgTotal, 10:AsgDate, 11:AsgStatus
+
+                    // Handle missing columns if CSV is messy
+                    if (cleanCols.length < 3) return;
+
+                    const type = cleanCols[0];
+                    const classId = cleanCols[1];
+                    const className = cleanCols[2];
+
+                    if (!classMap[classId]) {
+                        classMap[classId] = {
+                            id: classId,
+                            name: className,
+                            categories: [],
+                            assignments: []
+                        };
+                        newClasses.push(classMap[classId]);
+                    }
+
+                    if (type === 'Category') {
+                        classMap[classId].categories.push({
+                            id: cleanCols[3],
+                            name: cleanCols[4],
+                            weight: cleanCols[5]
+                        });
+                    } else if (type === 'Assignment') {
+                        classMap[classId].assignments.push({
+                            id: cleanCols[6],
+                            categoryId: cleanCols[3],
+                            name: cleanCols[7],
+                            score: cleanCols[8],
+                            total: cleanCols[9],
+                            dueDate: cleanCols[10],
+                            status: cleanCols[11]
+                        });
+                    }
+                });
+
+                if (newClasses.length > 0) {
+                    if(confirm(`Found ${newClasses.length} classes. This will overwrite current data. Continue?`)) {
+                        state.classes = newClasses;
+                        if(state.classes.length > 0) state.activeTab = state.classes[0].id;
+                        saveData();
+                        render();
+                        alert("Import successful!");
+                    }
+                } else {
+                    alert("Could not parse CSV data.");
+                }
+                input.value = ''; // Reset input
+            };
+            reader.readAsText(file);
+        }
+
+        function exportPDF() {
+            const element = document.getElementById('main-app-container');
+            const opt = {
+                margin:       0.5,
+                filename:     'edutrack_report.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+            
+            // Temporary styling for print
+            const originalShadows = document.querySelectorAll('.shadow-sm, .shadow-lg');
+            originalShadows.forEach(el => el.classList.remove('shadow-sm', 'shadow-lg'));
+            
+            html2pdf().set(opt).from(element).save().then(() => {
+                // Restore styling
+                originalShadows.forEach(el => el.classList.add('shadow-sm'));
+                render(); // Re-render to ensure state is clean
+            });
+        }
 
         // --- DATA PERSISTENCE ---
 
@@ -474,7 +625,7 @@
                 });
             });
 
-            // Sort by date (assignments without dates go to the bottom)
+            // Sort by date
             allAssignments.sort((a, b) => {
                 if (!a.dueDate) return 1;
                 if (!b.dueDate) return -1;
