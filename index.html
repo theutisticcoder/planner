@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<htmllang="en">
 
 <head>
     <meta charset="UTF-8">
@@ -516,21 +516,22 @@
             <div class="modal-content py-4 text-left px-6">
                 <div class="flex justify-between items-center pb-3">
                     <p class="text-2xl font-bold">Class Notes</p>
-                    <div class="modal-close cursor-pointer z-50 p-2" onclick="toggleNotesModal(false)">
+                    <div class="modal-close cursor-pointer z-50 p-2" onclick="closeNotesModal()">
                         <span class="text-2xl">&times;</span>
                     </div>
                 </div>
-                <div id="class-notes-content" class="mb-6"></div>
-                <div id="class-notes-editor" class="hidden">
-                    <textarea id="class-notes-input" class="w-full p-3 border rounded-md resize-none" rows="5"></textarea>
-                    <div class="mt-2 flex justify-end">
-                        <button onclick="saveClassNotes()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Save</button>
-                    </div>
+                <div class="mb-6">
+                    <textarea id="notes-input" class="w-full p-3 border rounded-md resize-none" rows="5"></textarea>
+                </div>
+                <div class="flex justify-end">
+                    <button onclick="saveNotes()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                        Save Notes
+                    </button>
                 </div>
             </div>
         </div>
     </div>
-   
+
     <script>
         // --- SUPABASE CONFIGURATION ---
         const SUPABASE_URL = 'https://njgjgpiamweujgyknqtz.supabase.co';
@@ -824,7 +825,7 @@
             state.classes.forEach((cls, index) => {
                 const currentGrade = calculateClassGrade(cls);
                 const letterGrade = getLetterGrade(currentGrade);
-                const gradeColor = letterGrade === 'A' ? '#16a34a' : letterGrade === 'F' ? '#ef4444' : '#2563eb';
+                const gradeColorClass = `grade-${letterGrade}`;
 
                 let sortedAssignments = [...cls.assignments].sort((a, b) => {
                     if (a.dueDate && b.dueDate) return new Date(b.dueDate) - new Date(a.dueDate);
@@ -861,7 +862,7 @@
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                             <h2 style="font-size: 24px; font-weight: bold; margin: 0;">${cls.name}</h2>
                             <div style="text-align: right;">
-                                <span style="font-size: 24px; font-weight: bold; color: ${gradeColor};">${currentGrade ? currentGrade.toFixed(2) : '--'}%</span>
+                                <span style="font-size: 24px; font-weight: bold; color: ${gradeColorClass};">${currentGrade ? currentGrade.toFixed(2) : '--'}%</span>
                                 <span style="font-size: 18px; color: #6b7280; margin-left: 5px;">(${letterGrade})</span>
                             </div>
                         </div>
@@ -1503,11 +1504,10 @@
                     </svg>
                 </button>
             </div>
-            <div id="class-notes-content" class="mb-6"></div>
             <div id="class-notes-editor" class="hidden">
-                <textarea id="class-notes-input" class="w-full p-3 border rounded-md resize-none" rows="5">${notes}</textarea>
+                <textarea id="notes-input" class="w-full p-3 border rounded-md resize-none" rows="5">${notes}</textarea>
                 <div class="mt-2 flex justify-end">
-                    <button onclick="saveClassNotes('${classId}', document.getElementById('class-notes-input').value)" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Save</button>
+                    <button onclick="saveNotes()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Save</button>
                 </div>
             </div>
         </div>
@@ -1534,12 +1534,21 @@
             document.getElementById('class-notes-content').innerHTML = marked(notes);
         }
 
-        function saveClassNotes(classId, notes) {
+        function saveNotes() {
+            const classId = document.getElementById('asg-class-id').value;
             const cls = state.classes.find(c => c.id === classId);
             if (cls) {
-                cls.notes = notes;
+                cls.notes = document.getElementById('notes-input').value;
                 saveData();
             }
+            closeNotesModal();
+        }
+
+        function closeNotesModal() {
+            const editor = document.getElementById('class-notes-editor');
+            const content = document.getElementById('class-notes-content');
+            editor.classList.add('hidden');
+            content.classList.remove('hidden');
         }
 
         // --- Initialize App ---
