@@ -874,13 +874,104 @@
         }
 
         // --- DATA PERSISTENCE ---
+        function closeNoteModal() {
+            const modal = document.getElementById('note-modal');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            document.body.classList.remove('modal-active');
+
+            // Destroy Quill instance
+            const editor = document.getElementById('note-editor');
+            if (editor && editor.parentNode) {
+                editor.parentNode.removeChild(editor);
+            }
+        }
+        // Add this to the openNoteModal() function
+        function openNoteModal(noteId = null, content = '') {
+            const modal = document.getElementById('note-modal');
+            const editor = document.getElementById('note-editor');
+
+            // Initialize Quill editor
+            const quill = new Quill(editor, {
+                theme: 'snow',
+                placeholder: 'Start typing your note...',
+                modules: {
+                    toolbar: [
+                        ['bold', 'italic', 'underline', 'strike'],
+                        ['link', 'image'],
+                        [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                        [{ 'indent': '-1' }, { 'indent': '+1' }],
+                        ['clean']
+                    ]
+                }
+            });
+
+            // Set initial content
+            if (noteId) {
+                const note = activeClass.notes.find(n => n.id === noteId);
+                if (note) {
+                    editor.innerHTML = note.content;
+                    quill.setContents(note.content);
+                }
+            } else {
+                editor.innerHTML = '';
+            }
+
+            // Save note
+            document.getElementById('save-note-btn').onclick = () => {
+                const content = quill.getContents();
+                const html = quill.root.innerHTML;
+
+                if (noteId) {
+                    const note = activeClass.notes.find(n => n.id === noteId);
+                    note.content = content;
+                    note.html = html;
+                } else {
+                    activeClass.notes.push({
+                        id: 'note_' + Date.now(),
+                        content: content,
+                        html: html,
+                        title: 'New Note'
+                    });
+                }
+
+                saveData();
+                render();
+                closeNoteModal();
+            };
+
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            document.body.classList.add('modal-active');
+        }
+
+        // Add this to the closeNoteModal() function
+        function closeNoteModal() {
+            const modal = document.getElementById('note-modal');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            document.body.classList.remove('modal-active');
+
+            // Destroy Quill instance
+            const editor = document.getElementById('note-editor');
+            if (editor && editor.parentNode) {
+                editor.parentNode.removeChild(editor);
+            }
+        }
         async function saveData() {
             if (state.user) {
                 if (state.classes.length > 0) {
                     state.classes.forEach(cls => {
                         if (cls.notes) {
+                            // Convert notes to string
+                            const notesString = cls.notes.map(note => {
+                                return JSON.stringify({
+                                    id: note.id,
+                                    content: note.content,
+                                    html: note.html,
+                                    title: note.title
+                                });
+                            }).join('\n\n');
+
                             // Scramble notes data
-                            const scrambled = scrambleData({ notes: cls.notes });
+                            const scrambled = scrambleData({ notes: notesString });
                             cls.data.scrambled = scrambled;
                         }
                     });
@@ -922,14 +1013,22 @@
             if (data && data.data) {
                 // Check if it's scrambled or legacy format
                 if (data.data.scrambled) {
-                    state.classes = unscrambleData(data.data.scrambled);
-                    const notesData = unscrambleData(data.data.scrambled);
-                    if (notesData.notes) {
-                        state.classes.forEach(cls => {
-                            if (cls.id === notesData.classId) {
-                                cls.notes = notesData.notes;
-                            }
-                        });
+                    if (data.data.scrambled) {
+                        const notesData = unscrambleData(data.data.scrambled);
+                        if (notesData.notes) {
+                            state.classes.forEach(cls => {
+                                if (notesData.classId === cls.id) {
+                                    cls.notes = JSON.parse(notesData.notes).map(note => {
+                                        return {
+                                            id: note.id,
+                                            content: note.content,
+                                            html: note.html,
+                                            title: note.title
+                                        };
+                                    });
+                                }
+                            });
+                        }
                     }
 
                 } else {
@@ -1228,19 +1327,31 @@
                         </div>
                     </div>
                 `;
-                const notesContainer = document.getElementById('class-notes');
-                if (!notesContainer) {
-                    const container = document.createElement('div');
-                    container.className = 'card p-6 rounded-xl shadow-sm mt-4';
-                    container.innerHTML = `
-            <h3 class="text-gray-500 dark:text-gray-400 text-sm uppercase tracking-wide mb-2">Class Notes</h3>
-            <div id="class-notes" class="w-full h-64 border border-gray-200 rounded-md p-4 text-gray-900 dark:bg-gray-800 dark:text-gray-300"></div>
-        `;
-                    document.getElementById('class-content').appendChild(container);
+                const notesContainer = document.getElementById('notes-container');
+                notesContainer.innerHTML = '';
+
+                if (activeClass.notes && activeClass.notes.length > 0) {
+                    activeClass.notes.forEach(note => {
+                        const noteCard = document.createElement('div');
+                        noteCard.className = 'flex items-center gap-2 bg-white dark:bg-gray-800 p-2 rounded-lg shadow-sm mb-2';
+
+                        const title = document.createElement('span');
+                        title.className = 'font-medium text-gray-800 dark:text-gray-200';
+                        title.textContent = note.title || 'Untitled Note';
+
+                        const editBtn = document.createElement('button');
+                        editBtn.className = 'text-blue-500 hover:underline font-bold';
+                        editBtn.textContent = 'Edit';
+                        editBtn.onclick = () => openNoteModal(note.id, note.content);
+
+                        noteCard.appendChild(title);
+                        noteCard.appendChild(editBtn);
+
+                        notesContainer.appendChild(noteCard);
+                    });
+                } else {
+                    notesContainer.innerHTML = '<p class="text-gray-400">No notes yet. Click "New Note" to add some.</p>';
                 }
-                const notes = activeClass.notes || '';
-                const notesElement = document.getElementById('class-notes');
-                notesElement.innerHTML = notes;
 
                 // Add edit button
                 const editNotesBtn = document.createElement('button');
@@ -1249,31 +1360,48 @@
                 editNotesBtn.onclick = () => {
                     const editor = document.createElement('textarea');
                     editor.className = 'w-full h-64 border border-gray-200 rounded-md p-4 text-gray-900 dark:bg-gray-800 dark:text-gray-300';
-                    editor.value = notes;
-                    notesElement.innerHTML = '';
-                    notesElement.appendChild(editor);
+                    editor.value = activeClass.notes ? activeClass.notes.join('\n\n') : '';
+                    notesContainer.innerHTML = '';
+                    notesContainer.appendChild(editor);
 
                     const saveBtn = document.createElement('button');
                     saveBtn.className = 'mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700';
                     saveBtn.textContent = 'Save Notes';
                     saveBtn.onclick = () => {
-                        activeClass.notes = editor.value;
+                        activeClass.notes = editor.value.split('\n\n');
                         saveData();
                         render();
                         editNotesBtn.textContent = 'Edit Notes';
                     };
-                    notesElement.appendChild(saveBtn);
+                    notesContainer.appendChild(saveBtn);
 
                     editNotesBtn.textContent = 'Cancel';
                     editNotesBtn.onclick = () => {
-                        notesElement.innerHTML = notes;
-                        notesElement.appendChild(editNotesBtn);
+                        notesContainer.innerHTML = '';
+                        activeClass.notes.forEach(note => {
+                            const noteCard = document.createElement('div');
+                            noteCard.className = 'flex items-center gap-2 bg-white dark:bg-gray-800 p-2 rounded-lg shadow-sm mb-2';
+
+                            const title = document.createElement('span');
+                            title.className = 'font-medium text-gray-800 dark:text-gray-200';
+                            title.textContent = note.title || 'Untitled Note';
+
+                            const editBtn = document.createElement('button');
+                            editBtn.className = 'text-blue-500 hover:underline font-bold';
+                            editBtn.textContent = 'Edit';
+                            editBtn.onclick = () => openNoteModal(note.id, note.content);
+
+                            noteCard.appendChild(title);
+                            noteCard.appendChild(editBtn);
+
+                            notesContainer.appendChild(noteCard);
+                        });
                     };
                 };
-                notesElement.appendChild(editNotesBtn);
-
-            }
-            calculateOverallGPA();
+                notesContainer.appendChild(editNotesBtn);
+            
+        }
+        calculateOverallGPA();
         }
 
         function renderTodoList() {
