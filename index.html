@@ -511,6 +511,12 @@
             <div id="class-notes-content" class="markdown-body"></div>
         </div>
     </div>
+    <div id="class-notes-editor" class="hidden">
+        <textarea id="class-notes-input" class="w-full p-3 border rounded-md resize-none" rows="5"></textarea>
+        <div class="mt-2 flex justify-end">
+            <button onclick="saveClassNotes()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Save</button>
+        </div>
+    </div>
     <script>
         // --- SUPABASE CONFIGURATION ---
         const SUPABASE_URL = 'https://njgjgpiamweujgyknqtz.supabase.co';
@@ -552,7 +558,6 @@
         initDarkMode();
 
         // --- ENCRYPTION / SCRAMBLING LOGIC (Base64) ---
-        // Basic obfuscation to scramble data in DB
         function scrambleData(data) {
             try {
                 const jsonString = JSON.stringify(data);
@@ -689,7 +694,7 @@
             if (state.classes.length === 0) return alert("No data to export.");
 
             let csvContent = "data:text/csv;charset=utf-8,";
-            csvContent += "Type,ClassID,ClassName,CatID,CatName,CatWeight,AsgID,AsgName,AsgScore,AsgTotal,AsgDate,AsgStatus\n";
+            csvContent += "Type,ClassID,ClassName,CatID,CatName,CatWeight,AsgID,AsgName,AsgScore,AsgTotal,AsgDate,AsgStatus,Notes\n";
 
             state.classes.forEach(cls => {
                 cls.categories.forEach(cat => {
@@ -699,7 +704,8 @@
                 cls.assignments.forEach(asg => {
                     const cat = cls.categories.find(c => c.id === asg.categoryId);
                     const catName = cat ? cat.name : "Unknown";
-                    csvContent += `Assignment,${cls.id},"${cls.name}",${asg.categoryId},"${catName}",,${asg.id},"${asg.name}",${asg.score || ''},${asg.total || ''},${asg.dueDate || ''},${asg.status || ''}\n`;
+                    const notes = cls.notes ? cls.notes : "";
+                    csvContent += `Assignment,${cls.id},"${cls.name}",${asg.categoryId},"${catName}",,${asg.id},"${asg.name}",${asg.score || ''},${asg.total || ''},${asg.dueDate || ''},${asg.status || ''},"${notes}"\n`;
                 });
             });
 
@@ -739,7 +745,8 @@
                             id: classId,
                             name: className,
                             categories: [],
-                            assignments: []
+                            assignments: [],
+                            notes: ""
                         };
                         newClasses.push(classMap[classId]);
                     }
@@ -758,7 +765,8 @@
                             score: cleanCols[8],
                             total: cleanCols[9],
                             dueDate: cleanCols[10],
-                            status: cleanCols[11]
+                            status: cleanCols[11],
+                            notes: cleanCols[12]
                         });
                     }
                 });
@@ -817,6 +825,10 @@
                         const catName = cat ? cat.name : 'Unknown';
                         const scoreDisplay = (asg.score !== null && asg.score !== "") ? `${asg.score}/${asg.total}` : '-';
                         const percent = (asg.score !== null && asg.score !== "") ? Math.round((asg.score / asg.total) * 100) + '%' : '';
+
+                        const statusKey = asg.status || 'not-started';
+                        const statusBadgeHtml = `<span class="text-[10px] uppercase font-bold px-2 py-0.5 rounded status-${statusKey} mr-2">${getStatusLabel(statusKey)}</span>`;
+                        const dateBadge = asg.dueDate ? `<span class="ml-2 text-xs text-gray-400 border border-gray-200 dark:border-gray-600 rounded px-1">${asg.dueDate}</span>` : '';
 
                         assignmentsRows += `
                             <tr style="border-bottom: 1px solid #e5e7eb;">
@@ -1101,7 +1113,7 @@
             state.classes.forEach(cls => {
                 const isActive = cls.id === state.activeTab;
                 const tabBtn = document.createElement('a');
-                tabBtn.className = `cursor-pointer whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${isActive ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-600'}`;
+                tabBtn.className = `cursor-pointer whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${isActive ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300'}`;
                 tabBtn.innerText = cls.name;
                 tabBtn.onclick = () => { state.activeTab = cls.id; render(); };
                 tabsContainer.appendChild(tabBtn);
@@ -1199,7 +1211,7 @@
                         <div class="md:w-2/3">
                             <div class="flex justify-between items-center mb-2">
                                 <h3 class="text-lg font-bold text-gray-800 dark:text-gray-200">Assignments</h3>
-                                <button onclick="openAssignmentModal()" class="bg-blue-600 text-white text-sm px-3 py-1.5 rounded hover:bg-blue-700 shadow-sm">
+                                <button onclick="openAssignmentModal()" class="bg-blue-600 text-white text-sm px-3 py-1.5 rounded hover:bg-blue-700">
                                     + Add Assignment
                                 </button>
                             </div>
@@ -1228,7 +1240,7 @@
             allAssignments.sort((a, b) => {
                 if (!a.dueDate) return 1;
                 if (!b.dueDate) return -1;
-                return new Date(a.dueDate) - new Date(b.dueDate);
+                return new Date(b.dueDate) - new Date(a.dueDate);
             });
             if (allAssignments.length === 0) {
                 listEl.innerHTML = '<p class="text-gray-400 italic">No pending assignments.</p>';
@@ -1453,21 +1465,6 @@
             closeAssignmentModal();
         });
 
-        // Initialize App
-        checkUser();
-        function loadClassNotes(classId) {
-            const notes = state.classes.find(c => c.id === classId)?.notes || '';
-            document.getElementById('class-notes-content').innerHTML = marked(notes);
-        }
-
-        function saveClassNotes(classId, notes) {
-            const cls = state.classes.find(c => c.id === classId);
-            if (cls) {
-                cls.notes = notes;
-                saveData();
-            }
-        }
-
         // --- NOTES UI ---
         function showClassNotes(classId) {
             const notesSection = document.getElementById('class-notes');
@@ -1487,7 +1484,7 @@
                 <h4 class="text-lg font-bold text-gray-800 dark:text-gray-200">Notes</h4>
                 <button onclick="toggleNotesEditor()" class="text-blue-500 hover:text-blue-700">
                     <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v9a1 1 0 11-2 0V4a1 1 0 011-1zm0 11a1 1 0 100-2h9a1 1 0 100-2H10zm-9 4a1 1 0 011-1v-2a1 1 0 011-1h2a1 1 0 110-2H7v-2a1 1 0 011-1h2a1 1 0 110-2H6v-2a1 1 0 011-1h2a1 1 0 110-2H5v-2a1 1 0 011-1h2a1 1 0 100-2H4v-2a1 1 0 011-1h3a1 1 0 011 1v9a1 1 0 11-2 0z"/>
+                        <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v9a1 1 0 11-2 0V4a1 1 0 011-1zm0 11a1 1 0 100-2h9a1 1 0 100-2H10zm-9 4a1 1 0 011-1v-2a1 1 0 011-1h2a1 1 0 110-2H7v-2a1 1 0 011-1h2a1 1 0 110-2H6v-2a1 1 0 011-1h2a1 1 0 100-2H5v-2a1 1 0 011-1h2a1 1 0 100-2H4v-2a1 1 0 011-1h3a1 1 0 011 1v9a1 1 0 11-2 0z"/>
                     </svg>
                 </button>
             </div>
@@ -1515,7 +1512,22 @@
             }
         }
 
+        // --- NOTES LOGIC ---
+        function loadClassNotes(classId) {
+            const notes = state.classes.find(c => c.id === classId)?.notes || '';
+            document.getElementById('class-notes-content').innerHTML = marked(notes);
+        }
 
+        function saveClassNotes(classId, notes) {
+            const cls = state.classes.find(c => c.id === classId);
+            if (cls) {
+                cls.notes = notes;
+                saveData();
+            }
+        }
+
+        // --- Initialize App ---
+        checkUser();
     </script>
 
 </body>
