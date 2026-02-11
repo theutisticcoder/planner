@@ -638,7 +638,7 @@
                     if (dueDate < today) {
                         timeColor = 'bg-red-100 text-red-800';
                         timeText += ' (Overdue)';
-                    } else if (dueDate === today) {
+                    } else if (dueDate.getTime() === today.getTime()) {
                         timeColor = 'bg-yellow-100 text-yellow-800';
                         timeText = 'Today';
                     } else {
