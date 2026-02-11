@@ -625,7 +625,7 @@
                 return;
             }
 
-            const today = Date.now();
+            const today = new Date(Date.now());
 
             allAssignments.forEach(asg => {
                 let timeText = asg.dueDate || 'No Date';
