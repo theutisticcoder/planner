@@ -1064,20 +1064,18 @@
                 listEl.innerHTML = '<p class="text-gray-400 italic">No pending assignments.</p>';
                 return;
             }
-            const today = new Date(Date.now())+1
+            const today = new Date(Date.now())
             allAssignments.forEach(asg => {
                 let timeText = asg.dueDate || 'No Date';
                 let timeColor = 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300';
                 if (asg.dueDate) {
                     const dueDate = new Date(asg.dueDate);
                     // Reset time to compare just dates
-                    const todayZero = new Date(); todayZero.setHours(0,0,0,0);
-                    const dueZero = new Date(dueDate); dueZero.setHours(0,0,0,0);
                     
-                    if (dueZero < todayZero) {
+                    if (dueDate < today) {
                         timeColor = 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
                         timeText += ' (Overdue)';
-                    } else if (dueZero.getTime() === todayZero.getTime()) {
+                    } else if (dueDate.getDate() === today.getDate()+1) {
                         timeColor = 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
                         timeText = 'Today';
                     } else {
