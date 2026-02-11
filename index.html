@@ -44,7 +44,7 @@
                         <button class="text-sm font-medium text-gray-600 hover:text-blue-600 flex items-center gap-1">
                             Data Tools ▾
                         </button>
-                        <div class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 hidden group-hover:block border border-gray-100">
+                        <div class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 hidden group-hover:block border border-gray-100 z-50">
                             <button onclick="exportCSV()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left">Export CSV</button>
                             <label class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left cursor-pointer">
                                 Import CSV
@@ -267,8 +267,10 @@
             state.user = user;
             updateAuthUI();
             if (user) {
+                // If user is logged in, ONLY load from Supabase
                 loadDataFromSupabase();
             } else {
+                // Only load local data if NOT logged in (Guest mode)
                 loadLocalData(); 
             }
         }
@@ -282,7 +284,7 @@
                 loginBtn.classList.add('hidden');
                 userInfo.classList.remove('hidden');
                 userEmail.innerText = state.user.email;
-                toggleModal('login-modal', false); // Close modal if open
+                toggleModal('login-modal', false); 
             } else {
                 loginBtn.classList.remove('hidden');
                 userInfo.classList.add('hidden');
@@ -325,11 +327,9 @@
             if (error) {
                 msg.innerText = error.message;
             } else {
-                // Modified message to simply confirm signup success
                 msg.innerText = "Sign up successful! You are logged in.";
                 msg.classList.remove('text-red-500');
                 msg.classList.add('text-green-500');
-                // Auto login might happen depending on Supabase config, but checkUser handles session
                 setTimeout(checkUser, 1500);
             }
         });
@@ -340,7 +340,8 @@
             state.classes = [];
             state.activeTab = null;
             updateAuthUI();
-            render();
+            
+            // Clear view
             document.getElementById('class-tabs').innerHTML = '';
             document.getElementById('class-content').innerHTML = '<div class="text-center text-gray-400 mt-20"><p>Please login to see your data.</p></div>';
             document.getElementById('overall-gpa').innerText = '0.00';
@@ -356,16 +357,13 @@
             csvContent += "Type,ClassID,ClassName,CatID,CatName,CatWeight,AsgID,AsgName,AsgScore,AsgTotal,AsgDate,AsgStatus\n";
 
             state.classes.forEach(cls => {
-                // Export Categories
                 cls.categories.forEach(cat => {
                     csvContent += `Category,${cls.id},"${cls.name}",${cat.id},"${cat.name}",${cat.weight},,,,,,\n`;
                 });
                 
-                // Export Assignments
                 cls.assignments.forEach(asg => {
                     const cat = cls.categories.find(c => c.id === asg.categoryId);
                     const catName = cat ? cat.name : "Unknown";
-                    // Handle commas in names
                     csvContent += `Assignment,${cls.id},"${cls.name}",${asg.categoryId},"${catName}",,${asg.id},"${asg.name}",${asg.score || ''},${asg.total || ''},${asg.dueDate || ''},${asg.status || ''}\n`;
                 });
             });
@@ -386,24 +384,16 @@
             const reader = new FileReader();
             reader.onload = function(e) {
                 const text = e.target.result;
-                const rows = text.split('\n').slice(1); // Skip header
+                const rows = text.split('\n').slice(1);
                 const newClasses = [];
-                const classMap = {}; // Helper to group by ID
+                const classMap = {}; 
 
                 rows.forEach(row => {
                     if (!row.trim()) return;
                     
-                    // Rudimentary CSV parsing (handles simple commas, but robust parsing usually requires a lib)
-                    // Assuming standard export format from above function
-                    // We'll use a regex to handle quoted strings properly
                     const cols = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || [];
-                    const cleanCols = cols.map(c => c.replace(/^"|"$/g, '').trim()); // Remove quotes
+                    const cleanCols = cols.map(c => c.replace(/^"|"$/g, '').trim()); 
 
-                    // Mapping based on header: 
-                    // 0:Type, 1:ClassID, 2:ClassName, 3:CatID, 4:CatName, 5:CatWeight, 
-                    // 6:AsgID, 7:AsgName, 8:AsgScore, 9:AsgTotal, 10:AsgDate, 11:AsgStatus
-
-                    // Handle missing columns if CSV is messy
                     if (cleanCols.length < 3) return;
 
                     const type = cleanCols[0];
@@ -450,7 +440,7 @@
                 } else {
                     alert("Could not parse CSV data.");
                 }
-                input.value = ''; // Reset input
+                input.value = ''; 
             };
             reader.readAsText(file);
         }
@@ -465,24 +455,21 @@
                 jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
             };
             
-            // Temporary styling for print
             const originalShadows = document.querySelectorAll('.shadow-sm, .shadow-lg');
             originalShadows.forEach(el => el.classList.remove('shadow-sm', 'shadow-lg'));
             
             html2pdf().set(opt).from(element).save().then(() => {
-                // Restore styling
                 originalShadows.forEach(el => el.classList.add('shadow-sm'));
-                render(); // Re-render to ensure state is clean
+                render(); 
             });
         }
 
         // --- DATA PERSISTENCE ---
 
         async function saveData() {
-            localStorage.setItem('edutrack_data', JSON.stringify(state.classes));
-            
+            // IF LOGGED IN: Save ONLY to Supabase
             if (state.user) {
-                document.getElementById('sync-status').innerText = 'Syncing...';
+                document.getElementById('sync-status').innerText = 'Saving...';
                 
                 const { data: existingData } = await supabaseClient
                     .from('user_data')
@@ -504,8 +491,11 @@
                 }
                 
                 setTimeout(() => {
-                    document.getElementById('sync-status').innerText = 'Synced';
+                    document.getElementById('sync-status').innerText = 'Saved';
                 }, 1000);
+            } else {
+                // IF NOT LOGGED IN: Fallback to local storage (Guest Mode)
+                localStorage.setItem('edutrack_data', JSON.stringify(state.classes));
             }
         }
 
@@ -529,11 +519,9 @@
             if (data && data.data) {
                 state.classes = data.data;
                 if(state.classes.length > 0) state.activeTab = state.classes[0].id;
-                localStorage.setItem('edutrack_data', JSON.stringify(state.classes));
                 render();
-            } else {
-                loadLocalData();
-            }
+            } 
+            // If no data in Supabase yet, we start with empty state, NOT local storage
             document.getElementById('sync-status').innerText = 'Synced';
         }
 
