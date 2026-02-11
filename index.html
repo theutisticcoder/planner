@@ -626,7 +626,6 @@
             }
 
             const today = new Date();
-            today.setHours(0,0,0,0);
 
             allAssignments.forEach(asg => {
                 let timeText = asg.dueDate || 'No Date';
@@ -639,7 +638,7 @@
                     if (dueDate < today) {
                         timeColor = 'bg-red-100 text-red-800';
                         timeText += ' (Overdue)';
-                    } else if (dueDate.getTime() === today.getTime()) {
+                    } else if (dueDate.getDate() === today.getDate()) {
                         timeColor = 'bg-yellow-100 text-yellow-800';
                         timeText = 'Today';
                     } else {
