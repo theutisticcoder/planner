@@ -11,7 +11,7 @@
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
         .tab-active { border-bottom: 2px solid #2563eb; color: #2563eb; font-weight: 600; }
-        .tab-inactive { color: #6b7280; }
+        .tab-inactive { color: #6b7280; border-bottom: 2px solid transparent; }
         .grade-A { color: #16a34a; }
         .grade-B { color: #84cc16; }
         .grade-C { color: #eab308; }
@@ -26,6 +26,11 @@
         .status-completed { background-color: #dcfce7; color: #16a34a; }
         .status-submitted { background-color: #e0e7ff; color: #4338ca; }
         .status-na { background-color: #f9fafb; color: #9ca3af; text-decoration: line-through; }
+
+        /* Calendar Styles */
+        .calendar-day { min-height: 100px; transition: background-color 0.2s; }
+        .calendar-day:hover { background-color: #f9fafb; }
+        .calendar-event { font-size: 0.75rem; padding: 2px 4px; margin-bottom: 2px; border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
     </style>
 </head>
 <body class="text-gray-800">
@@ -34,6 +39,13 @@
     <nav class="bg-white shadow-sm p-4 sticky top-0 z-30">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
             <h1 class="text-2xl font-bold text-blue-600 tracking-tight">EduTrack</h1>
+            
+            <!-- Main View Switcher -->
+            <div class="hidden md:flex space-x-6">
+                <button onclick="switchMainView('dashboard')" id="nav-dashboard" class="tab-active py-2">Dashboard</button>
+                <button onclick="switchMainView('calendar')" id="nav-calendar" class="tab-inactive py-2 hover:text-gray-700">Calendar</button>
+            </div>
+
             <div id="auth-section" class="flex items-center gap-3">
                 <button onclick="toggleModal('login-modal', true)" id="login-btn-nav" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition hidden">
                     Login / Sign Up
@@ -59,50 +71,98 @@
                 </div>
             </div>
         </div>
+        <!-- Mobile Nav View Switcher -->
+        <div class="md:hidden flex justify-center space-x-6 mt-4 border-t pt-2">
+            <button onclick="switchMainView('dashboard')" id="nav-dashboard-mobile" class="text-blue-600 font-bold">Dashboard</button>
+            <button onclick="switchMainView('calendar')" id="nav-calendar-mobile" class="text-gray-500">Calendar</button>
+        </div>
     </nav>
 
-    <!-- Main Content -->
-    <div class="max-w-7xl mx-auto p-4 mt-6" id="main-app-container">
+    <!-- Main Content Container -->
+    <div class="max-w-7xl mx-auto p-4 mt-6">
         
-        <!-- Dashboard Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <!-- GPA Card -->
-            <div class="bg-white p-6 rounded-xl shadow-sm flex flex-col justify-center relative">
-                <button onclick="exportPDF()" class="absolute top-4 right-4 text-gray-400 hover:text-red-600 text-xs border border-gray-200 p-1 rounded" title="Download PDF Report">
-                    PDF Report
-                </button>
-                <h2 class="text-gray-500 text-sm uppercase tracking-wide">Cumulative GPA</h2>
-                <div class="text-4xl font-bold text-gray-900 mt-1" id="overall-gpa">0.00</div>
-            </div>
-            
-            <!-- To-Do List -->
-            <div class="bg-white p-6 rounded-xl shadow-sm col-span-2 overflow-y-auto max-h-48">
-                <h2 class="text-gray-500 text-sm uppercase tracking-wide mb-2">Upcoming Deadlines</h2>
-                <div id="todo-list" class="space-y-2 text-sm">
-                    <!-- Injected via JS -->
-                    <p class="text-gray-400">No upcoming assignments.</p>
+        <!-- VIEW: DASHBOARD -->
+        <div id="view-dashboard">
+            <div id="main-app-container">
+                <!-- Dashboard Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <!-- GPA Card -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm flex flex-col justify-center relative">
+                        <button onclick="exportPDF()" class="absolute top-4 right-4 text-gray-400 hover:text-red-600 text-xs border border-gray-200 p-1 rounded" title="Download PDF Report">
+                            PDF Report
+                        </button>
+                        <h2 class="text-gray-500 text-sm uppercase tracking-wide">Cumulative GPA</h2>
+                        <div class="text-4xl font-bold text-gray-900 mt-1" id="overall-gpa">0.00</div>
+                    </div>
+                    
+                    <!-- To-Do List -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm col-span-2 overflow-y-auto max-h-48">
+                        <h2 class="text-gray-500 text-sm uppercase tracking-wide mb-2">Upcoming Deadlines</h2>
+                        <div id="todo-list" class="space-y-2 text-sm">
+                            <!-- Injected via JS -->
+                            <p class="text-gray-400">No upcoming assignments.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="flex justify-between items-center mb-4">
+                    <div class="border-b border-gray-200 flex-grow overflow-x-auto">
+                        <nav class="-mb-px flex space-x-8" id="class-tabs">
+                            <!-- Tabs injected by JS -->
+                        </nav>
+                    </div>
+                    <button id="add-class-btn" onclick="openClassModal()" class="ml-4 bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition whitespace-nowrap">
+                        + Add Class
+                    </button>
+                </div>
+
+                <!-- Class Content Area -->
+                <div id="class-content" class="min-h-[400px]">
+                    <div class="text-center text-gray-400 mt-20">
+                        <p>Select a class or add one to get started.</p>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Controls -->
-        <div class="flex justify-between items-center mb-4">
-            <div class="border-b border-gray-200 flex-grow overflow-x-auto">
-                <nav class="-mb-px flex space-x-8" id="class-tabs">
-                    <!-- Tabs injected by JS -->
-                </nav>
+        <!-- VIEW: CALENDAR -->
+        <div id="view-calendar" class="hidden">
+            <div class="bg-white rounded-xl shadow-sm p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800" id="calendar-month-year"></h2>
+                    <div class="flex space-x-2">
+                        <button onclick="changeMonth(-1)" class="p-2 hover:bg-gray-100 rounded text-gray-600">
+                            &lt; Prev
+                        </button>
+                        <button onclick="changeMonth(1)" class="p-2 hover:bg-gray-100 rounded text-gray-600">
+                            Next &gt;
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Calendar Grid -->
+                <div class="grid grid-cols-7 gap-px bg-gray-200 border border-gray-200 rounded-lg overflow-hidden">
+                    <!-- Weekday Headers -->
+                    <div class="bg-gray-50 p-2 text-center text-xs font-semibold text-gray-500">Sun</div>
+                    <div class="bg-gray-50 p-2 text-center text-xs font-semibold text-gray-500">Mon</div>
+                    <div class="bg-gray-50 p-2 text-center text-xs font-semibold text-gray-500">Tue</div>
+                    <div class="bg-gray-50 p-2 text-center text-xs font-semibold text-gray-500">Wed</div>
+                    <div class="bg-gray-50 p-2 text-center text-xs font-semibold text-gray-500">Thu</div>
+                    <div class="bg-gray-50 p-2 text-center text-xs font-semibold text-gray-500">Fri</div>
+                    <div class="bg-gray-50 p-2 text-center text-xs font-semibold text-gray-500">Sat</div>
+                    
+                    <!-- Days injected via JS -->
+                    <div id="calendar-grid" class="contents"></div>
+                </div>
+                
+                <!-- Legend -->
+                <div id="calendar-legend" class="mt-4 flex flex-wrap gap-4 text-xs">
+                    <!-- Legend items injected via JS -->
+                </div>
             </div>
-            <button id="add-class-btn" onclick="openClassModal()" class="ml-4 bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition whitespace-nowrap">
-                + Add Class
-            </button>
         </div>
 
-        <!-- Class Content Area -->
-        <div id="class-content" class="min-h-[400px]">
-            <div class="text-center text-gray-400 mt-20">
-                <p>Select a class or add one to get started.</p>
-            </div>
-        </div>
     </div>
 
     <!-- LOGIN MODAL -->
@@ -248,7 +308,7 @@
         </div>
     </div>
 
-  <script>
+    <script>
         // --- SUPABASE CONFIGURATION ---
         const SUPABASE_URL = 'https://njgjgpiamweujgyknqtz.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_3bRvo_Zuppdi4ICnOtfjeA_VWfp6Zyx'; 
@@ -258,7 +318,9 @@
         let state = {
             classes: [], 
             activeTab: null,
-            user: null
+            user: null,
+            currentView: 'dashboard', // dashboard or calendar
+            calendarDate: new Date()
         };
 
         // --- AUTHENTICATION ---
@@ -267,10 +329,8 @@
             state.user = user;
             updateAuthUI();
             if (user) {
-                // If user is logged in, ONLY load from Supabase
                 loadDataFromSupabase();
             } else {
-                // Only load local data if NOT logged in (Guest mode)
                 loadLocalData(); 
             }
         }
@@ -341,15 +401,36 @@
             state.activeTab = null;
             updateAuthUI();
             
-            // Clear view
             document.getElementById('class-tabs').innerHTML = '';
             document.getElementById('class-content').innerHTML = '<div class="text-center text-gray-400 mt-20"><p>Please login to see your data.</p></div>';
             document.getElementById('overall-gpa').innerText = '0.00';
             document.getElementById('todo-list').innerHTML = '';
+            renderCalendar();
         });
 
-        // --- IMPORT / EXPORT LOGIC ---
+        // --- NAVIGATION LOGIC ---
+        function switchMainView(view) {
+            state.currentView = view;
+            
+            // Tab Styling
+            const dashBtn = document.getElementById('nav-dashboard');
+            const calBtn = document.getElementById('nav-calendar');
+            
+            if(view === 'dashboard') {
+                document.getElementById('view-dashboard').classList.remove('hidden');
+                document.getElementById('view-calendar').classList.add('hidden');
+                dashBtn.className = "tab-active py-2";
+                calBtn.className = "tab-inactive py-2 hover:text-gray-700";
+            } else {
+                document.getElementById('view-dashboard').classList.add('hidden');
+                document.getElementById('view-calendar').classList.remove('hidden');
+                dashBtn.className = "tab-inactive py-2 hover:text-gray-700";
+                calBtn.className = "tab-active py-2";
+                renderCalendar();
+            }
+        }
 
+        // --- IMPORT / EXPORT LOGIC ---
         function exportCSV() {
             if (state.classes.length === 0) return alert("No data to export.");
 
@@ -390,7 +471,6 @@
 
                 rows.forEach(row => {
                     if (!row.trim()) return;
-                    
                     const cols = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || [];
                     const cleanCols = cols.map(c => c.replace(/^"|"$/g, '').trim()); 
 
@@ -447,13 +527,10 @@
 
         function exportPDF() {
             if (state.classes.length === 0) return alert("No classes to export.");
-
-            // Create a temporary container for the PDF content
             const tempDiv = document.createElement('div');
             tempDiv.style.padding = '20px';
             tempDiv.style.fontFamily = 'Inter, sans-serif';
 
-            // Generate overall GPA Header
             let overallGPA = document.getElementById('overall-gpa').innerText;
             let header = `
                 <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #2563eb; padding-bottom: 10px;">
@@ -464,13 +541,11 @@
             `;
             tempDiv.innerHTML = header;
 
-            // Loop through each class and create a page
             state.classes.forEach((cls, index) => {
                 const currentGrade = calculateClassGrade(cls);
                 const letterGrade = getLetterGrade(currentGrade);
                 const gradeColor = letterGrade === 'A' ? '#16a34a' : letterGrade === 'F' ? '#ef4444' : '#2563eb';
 
-                // Sort assignments by date
                 let sortedAssignments = [...cls.assignments].sort((a,b) => {
                      if (a.dueDate && b.dueDate) return new Date(b.dueDate) - new Date(a.dueDate);
                      return 0;
@@ -496,10 +571,7 @@
                         `;
                     });
                 }
-
-                // Page Break CSS (always break after, except for the last one if you prefer)
                 const pageBreak = `<div style="page-break-after: always;"></div>`;
-
                 const classHtml = `
                     <div style="margin-bottom: 20px;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
@@ -509,16 +581,12 @@
                                 <span style="font-size: 18px; color: #6b7280; margin-left: 5px;">(${letterGrade})</span>
                             </div>
                         </div>
-
-                        <!-- Category Breakdown -->
                         <div style="margin-bottom: 20px; background: #f9fafb; padding: 10px; border-radius: 8px;">
                             <h3 style="font-size: 14px; margin: 0 0 5px 0; text-transform: uppercase; color: #6b7280;">Weighting</h3>
                             <ul style="margin: 0; padding-left: 20px; font-size: 14px;">
                                 ${cls.categories.map(cat => `<li>${cat.name}: ${cat.weight}%</li>`).join('')}
                             </ul>
                         </div>
-
-                        <!-- Assignment Table -->
                         <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
                             <thead>
                                 <tr style="background-color: #f3f4f6; text-align: left;">
@@ -528,9 +596,7 @@
                                     <th style="padding: 8px; border-bottom: 2px solid #e5e7eb;">Score</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                ${assignmentsRows}
-                            </tbody>
+                            <tbody>${assignmentsRows}</tbody>
                         </table>
                     </div>
                     ${pageBreak}
@@ -545,42 +611,22 @@
                 html2canvas:  { scale: 2 },
                 jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
             };
-
-            // Generate PDF from the temp div
             html2pdf().set(opt).from(tempDiv).save();
         }
 
         // --- DATA PERSISTENCE ---
-
         async function saveData() {
-            // IF LOGGED IN: Save ONLY to Supabase
             if (state.user) {
                 document.getElementById('sync-status').innerText = 'Saving...';
-                
-                const { data: existingData } = await supabaseClient
-                    .from('user_data')
-                    .select('id')
-                    .eq('user_id', state.user.id)
-                    .single();
-
+                const { data: existingData } = await supabaseClient.from('user_data').select('id').eq('user_id', state.user.id).single();
                 const updatePayload = { data: state.classes, updated_at: new Date() };
-                
                 if (existingData) {
-                    await supabaseClient
-                        .from('user_data')
-                        .update(updatePayload)
-                        .eq('user_id', state.user.id);
+                    await supabaseClient.from('user_data').update(updatePayload).eq('user_id', state.user.id);
                 } else {
-                    await supabaseClient
-                        .from('user_data')
-                        .insert([{ user_id: state.user.id, data: state.classes }]);
+                    await supabaseClient.from('user_data').insert([{ user_id: state.user.id, data: state.classes }]);
                 }
-                
-                setTimeout(() => {
-                    document.getElementById('sync-status').innerText = 'Saved';
-                }, 1000);
+                setTimeout(() => { document.getElementById('sync-status').innerText = 'Saved'; }, 1000);
             } else {
-                // IF NOT LOGGED IN: Fallback to local storage (Guest Mode)
                 localStorage.setItem('edutrack_data', JSON.stringify(state.classes));
             }
         }
@@ -596,39 +642,28 @@
 
         async function loadDataFromSupabase() {
             document.getElementById('sync-status').innerText = 'Loading...';
-            const { data, error } = await supabaseClient
-                .from('user_data')
-                .select('data')
-                .eq('user_id', state.user.id)
-                .single();
-
+            const { data, error } = await supabaseClient.from('user_data').select('data').eq('user_id', state.user.id).single();
             if (data && data.data) {
                 state.classes = data.data;
                 if(state.classes.length > 0) state.activeTab = state.classes[0].id;
                 render();
             } 
-            // If no data in Supabase yet, we start with empty state, NOT local storage
             document.getElementById('sync-status').innerText = 'Synced';
         }
 
         // --- CORE LOGIC (GPA & GRADES) ---
-
         function calculateClassGrade(cls) {
             let totalWeightUsed = 0;
             let weightedSum = 0;
-
             cls.categories.forEach(cat => {
                 const assignments = cls.assignments.filter(a => a.categoryId === cat.id && a.score !== null && a.score !== "");
-                
                 if (assignments.length > 0) {
                     let catTotalPoints = 0;
                     let catEarnedPoints = 0;
-
                     assignments.forEach(a => {
                         catEarnedPoints += parseFloat(a.score);
                         catTotalPoints += parseFloat(a.total);
                     });
-
                     if (catTotalPoints > 0) {
                         const catPercentage = (catEarnedPoints / catTotalPoints);
                         weightedSum += catPercentage * parseFloat(cat.weight);
@@ -636,9 +671,7 @@
                     }
                 }
             });
-
             if (totalWeightUsed === 0) return null; 
-
             return (weightedSum / totalWeightUsed) * 100;
         }
 
@@ -662,7 +695,6 @@
         function calculateOverallGPA() {
             let totalGPA = 0;
             let count = 0;
-
             state.classes.forEach(cls => {
                 const grade = calculateClassGrade(cls);
                 if (grade !== null) {
@@ -670,7 +702,6 @@
                     count++;
                 }
             });
-
             const finalGPA = count === 0 ? 0 : (totalGPA / count);
             document.getElementById('overall-gpa').innerText = finalGPA.toFixed(2);
         }
@@ -685,75 +716,113 @@
             }
         }
 
-        function renderTodoList() {
-            const listEl = document.getElementById('todo-list');
-            listEl.innerHTML = '';
+        // --- CALENDAR LOGIC ---
 
-            let allAssignments = [];
+        // Helper to generate a consistent pastel color from a string (class id)
+        function stringToColor(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                hash = str.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            const hue = Math.abs(hash % 360);
+            return `hsl(${hue}, 70%, 85%)`; // Pastel background
+        }
+        function stringToTextColor(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                hash = str.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            const hue = Math.abs(hash % 360);
+            return `hsl(${hue}, 80%, 30%)`; // Darker text
+        }
+
+        function changeMonth(offset) {
+            state.calendarDate.setMonth(state.calendarDate.getMonth() + offset);
+            renderCalendar();
+        }
+
+        function renderCalendar() {
+            const grid = document.getElementById('calendar-grid');
+            const monthLabel = document.getElementById('calendar-month-year');
+            const legend = document.getElementById('calendar-legend');
+            
+            grid.innerHTML = '';
+            legend.innerHTML = '';
+            
+            const year = state.calendarDate.getFullYear();
+            const month = state.calendarDate.getMonth();
+            
+            // Update Header
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            monthLabel.innerText = `${monthNames[month]} ${year}`;
+
+            // Create Legend
             state.classes.forEach(cls => {
-                cls.assignments.forEach(asg => {
-                    // Include if it's not completed/submitted/na
-                    if (asg.status !== 'completed' && asg.status !== 'submitted' && asg.status !== 'na') {
-                        allAssignments.push({ ...asg, className: cls.name, classId: cls.id });
-                    }
-                });
+                const bg = stringToColor(cls.id);
+                const txt = stringToTextColor(cls.id);
+                const item = document.createElement('div');
+                item.className = 'flex items-center gap-1';
+                item.innerHTML = `<span class="w-3 h-3 rounded-full" style="background-color:${bg}"></span><span>${cls.name}</span>`;
+                legend.appendChild(item);
             });
 
-            // Sort by date
-            allAssignments.sort((a, b) => {
-                if (!a.dueDate) return 1;
-                if (!b.dueDate) return -1;
-                return new Date(a.dueDate) - new Date(b.dueDate);
-            });
-
-            if (allAssignments.length === 0) {
-                listEl.innerHTML = '<p class="text-gray-400 italic">No pending assignments.</p>';
-                return;
+            // Calculate Grid details
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            const startDayIndex = firstDay.getDay(); // 0 is Sunday
+            
+            // Empty slots for previous month
+            for (let i = 0; i < startDayIndex; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'bg-gray-100 min-h-[100px] border-b border-r border-gray-200';
+                grid.appendChild(cell);
             }
 
-            const today = new Date(Date.now());
+            // Days
+            for (let day = 1; day <= daysInMonth; day++) {
+                const cell = document.createElement('div');
+                cell.className = 'calendar-day bg-white border-b border-r border-gray-200 p-1 relative';
+                
+                const dayNum = document.createElement('div');
+                dayNum.className = 'text-xs font-bold text-gray-500 mb-1';
+                dayNum.innerText = day;
+                cell.appendChild(dayNum);
+                
+                // Find assignments for this specific date
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                
+                state.classes.forEach(cls => {
+                    cls.assignments.forEach(asg => {
+                        if(asg.dueDate === dateStr) {
+                            const event = document.createElement('div');
+                            event.className = 'calendar-event';
+                            event.style.backgroundColor = stringToColor(cls.id);
+                            event.style.color = stringToTextColor(cls.id);
+                            event.innerText = asg.name;
+                            event.title = `${asg.name} (${cls.name})`;
+                            event.onclick = (e) => {
+                                e.stopPropagation();
+                                state.activeTab = cls.id;
+                                editAssignment(asg.id);
+                            };
+                            cell.appendChild(event);
+                        }
+                    });
+                });
 
-            allAssignments.forEach(asg => {
-                let timeText = asg.dueDate || 'No Date';
-                let timeColor = 'bg-gray-100 text-gray-600';
-
-                if (asg.dueDate) {
-                    const dueDate = new Date(asg.dueDate);
-                    
-                    if (dueDate.getDate() < (today.getDate() - 1)) {
-                        timeColor = 'bg-red-100 text-red-800';
-                        timeText += ' (Overdue)';
-                    } else if (dueDate.getDate() === (today.getDate() - 1)) {
-                        timeColor = 'bg-yellow-100 text-yellow-800';
-                        timeText = 'Today';
-                    } else {
-                        timeColor = 'bg-blue-100 text-blue-800';
-                    }
-                }
-
-                const item = document.createElement('div');
-                item.className = 'flex justify-between items-center bg-gray-50 p-2 rounded border border-gray-100 cursor-pointer hover:bg-gray-100';
-                item.onclick = () => {
-                    state.activeTab = asg.classId;
-                    render(); // Switch tab
-                    editAssignment(asg.id); // Open modal
-                };
-                item.innerHTML = `
-                    <div>
-                        <span class="font-medium text-gray-800">${asg.name}</span>
-                        <span class="text-xs text-gray-500 block">${asg.className}</span>
-                    </div>
-                    <span class="text-xs font-semibold px-2 py-1 rounded ${timeColor}">${timeText}</span>
-                `;
-                listEl.appendChild(item);
-            });
+                grid.appendChild(cell);
+            }
         }
 
         // --- UI RENDERING ---
-
         function render() {
             renderTodoList();
             
+            if (state.currentView === 'calendar') {
+                renderCalendar();
+            }
+
             const tabsContainer = document.getElementById('class-tabs');
             const contentContainer = document.getElementById('class-content');
             
@@ -788,7 +857,6 @@
                 } else {
                     assignmentsHtml = `<div class="bg-white shadow overflow-hidden sm:rounded-md mt-4"><ul class="divide-y divide-gray-200">`;
                     
-                    // Sort by due date
                     activeClass.assignments.sort((a,b) => {
                          if (a.dueDate && b.dueDate) return new Date(b.dueDate) - new Date(a.dueDate);
                          return 0;
@@ -805,10 +873,8 @@
                             percentColor = percent >= 90 ? 'text-green-600' : percent < 60 ? 'text-red-500' : 'text-gray-500';
                         }
                         
-                        // Status Badge
                         const statusKey = asg.status || 'not-started';
                         const statusBadgeHtml = `<span class="text-[10px] uppercase font-bold px-2 py-0.5 rounded status-${statusKey} mr-2">${getStatusLabel(statusKey)}</span>`;
-                        
                         const dateBadge = asg.dueDate ? `<span class="ml-2 text-xs text-gray-400 border border-gray-200 rounded px-1">${asg.dueDate}</span>` : '';
 
                         assignmentsHtml += `
@@ -881,15 +947,67 @@
             calculateOverallGPA();
         }
 
+        function renderTodoList() {
+            const listEl = document.getElementById('todo-list');
+            listEl.innerHTML = '';
+            let allAssignments = [];
+            state.classes.forEach(cls => {
+                cls.assignments.forEach(asg => {
+                    if (asg.status !== 'completed' && asg.status !== 'submitted' && asg.status !== 'na') {
+                        allAssignments.push({ ...asg, className: cls.name, classId: cls.id });
+                    }
+                });
+            });
+            allAssignments.sort((a, b) => {
+                if (!a.dueDate) return 1;
+                if (!b.dueDate) return -1;
+                return new Date(a.dueDate) - new Date(b.dueDate);
+            });
+            if (allAssignments.length === 0) {
+                listEl.innerHTML = '<p class="text-gray-400 italic">No pending assignments.</p>';
+                return;
+            }
+            const today = new Date(Date.now());
+            allAssignments.forEach(asg => {
+                let timeText = asg.dueDate || 'No Date';
+                let timeColor = 'bg-gray-100 text-gray-600';
+                if (asg.dueDate) {
+                    const dueDate = new Date(asg.dueDate);
+                    if (dueDate.getDate() < (today.getDate() - 1)) {
+                        timeColor = 'bg-red-100 text-red-800';
+                        timeText += ' (Overdue)';
+                    } else if (dueDate.getDate() === (today.getDate() - 1)) {
+                        timeColor = 'bg-yellow-100 text-yellow-800';
+                        timeText = 'Today';
+                    } else {
+                        timeColor = 'bg-blue-100 text-blue-800';
+                    }
+                }
+                const item = document.createElement('div');
+                item.className = 'flex justify-between items-center bg-gray-50 p-2 rounded border border-gray-100 cursor-pointer hover:bg-gray-100';
+                item.onclick = () => {
+                    state.activeTab = asg.classId;
+                    switchMainView('dashboard'); // Switch back to dashboard to see details
+                    render();
+                    editAssignment(asg.id); 
+                };
+                item.innerHTML = `
+                    <div>
+                        <span class="font-medium text-gray-800">${asg.name}</span>
+                        <span class="text-xs text-gray-500 block">${asg.className}</span>
+                    </div>
+                    <span class="text-xs font-semibold px-2 py-1 rounded ${timeColor}">${timeText}</span>
+                `;
+                listEl.appendChild(item);
+            });
+        }
+
         // --- MODAL & FORM HANDLERS ---
 
         function toggleModal(modalID, forceState = null) {
             const modal = document.getElementById(modalID);
             const isHidden = modal.classList.contains('opacity-0');
-            
-            // If forceState is provided: true = show, false = hide
             const shouldShow = forceState !== null ? forceState : isHidden;
-
             if (shouldShow) {
                 modal.classList.remove('opacity-0', 'pointer-events-none');
                 document.body.classList.add('modal-active');
@@ -904,7 +1022,6 @@
             const deleteBtn = document.getElementById('delete-class-btn');
             const catInputs = document.getElementById('category-inputs');
             catInputs.innerHTML = ''; 
-
             if (classId) {
                 const cls = state.classes.find(c => c.id === classId);
                 document.getElementById('edit-class-id').value = cls.id;
@@ -940,7 +1057,6 @@
             e.preventDefault();
             const id = document.getElementById('edit-class-id').value;
             const name = document.getElementById('class-name').value;
-            
             const categories = [];
             document.querySelectorAll('.category-row').forEach(row => {
                 categories.push({
@@ -949,12 +1065,10 @@
                     weight: row.querySelector('.cat-weight').value
                 });
             });
-
             if (categories.length === 0) {
                 alert("Please add at least one category.");
                 return;
             }
-
             if (id) {
                 const cls = state.classes.find(c => c.id === id);
                 cls.name = name;
@@ -969,7 +1083,6 @@
                 state.classes.push(newClass);
                 state.activeTab = newClass.id;
             }
-            
             saveData();
             render();
             closeClassModal();
@@ -988,39 +1101,31 @@
 
         function openAssignmentModal() {
             if (!state.activeTab) return alert("Select a class first");
-            
             const activeClass = state.classes.find(c => c.id === state.activeTab);
             const select = document.getElementById('asg-category');
             select.innerHTML = '';
-            
             if (activeClass.categories.length === 0) {
                 alert("This class has no categories. Please edit the class to add categories.");
                 return;
             }
-
             activeClass.categories.forEach(cat => {
                 const opt = document.createElement('option');
                 opt.value = cat.id;
                 opt.innerText = `${cat.name} (${cat.weight}%)`;
                 select.appendChild(opt);
             });
-
             document.getElementById('asg-class-id').value = activeClass.id;
             document.getElementById('asg-id').value = ''; 
             document.getElementById('delete-asg-btn').classList.add('hidden');
             document.getElementById('assignment-form').reset();
-            // Default status
             document.getElementById('asg-status').value = 'not-started';
-            
             toggleModal('assignment-modal', true);
         }
 
         function editAssignment(asgId) {
             const activeClass = state.classes.find(c => c.id === state.activeTab);
             const asg = activeClass.assignments.find(a => a.id === asgId);
-            
             openAssignmentModal(); 
-            
             document.getElementById('asg-id').value = asg.id;
             document.getElementById('asg-name').value = asg.name;
             document.getElementById('asg-category').value = asg.categoryId;
@@ -1036,7 +1141,6 @@
                 const classId = document.getElementById('asg-class-id').value;
                 const asgId = document.getElementById('asg-id').value;
                 const cls = state.classes.find(c => c.id === classId);
-                
                 cls.assignments = cls.assignments.filter(a => a.id !== asgId);
                 saveData();
                 render();
@@ -1056,9 +1160,7 @@
             const total = document.getElementById('asg-total').value;
             const date = document.getElementById('asg-date').value;
             const status = document.getElementById('asg-status').value;
-
             const cls = state.classes.find(c => c.id === classId);
-            
             if (asgId) {
                 const asg = cls.assignments.find(a => a.id === asgId);
                 asg.name = name;
@@ -1079,7 +1181,6 @@
                     created_at: new Date().toISOString()
                 });
             }
-
             saveData();
             render();
             closeAssignmentModal();
