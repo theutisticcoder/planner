@@ -8,15 +8,41 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- Library for PDF Export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            bg: '#111827',
+                            card: '#1f2937',
+                            text: '#f3f4f6',
+                            muted: '#9ca3af',
+                            border: '#374151'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        body { font-family: 'Inter', sans-serif; transition: background-color 0.3s, color 0.3s; }
+        
+        /* Light Mode Defaults */
+        body { background-color: #f3f4f6; color: #1f2937; }
+        .card { background-color: #ffffff; }
         .tab-active { border-bottom: 2px solid #2563eb; color: #2563eb; font-weight: 600; }
         .tab-inactive { color: #6b7280; border-bottom: 2px solid transparent; }
-        .grade-A { color: #16a34a; }
-        .grade-B { color: #84cc16; }
-        .grade-C { color: #eab308; }
-        .grade-D { color: #f97316; }
-        .grade-F { color: #ef4444; }
+        
+        /* Dark Mode Overrides */
+        .dark body { background-color: #111827; color: #f3f4f6; }
+        .dark .card { background-color: #1f2937; border-color: #374151; }
+        .dark .tab-inactive { color: #9ca3af; }
+        .dark nav { background-color: #1f2937; border-color: #374151; }
+        .dark input, .dark select { background-color: #374151; color: white; border-color: #4b5563; }
+        .dark .modal-container { background-color: #1f2937; color: white; }
+
         .modal { transition: opacity 0.25s ease; }
         body.modal-active { overflow: hidden; }
         
@@ -31,50 +57,61 @@
         .calendar-day { min-height: 100px; transition: background-color 0.2s; }
         .calendar-day:hover { background-color: #f9fafb; }
         .calendar-event { font-size: 0.75rem; padding: 2px 4px; margin-bottom: 2px; border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+
+        /* Dark Mode Calendar */
+        .dark .calendar-day { background-color: #1f2937; border-color: #374151; }
+        .dark .calendar-day:hover { background-color: #374151; }
+        .dark .calendar-header { background-color: #374151; color: #d1d5db; }
+        .dark .calendar-grid-bg { background-color: #374151; border-color: #374151; }
     </style>
 </head>
 <body class="text-gray-800">
 
     <!-- Navbar -->
-    <nav class="bg-white shadow-sm p-4 sticky top-0 z-30">
+    <nav class="bg-white shadow-sm p-4 sticky top-0 z-30 dark:bg-gray-800 dark:border-gray-700 transition-colors">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
             <h1 class="text-2xl font-bold text-blue-600 tracking-tight">EduTrack</h1>
             
             <!-- Main View Switcher -->
             <div class="hidden md:flex space-x-6">
                 <button onclick="switchMainView('dashboard')" id="nav-dashboard" class="tab-active py-2">Dashboard</button>
-                <button onclick="switchMainView('calendar')" id="nav-calendar" class="tab-inactive py-2 hover:text-gray-700">Calendar</button>
+                <button onclick="switchMainView('calendar')" id="nav-calendar" class="tab-inactive py-2 hover:text-gray-700 dark:hover:text-gray-300">Calendar</button>
             </div>
 
             <div id="auth-section" class="flex items-center gap-3">
+                <!-- Dark Mode Toggle -->
+                <button onclick="toggleDarkMode()" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+                    <span id="dark-icon">🌙</span>
+                </button>
+
                 <button onclick="toggleModal('login-modal', true)" id="login-btn-nav" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition hidden">
                     Login / Sign Up
                 </button>
                 <div id="user-info" class="hidden flex items-center gap-4">
                     <!-- Data Tools Dropdown Trigger -->
                     <div class="relative group">
-                        <button class="text-sm font-medium text-gray-600 hover:text-blue-600 flex items-center gap-1">
+                        <button class="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-blue-600 flex items-center gap-1">
                             Data Tools ▾
                         </button>
-                        <div class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 hidden group-hover:block border border-gray-100 z-50">
-                            <button onclick="exportCSV()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left">Export CSV</button>
-                            <label class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left cursor-pointer">
+                        <div class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 hidden group-hover:block border border-gray-100 dark:border-gray-700 z-50">
+                            <button onclick="exportCSV()" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left">Export CSV</button>
+                            <label class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left cursor-pointer">
                                 Import CSV
                                 <input type="file" id="csv-upload" class="hidden" accept=".csv" onchange="importCSV(this)">
                             </label>
                         </div>
                     </div>
 
-                    <span id="user-email" class="text-sm font-medium hidden md:inline"></span>
+                    <span id="user-email" class="text-sm font-medium hidden md:inline dark:text-gray-300"></span>
                     <button id="logout-btn" class="text-sm text-red-500 hover:text-red-700">Logout</button>
                     <span id="sync-status" class="text-xs text-gray-400">Synced</span>
                 </div>
             </div>
         </div>
         <!-- Mobile Nav View Switcher -->
-        <div class="md:hidden flex justify-center space-x-6 mt-4 border-t pt-2">
+        <div class="md:hidden flex justify-center space-x-6 mt-4 border-t pt-2 dark:border-gray-700">
             <button onclick="switchMainView('dashboard')" id="nav-dashboard-mobile" class="text-blue-600 font-bold">Dashboard</button>
-            <button onclick="switchMainView('calendar')" id="nav-calendar-mobile" class="text-gray-500">Calendar</button>
+            <button onclick="switchMainView('calendar')" id="nav-calendar-mobile" class="text-gray-500 dark:text-gray-400">Calendar</button>
         </div>
     </nav>
 
@@ -87,17 +124,17 @@
                 <!-- Dashboard Grid -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                     <!-- GPA Card -->
-                    <div class="bg-white p-6 rounded-xl shadow-sm flex flex-col justify-center relative">
-                        <button onclick="exportPDF()" class="absolute top-4 right-4 text-gray-400 hover:text-red-600 text-xs border border-gray-200 p-1 rounded" title="Download PDF Report">
+                    <div class="card p-6 rounded-xl shadow-sm flex flex-col justify-center relative">
+                        <button onclick="exportPDF()" class="absolute top-4 right-4 text-gray-400 hover:text-red-600 text-xs border border-gray-200 dark:border-gray-600 p-1 rounded" title="Download PDF Report">
                             PDF Report
                         </button>
-                        <h2 class="text-gray-500 text-sm uppercase tracking-wide">Cumulative GPA</h2>
-                        <div class="text-4xl font-bold text-gray-900 mt-1" id="overall-gpa">0.00</div>
+                        <h2 class="text-gray-500 dark:text-gray-400 text-sm uppercase tracking-wide">Cumulative GPA</h2>
+                        <div class="text-4xl font-bold text-gray-900 dark:text-white mt-1" id="overall-gpa">0.00</div>
                     </div>
                     
                     <!-- To-Do List -->
-                    <div class="bg-white p-6 rounded-xl shadow-sm col-span-2 overflow-y-auto max-h-48">
-                        <h2 class="text-gray-500 text-sm uppercase tracking-wide mb-2">Upcoming Deadlines</h2>
+                    <div class="card p-6 rounded-xl shadow-sm col-span-2 overflow-y-auto max-h-48">
+                        <h2 class="text-gray-500 dark:text-gray-400 text-sm uppercase tracking-wide mb-2">Upcoming Deadlines</h2>
                         <div id="todo-list" class="space-y-2 text-sm">
                             <!-- Injected via JS -->
                             <p class="text-gray-400">No upcoming assignments.</p>
@@ -107,12 +144,12 @@
 
                 <!-- Controls -->
                 <div class="flex justify-between items-center mb-4">
-                    <div class="border-b border-gray-200 flex-grow overflow-x-auto">
+                    <div class="border-b border-gray-200 dark:border-gray-700 flex-grow overflow-x-auto">
                         <nav class="-mb-px flex space-x-8" id="class-tabs">
                             <!-- Tabs injected by JS -->
                         </nav>
                     </div>
-                    <button id="add-class-btn" onclick="openClassModal()" class="ml-4 bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition whitespace-nowrap">
+                    <button id="add-class-btn" onclick="openClassModal()" class="ml-4 bg-gray-900 dark:bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-gray-800 dark:hover:bg-blue-700 transition whitespace-nowrap">
                         + Add Class
                     </button>
                 </div>
@@ -128,36 +165,36 @@
 
         <!-- VIEW: CALENDAR -->
         <div id="view-calendar" class="hidden">
-            <div class="bg-white rounded-xl shadow-sm p-6">
+            <div class="card rounded-xl shadow-sm p-6">
                 <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold text-gray-800" id="calendar-month-year"></h2>
+                    <h2 class="text-2xl font-bold text-gray-800 dark:text-white" id="calendar-month-year"></h2>
                     <div class="flex space-x-2">
-                        <button onclick="changeMonth(-1)" class="p-2 hover:bg-gray-100 rounded text-gray-600">
+                        <button onclick="changeMonth(-1)" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-300">
                             &lt; Prev
                         </button>
-                        <button onclick="changeMonth(1)" class="p-2 hover:bg-gray-100 rounded text-gray-600">
+                        <button onclick="changeMonth(1)" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-300">
                             Next &gt;
                         </button>
                     </div>
                 </div>
                 
                 <!-- Calendar Grid -->
-                <div class="grid grid-cols-7 gap-px bg-gray-200 border border-gray-200 rounded-lg overflow-hidden">
+                <div class="grid grid-cols-7 gap-px bg-gray-200 dark:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
                     <!-- Weekday Headers -->
-                    <div class="bg-gray-50 p-2 text-center text-xs font-semibold text-gray-500">Sun</div>
-                    <div class="bg-gray-50 p-2 text-center text-xs font-semibold text-gray-500">Mon</div>
-                    <div class="bg-gray-50 p-2 text-center text-xs font-semibold text-gray-500">Tue</div>
-                    <div class="bg-gray-50 p-2 text-center text-xs font-semibold text-gray-500">Wed</div>
-                    <div class="bg-gray-50 p-2 text-center text-xs font-semibold text-gray-500">Thu</div>
-                    <div class="bg-gray-50 p-2 text-center text-xs font-semibold text-gray-500">Fri</div>
-                    <div class="bg-gray-50 p-2 text-center text-xs font-semibold text-gray-500">Sat</div>
+                    <div class="calendar-header bg-gray-50 p-2 text-center text-xs font-semibold text-gray-500">Sun</div>
+                    <div class="calendar-header bg-gray-50 p-2 text-center text-xs font-semibold text-gray-500">Mon</div>
+                    <div class="calendar-header bg-gray-50 p-2 text-center text-xs font-semibold text-gray-500">Tue</div>
+                    <div class="calendar-header bg-gray-50 p-2 text-center text-xs font-semibold text-gray-500">Wed</div>
+                    <div class="calendar-header bg-gray-50 p-2 text-center text-xs font-semibold text-gray-500">Thu</div>
+                    <div class="calendar-header bg-gray-50 p-2 text-center text-xs font-semibold text-gray-500">Fri</div>
+                    <div class="calendar-header bg-gray-50 p-2 text-center text-xs font-semibold text-gray-500">Sat</div>
                     
                     <!-- Days injected via JS -->
                     <div id="calendar-grid" class="contents"></div>
                 </div>
                 
                 <!-- Legend -->
-                <div id="calendar-legend" class="mt-4 flex flex-wrap gap-4 text-xs">
+                <div id="calendar-legend" class="mt-4 flex flex-wrap gap-4 text-xs dark:text-gray-300">
                     <!-- Legend items injected via JS -->
                 </div>
             </div>
@@ -192,11 +229,11 @@
                 <!-- Email Form -->
                 <form id="email-auth-form" class="space-y-4">
                     <div>
-                        <label class="block text-gray-700 text-sm font-bold mb-2">Email</label>
+                        <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Email</label>
                         <input type="email" id="auth-email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
                     </div>
                     <div>
-                        <label class="block text-gray-700 text-sm font-bold mb-2">Password</label>
+                        <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Password</label>
                         <input type="password" id="auth-password" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
                     </div>
                     <div class="flex gap-2 pt-2">
@@ -223,12 +260,12 @@
                 <form id="class-form">
                     <input type="hidden" id="edit-class-id">
                     <div class="mb-4">
-                        <label class="block text-gray-700 text-sm font-bold mb-2">Class Name</label>
+                        <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Class Name</label>
                         <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="class-name" type="text" placeholder="e.g. Calculus I" required>
                     </div>
                     
                     <div class="mb-4">
-                        <label class="block text-gray-700 text-sm font-bold mb-2">Categories & Weights (%)</label>
+                        <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Categories & Weights (%)</label>
                         <div id="category-inputs" class="space-y-2">
                             <!-- Categories injected here -->
                         </div>
@@ -260,19 +297,19 @@
                     <input type="hidden" id="asg-id">
                     
                     <div class="mb-4">
-                        <label class="block text-gray-700 text-sm font-bold mb-2">Name</label>
+                        <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Name</label>
                         <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" id="asg-name" type="text" required>
                     </div>
 
                     <div class="flex gap-4 mb-4">
                         <div class="w-1/2">
-                            <label class="block text-gray-700 text-sm font-bold mb-2">Category</label>
+                            <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Category</label>
                             <select id="asg-category" class="shadow border rounded w-full py-2 px-3 text-gray-700 bg-white" required>
                                 <!-- Options filled via JS -->
                             </select>
                         </div>
                         <div class="w-1/2">
-                            <label class="block text-gray-700 text-sm font-bold mb-2">Status</label>
+                            <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Status</label>
                             <select id="asg-status" class="shadow border rounded w-full py-2 px-3 text-gray-700 bg-white">
                                 <option value="not-started">Not Started</option>
                                 <option value="in-progress">In Progress</option>
@@ -284,17 +321,17 @@
                     </div>
 
                     <div class="mb-4">
-                        <label class="block text-gray-700 text-sm font-bold mb-2">Due Date (Optional)</label>
+                        <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Due Date (Optional)</label>
                         <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" id="asg-date" type="date">
                     </div>
 
                     <div class="flex gap-4 mb-4">
                         <div class="w-1/2">
-                            <label class="block text-gray-700 text-sm font-bold mb-2">Score</label>
+                            <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Score</label>
                             <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" id="asg-score" type="number" step="0.1" placeholder="--" >
                         </div>
                         <div class="w-1/2">
-                            <label class="block text-gray-700 text-sm font-bold mb-2">Total</label>
+                            <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Total</label>
                             <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" id="asg-total" type="number" value="100" step="0.1">
                         </div>
                     </div>
@@ -319,9 +356,61 @@
             classes: [], 
             activeTab: null,
             user: null,
-            currentView: 'dashboard', // dashboard or calendar
+            currentView: 'dashboard', 
             calendarDate: new Date()
         };
+
+        // --- DARK MODE LOGIC ---
+        function initDarkMode() {
+            // Check local storage or system preference
+            if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+                document.getElementById('dark-icon').innerText = '☀️';
+            } else {
+                document.documentElement.classList.remove('dark');
+                document.getElementById('dark-icon').innerText = '🌙';
+            }
+        }
+
+        function toggleDarkMode() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+                document.getElementById('dark-icon').innerText = '🌙';
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+                document.getElementById('dark-icon').innerText = '☀️';
+            }
+        }
+        initDarkMode();
+
+        // --- ENCRYPTION / SCRAMBLING LOGIC (Base64) ---
+        // Basic obfuscation to scramble data in DB
+        function scrambleData(data) {
+            try {
+                const jsonString = JSON.stringify(data);
+                return btoa(unescape(encodeURIComponent(jsonString))); // Handle Unicode
+            } catch (e) {
+                console.error("Scramble failed", e);
+                return null;
+            }
+        }
+
+        function unscrambleData(scrambledString) {
+            try {
+                // Check if it looks like JSON (not scrambled) for legacy data support
+                if (scrambledString.trim().startsWith('[') || scrambledString.trim().startsWith('{')) {
+                    return JSON.parse(scrambledString);
+                }
+                const jsonString = decodeURIComponent(escape(atob(scrambledString)));
+                return JSON.parse(jsonString);
+            } catch (e) {
+                console.error("Unscramble failed", e);
+                // Fallback: maybe it wasn't scrambled?
+                try { return JSON.parse(scrambledString); } catch(e2) { return []; }
+            }
+        }
 
         // --- AUTHENTICATION ---
         async function checkUser() {
@@ -412,7 +501,6 @@
         function switchMainView(view) {
             state.currentView = view;
             
-            // Tab Styling
             const dashBtn = document.getElementById('nav-dashboard');
             const calBtn = document.getElementById('nav-calendar');
             
@@ -420,11 +508,11 @@
                 document.getElementById('view-dashboard').classList.remove('hidden');
                 document.getElementById('view-calendar').classList.add('hidden');
                 dashBtn.className = "tab-active py-2";
-                calBtn.className = "tab-inactive py-2 hover:text-gray-700";
+                calBtn.className = "tab-inactive py-2 hover:text-gray-700 dark:hover:text-gray-300";
             } else {
                 document.getElementById('view-dashboard').classList.add('hidden');
                 document.getElementById('view-calendar').classList.remove('hidden');
-                dashBtn.className = "tab-inactive py-2 hover:text-gray-700";
+                dashBtn.className = "tab-inactive py-2 hover:text-gray-700 dark:hover:text-gray-300";
                 calBtn.className = "tab-active py-2";
                 renderCalendar();
             }
@@ -530,6 +618,9 @@
             const tempDiv = document.createElement('div');
             tempDiv.style.padding = '20px';
             tempDiv.style.fontFamily = 'Inter, sans-serif';
+            // Force light mode colors for PDF
+            tempDiv.style.color = 'black';
+            tempDiv.style.backgroundColor = 'white';
 
             let overallGPA = document.getElementById('overall-gpa').innerText;
             let header = `
@@ -618,12 +709,20 @@
         async function saveData() {
             if (state.user) {
                 document.getElementById('sync-status').innerText = 'Saving...';
+                
+                // SCRAMBLE DATA
+                const scrambled = scrambleData(state.classes);
+
                 const { data: existingData } = await supabaseClient.from('user_data').select('id').eq('user_id', state.user.id).single();
-                const updatePayload = { data: state.classes, updated_at: new Date() };
+                
+                // We save the scrambled string in a wrapper object or directly as JSON value
+                const dataToSave = { scrambled: scrambled };
+
+                const updatePayload = { data: dataToSave, updated_at: new Date() };
                 if (existingData) {
                     await supabaseClient.from('user_data').update(updatePayload).eq('user_id', state.user.id);
                 } else {
-                    await supabaseClient.from('user_data').insert([{ user_id: state.user.id, data: state.classes }]);
+                    await supabaseClient.from('user_data').insert([{ user_id: state.user.id, data: dataToSave }]);
                 }
                 setTimeout(() => { document.getElementById('sync-status').innerText = 'Saved'; }, 1000);
             } else {
@@ -644,7 +743,14 @@
             document.getElementById('sync-status').innerText = 'Loading...';
             const { data, error } = await supabaseClient.from('user_data').select('data').eq('user_id', state.user.id).single();
             if (data && data.data) {
-                state.classes = data.data;
+                // Check if it's scrambled or legacy format
+                if (data.data.scrambled) {
+                     state.classes = unscrambleData(data.data.scrambled);
+                } else {
+                     // Legacy support (unscrambled data)
+                     state.classes = Array.isArray(data.data) ? data.data : [];
+                }
+
                 if(state.classes.length > 0) state.activeTab = state.classes[0].id;
                 render();
             } 
@@ -718,14 +824,13 @@
 
         // --- CALENDAR LOGIC ---
 
-        // Helper to generate a consistent pastel color from a string (class id)
         function stringToColor(str) {
             let hash = 0;
             for (let i = 0; i < str.length; i++) {
                 hash = str.charCodeAt(i) + ((hash << 5) - hash);
             }
             const hue = Math.abs(hash % 360);
-            return `hsl(${hue}, 70%, 85%)`; // Pastel background
+            return `hsl(${hue}, 70%, 85%)`; 
         }
         function stringToTextColor(str) {
             let hash = 0;
@@ -733,7 +838,7 @@
                 hash = str.charCodeAt(i) + ((hash << 5) - hash);
             }
             const hue = Math.abs(hash % 360);
-            return `hsl(${hue}, 80%, 30%)`; // Darker text
+            return `hsl(${hue}, 80%, 30%)`; 
         }
 
         function changeMonth(offset) {
@@ -752,44 +857,37 @@
             const year = state.calendarDate.getFullYear();
             const month = state.calendarDate.getMonth();
             
-            // Update Header
             const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
             monthLabel.innerText = `${monthNames[month]} ${year}`;
 
-            // Create Legend
             state.classes.forEach(cls => {
                 const bg = stringToColor(cls.id);
-                const txt = stringToTextColor(cls.id);
                 const item = document.createElement('div');
                 item.className = 'flex items-center gap-1';
                 item.innerHTML = `<span class="w-3 h-3 rounded-full" style="background-color:${bg}"></span><span>${cls.name}</span>`;
                 legend.appendChild(item);
             });
 
-            // Calculate Grid details
             const firstDay = new Date(year, month, 1);
             const lastDay = new Date(year, month + 1, 0);
             const daysInMonth = lastDay.getDate();
-            const startDayIndex = firstDay.getDay(); // 0 is Sunday
+            const startDayIndex = firstDay.getDay(); 
             
-            // Empty slots for previous month
             for (let i = 0; i < startDayIndex; i++) {
                 const cell = document.createElement('div');
-                cell.className = 'bg-gray-100 min-h-[100px] border-b border-r border-gray-200';
+                cell.className = 'bg-gray-100 dark:bg-gray-800 min-h-[100px] border-b border-r border-gray-200 dark:border-gray-700';
                 grid.appendChild(cell);
             }
 
-            // Days
             for (let day = 1; day <= daysInMonth; day++) {
                 const cell = document.createElement('div');
-                cell.className = 'calendar-day bg-white border-b border-r border-gray-200 p-1 relative';
+                cell.className = 'calendar-day bg-white dark:bg-gray-800 border-b border-r border-gray-200 dark:border-gray-700 p-1 relative';
                 
                 const dayNum = document.createElement('div');
-                dayNum.className = 'text-xs font-bold text-gray-500 mb-1';
+                dayNum.className = 'text-xs font-bold text-gray-500 dark:text-gray-400 mb-1';
                 dayNum.innerText = day;
                 cell.appendChild(dayNum);
                 
-                // Find assignments for this specific date
                 const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 
                 state.classes.forEach(cls => {
@@ -837,7 +935,7 @@
             state.classes.forEach(cls => {
                 const isActive = cls.id === state.activeTab;
                 const tabBtn = document.createElement('a');
-                tabBtn.className = `cursor-pointer whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${isActive ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`;
+                tabBtn.className = `cursor-pointer whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${isActive ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-600'}`;
                 tabBtn.innerText = cls.name;
                 tabBtn.onclick = () => { state.activeTab = cls.id; render(); };
                 tabsContainer.appendChild(tabBtn);
@@ -855,7 +953,7 @@
                      assignmentsHtml = `<div class="text-center text-gray-400 py-10">No assignments yet.</div>`;
                      if(!activeClass.assignments) activeClass.assignments = [];
                 } else {
-                    assignmentsHtml = `<div class="bg-white shadow overflow-hidden sm:rounded-md mt-4"><ul class="divide-y divide-gray-200">`;
+                    assignmentsHtml = `<div class="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-md mt-4"><ul class="divide-y divide-gray-200 dark:divide-gray-700">`;
                     
                     activeClass.assignments.sort((a,b) => {
                          if (a.dueDate && b.dueDate) return new Date(b.dueDate) - new Date(a.dueDate);
@@ -868,30 +966,30 @@
                         const scoreDisplay = (asg.score !== null && asg.score !== "") ? `${asg.score}/${asg.total}` : '-';
                         const percent = (asg.score !== null && asg.score !== "") ? Math.round((asg.score/asg.total)*100) : null;
                         
-                        let percentColor = 'text-gray-500';
+                        let percentColor = 'text-gray-500 dark:text-gray-400';
                         if (percent !== null) {
-                            percentColor = percent >= 90 ? 'text-green-600' : percent < 60 ? 'text-red-500' : 'text-gray-500';
+                            percentColor = percent >= 90 ? 'text-green-600' : percent < 60 ? 'text-red-500' : 'text-gray-500 dark:text-gray-400';
                         }
                         
                         const statusKey = asg.status || 'not-started';
                         const statusBadgeHtml = `<span class="text-[10px] uppercase font-bold px-2 py-0.5 rounded status-${statusKey} mr-2">${getStatusLabel(statusKey)}</span>`;
-                        const dateBadge = asg.dueDate ? `<span class="ml-2 text-xs text-gray-400 border border-gray-200 rounded px-1">${asg.dueDate}</span>` : '';
+                        const dateBadge = asg.dueDate ? `<span class="ml-2 text-xs text-gray-400 border border-gray-200 dark:border-gray-600 rounded px-1">${asg.dueDate}</span>` : '';
 
                         assignmentsHtml += `
-                            <li class="px-4 py-4 sm:px-6 flex justify-between items-center cursor-pointer hover:bg-gray-50 group" onclick="editAssignment('${asg.id}')">
+                            <li class="px-4 py-4 sm:px-6 flex justify-between items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 group" onclick="editAssignment('${asg.id}')">
                                 <div>
                                     <div class="flex items-center mb-1">
-                                        <p class="text-sm font-medium text-blue-600 truncate mr-2">${asg.name}</p>
+                                        <p class="text-sm font-medium text-blue-600 dark:text-blue-400 truncate mr-2">${asg.name}</p>
                                         ${statusBadgeHtml}
                                     </div>
                                     <div class="flex items-center">
-                                        <p class="text-xs text-gray-500">${catName}</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">${catName}</p>
                                         ${dateBadge}
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-4">
                                     <div class="text-right">
-                                        <p class="text-sm font-bold text-gray-900">${scoreDisplay}</p>
+                                        <p class="text-sm font-bold text-gray-900 dark:text-gray-100">${scoreDisplay}</p>
                                         <p class="text-xs ${percentColor}">${percent !== null ? percent + '%' : 'Pending'}</p>
                                     </div>
                                     <span class="text-gray-300 text-sm group-hover:text-gray-500">Edit</span>
@@ -905,14 +1003,14 @@
                 contentContainer.innerHTML = `
                     <div class="flex flex-col md:flex-row gap-6">
                         <div class="md:w-1/3 space-y-4">
-                            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 relative">
-                                <button onclick="openClassModal('${activeClass.id}')" class="absolute top-4 right-4 text-gray-400 hover:text-blue-600 border border-gray-200 rounded px-2 text-xs font-semibold uppercase">Edit Class</button>
-                                <h3 class="text-gray-500 text-xs uppercase tracking-wide">Current Grade</h3>
+                            <div class="card p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 relative">
+                                <button onclick="openClassModal('${activeClass.id}')" class="absolute top-4 right-4 text-gray-400 hover:text-blue-600 border border-gray-200 dark:border-gray-600 rounded px-2 text-xs font-semibold uppercase">Edit Class</button>
+                                <h3 class="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Current Grade</h3>
                                 <div class="flex items-baseline mt-2">
                                     <span class="text-5xl font-extrabold ${gradeColorClass}">${currentGrade ? currentGrade.toFixed(2) : '--'}%</span>
-                                    <span class="ml-2 text-2xl font-medium text-gray-400">${letterGrade}</span>
+                                    <span class="ml-2 text-2xl font-medium text-gray-400">(${letterGrade})</span>
                                 </div>
-                                <div class="mt-4 pt-4 border-t border-gray-100">
+                                <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
                                     <h4 class="text-xs font-semibold text-gray-400 mb-2">Category Breakdown</h4>
                                     <div class="space-y-2">
                                         ${activeClass.categories.map(cat => {
@@ -922,8 +1020,8 @@
                                             const avg = total > 0 ? Math.round((earned/total)*100) : 0;
                                             return `
                                                 <div class="flex justify-between text-sm">
-                                                    <span class="text-gray-600">${cat.name} <span class="text-xs text-gray-400">(${cat.weight}%)</span></span>
-                                                    <span class="font-bold ${total > 0 ? '' : 'text-gray-300'}">${total > 0 ? avg + '%' : '--'}</span>
+                                                    <span class="text-gray-600 dark:text-gray-300">${cat.name} <span class="text-xs text-gray-400">(${cat.weight}%)</span></span>
+                                                    <span class="font-bold ${total > 0 ? 'text-gray-700 dark:text-gray-200' : 'text-gray-300'}">${total > 0 ? avg + '%' : '--'}</span>
                                                 </div>
                                             `;
                                         }).join('')}
@@ -934,7 +1032,7 @@
 
                         <div class="md:w-2/3">
                             <div class="flex justify-between items-center mb-2">
-                                <h3 class="text-lg font-bold text-gray-800">Assignments</h3>
+                                <h3 class="text-lg font-bold text-gray-800 dark:text-gray-200">Assignments</h3>
                                 <button onclick="openAssignmentModal()" class="bg-blue-600 text-white text-sm px-3 py-1.5 rounded hover:bg-blue-700 shadow-sm">
                                     + Add Assignment
                                 </button>
@@ -970,21 +1068,25 @@
             const today = new Date(Date.now());
             allAssignments.forEach(asg => {
                 let timeText = asg.dueDate || 'No Date';
-                let timeColor = 'bg-gray-100 text-gray-600';
+                let timeColor = 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300';
                 if (asg.dueDate) {
                     const dueDate = new Date(asg.dueDate);
-                    if (dueDate.getDate() < (today.getDate() - 1)) {
-                        timeColor = 'bg-red-100 text-red-800';
+                    // Reset time to compare just dates
+                    const todayZero = new Date(); todayZero.setHours(0,0,0,0);
+                    const dueZero = new Date(dueDate); dueZero.setHours(0,0,0,0);
+                    
+                    if (dueZero < todayZero) {
+                        timeColor = 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
                         timeText += ' (Overdue)';
-                    } else if (dueDate.getDate() === (today.getDate() - 1)) {
-                        timeColor = 'bg-yellow-100 text-yellow-800';
+                    } else if (dueZero.getTime() === todayZero.getTime()) {
+                        timeColor = 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
                         timeText = 'Today';
                     } else {
-                        timeColor = 'bg-blue-100 text-blue-800';
+                        timeColor = 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
                     }
                 }
                 const item = document.createElement('div');
-                item.className = 'flex justify-between items-center bg-gray-50 p-2 rounded border border-gray-100 cursor-pointer hover:bg-gray-100';
+                item.className = 'flex justify-between items-center bg-gray-50 dark:bg-gray-800 p-2 rounded border border-gray-100 dark:border-gray-700 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700';
                 item.onclick = () => {
                     state.activeTab = asg.classId;
                     switchMainView('dashboard'); // Switch back to dashboard to see details
@@ -993,8 +1095,8 @@
                 };
                 item.innerHTML = `
                     <div>
-                        <span class="font-medium text-gray-800">${asg.name}</span>
-                        <span class="text-xs text-gray-500 block">${asg.className}</span>
+                        <span class="font-medium text-gray-800 dark:text-gray-200">${asg.name}</span>
+                        <span class="text-xs text-gray-500 dark:text-gray-400 block">${asg.className}</span>
                     </div>
                     <span class="text-xs font-semibold px-2 py-1 rounded ${timeColor}">${timeText}</span>
                 `;
@@ -1045,8 +1147,8 @@
             wrapper.className = 'flex gap-2 category-row items-center';
             const idVal = id ? id : 'new_' + Date.now() + Math.random();
             wrapper.innerHTML = `
-                <input type="text" placeholder="Category Name" class="cat-name flex-grow shadow appearance-none border rounded py-2 px-3 text-gray-700" value="${name}" required>
-                <input type="number" placeholder="%" class="cat-weight w-20 shadow appearance-none border rounded py-2 px-3 text-gray-700" value="${weight}" required>
+                <input type="text" placeholder="Category Name" class="cat-name flex-grow shadow appearance-none border rounded py-2 px-3 text-gray-700 dark:text-white dark:bg-gray-700 dark:border-gray-600" value="${name}" required>
+                <input type="number" placeholder="%" class="cat-weight w-20 shadow appearance-none border rounded py-2 px-3 text-gray-700 dark:text-white dark:bg-gray-700 dark:border-gray-600" value="${weight}" required>
                 <input type="hidden" class="cat-id" value="${idVal}">
                 <button type="button" onclick="this.closest('.category-row').remove()" class="text-red-500 hover:text-red-700 px-2 font-bold text-xl leading-none">&times;</button>
             `;
