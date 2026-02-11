@@ -1510,29 +1510,7 @@
             }
         }
 
-        // --- RENDER FUNCTION MODIFICATION ---
-        function render() {
-            // ... existing render code ...
-
-            if (state.currentView === 'dashboard') {
-                // ... existing dashboard code ...
-            } else if (state.currentView === 'calendar') {
-                // ... existing calendar code ...
-            } else {
-                // Class view
-                const activeClass = state.classes.find(c => c.id === state.activeTab);
-                if (activeClass) {
-                    // ... existing class content code ...
-
-                    // Add notes section
-                    if (!document.getElementById('class-notes-container')) {
-                        showClassNotes(activeClass.id);
-                    }
-                }
-            }
-
-            calculateOverallGPA();
-        }
+    
     </script>
     <div id="class-notes" class="hidden">
         <div class="card p-6 rounded-xl shadow-sm mb-6">
