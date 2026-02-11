@@ -633,7 +633,6 @@
 
                 if (asg.dueDate) {
                     const dueDate = new Date(asg.dueDate);
-                    dueDate.setHours(0,0,0,0);
                     
                     if (dueDate.getDate() < today.getDate()) {
                         timeColor = 'bg-red-100 text-red-800';
