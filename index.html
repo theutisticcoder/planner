@@ -248,7 +248,7 @@
         </div>
     </div>
 
-    <script>
+  <script>
         // --- SUPABASE CONFIGURATION ---
         const SUPABASE_URL = 'https://njgjgpiamweujgyknqtz.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_3bRvo_Zuppdi4ICnOtfjeA_VWfp6Zyx'; 
@@ -446,22 +446,108 @@
         }
 
         function exportPDF() {
-            const element = document.getElementById('main-app-container');
+            if (state.classes.length === 0) return alert("No classes to export.");
+
+            // Create a temporary container for the PDF content
+            const tempDiv = document.createElement('div');
+            tempDiv.style.padding = '20px';
+            tempDiv.style.fontFamily = 'Inter, sans-serif';
+
+            // Generate overall GPA Header
+            let overallGPA = document.getElementById('overall-gpa').innerText;
+            let header = `
+                <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #2563eb; padding-bottom: 10px;">
+                    <h1 style="color: #2563eb; margin: 0;">EduTrack Report</h1>
+                    <p style="color: #6b7280; margin: 5px 0;">Generated on ${new Date().toLocaleDateString()}</p>
+                    <h2 style="margin: 10px 0;">Cumulative GPA: ${overallGPA}</h2>
+                </div>
+            `;
+            tempDiv.innerHTML = header;
+
+            // Loop through each class and create a page
+            state.classes.forEach((cls, index) => {
+                const currentGrade = calculateClassGrade(cls);
+                const letterGrade = getLetterGrade(currentGrade);
+                const gradeColor = letterGrade === 'A' ? '#16a34a' : letterGrade === 'F' ? '#ef4444' : '#2563eb';
+
+                // Sort assignments by date
+                let sortedAssignments = [...cls.assignments].sort((a,b) => {
+                     if (a.dueDate && b.dueDate) return new Date(b.dueDate) - new Date(a.dueDate);
+                     return 0;
+                });
+
+                let assignmentsRows = '';
+                if(sortedAssignments.length === 0) {
+                    assignmentsRows = '<tr><td colspan="4" style="text-align:center; padding: 10px; color: #999;">No assignments found.</td></tr>';
+                } else {
+                    sortedAssignments.forEach(asg => {
+                        const cat = cls.categories.find(c => c.id === asg.categoryId);
+                        const catName = cat ? cat.name : 'Unknown';
+                        const scoreDisplay = (asg.score !== null && asg.score !== "") ? `${asg.score}/${asg.total}` : '-';
+                        const percent = (asg.score !== null && asg.score !== "") ? Math.round((asg.score/asg.total)*100) + '%' : '';
+                        
+                        assignmentsRows += `
+                            <tr style="border-bottom: 1px solid #e5e7eb;">
+                                <td style="padding: 8px;">${asg.name}</td>
+                                <td style="padding: 8px;">${catName}</td>
+                                <td style="padding: 8px;">${asg.dueDate || '-'}</td>
+                                <td style="padding: 8px; font-weight: bold;">${scoreDisplay} (${percent})</td>
+                            </tr>
+                        `;
+                    });
+                }
+
+                // Page Break CSS (always break after, except for the last one if you prefer)
+                const pageBreak = `<div style="page-break-after: always;"></div>`;
+
+                const classHtml = `
+                    <div style="margin-bottom: 20px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h2 style="font-size: 24px; font-weight: bold; margin: 0;">${cls.name}</h2>
+                            <div style="text-align: right;">
+                                <span style="font-size: 24px; font-weight: bold; color: ${gradeColor};">${currentGrade ? currentGrade.toFixed(2) : '--'}%</span>
+                                <span style="font-size: 18px; color: #6b7280; margin-left: 5px;">(${letterGrade})</span>
+                            </div>
+                        </div>
+
+                        <!-- Category Breakdown -->
+                        <div style="margin-bottom: 20px; background: #f9fafb; padding: 10px; border-radius: 8px;">
+                            <h3 style="font-size: 14px; margin: 0 0 5px 0; text-transform: uppercase; color: #6b7280;">Weighting</h3>
+                            <ul style="margin: 0; padding-left: 20px; font-size: 14px;">
+                                ${cls.categories.map(cat => `<li>${cat.name}: ${cat.weight}%</li>`).join('')}
+                            </ul>
+                        </div>
+
+                        <!-- Assignment Table -->
+                        <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                            <thead>
+                                <tr style="background-color: #f3f4f6; text-align: left;">
+                                    <th style="padding: 8px; border-bottom: 2px solid #e5e7eb;">Assignment</th>
+                                    <th style="padding: 8px; border-bottom: 2px solid #e5e7eb;">Category</th>
+                                    <th style="padding: 8px; border-bottom: 2px solid #e5e7eb;">Due Date</th>
+                                    <th style="padding: 8px; border-bottom: 2px solid #e5e7eb;">Score</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${assignmentsRows}
+                            </tbody>
+                        </table>
+                    </div>
+                    ${pageBreak}
+                `;
+                tempDiv.innerHTML += classHtml;
+            });
+
             const opt = {
                 margin:       0.5,
-                filename:     'edutrack_report.pdf',
+                filename:     'edutrack_report_paged.pdf',
                 image:        { type: 'jpeg', quality: 0.98 },
                 html2canvas:  { scale: 2 },
                 jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
             };
-            
-            const originalShadows = document.querySelectorAll('.shadow-sm, .shadow-lg');
-            originalShadows.forEach(el => el.classList.remove('shadow-sm', 'shadow-lg'));
-            
-            html2pdf().set(opt).from(element).save().then(() => {
-                originalShadows.forEach(el => el.classList.add('shadow-sm'));
-                render(); 
-            });
+
+            // Generate PDF from the temp div
+            html2pdf().set(opt).from(tempDiv).save();
         }
 
         // --- DATA PERSISTENCE ---
