@@ -634,10 +634,10 @@
                 if (asg.dueDate) {
                     const dueDate = new Date(asg.dueDate);
                     
-                    if (dueDate.getDate() < today.getDate()) {
+                    if (dueDate.getDate() < (today.getDate() - 1)) {
                         timeColor = 'bg-red-100 text-red-800';
                         timeText += ' (Overdue)';
-                    } else if (dueDate.getDate() === today.getDate()) {
+                    } else if (dueDate.getDate() === (today.getDate() - 1)) {
                         timeColor = 'bg-yellow-100 text-yellow-800';
                         timeText = 'Today';
                     } else {
