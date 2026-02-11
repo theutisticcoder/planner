@@ -499,24 +499,38 @@
                             class="hidden text-red-500 mr-auto hover:text-red-700 font-bold border border-red-200 px-3 py-1 rounded"
                             onclick="deleteAssignment()">Delete</button>
                         <button type="submit"
-                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save</button>
+                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save
+                            Assignment</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
-    <div id="class-notes" class="hidden">
-        <div class="card p-6 rounded-xl shadow-sm mb-6">
-            <h3 class="text-gray-800 dark:text-gray-200 mb-4">Class Notes</h3>
-            <div id="class-notes-content" class="markdown-body"></div>
+
+    <!-- NOTES MODAL -->
+    <div id="notes-modal"
+        class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
+        <div class="modal-overlay absolute w-full h-full bg-gray-900 opacity-50"></div>
+        <div
+            class="modal-container bg-white w-11/12 md:max-w-md mx-auto rounded-lg shadow-lg z-50 overflow-y-auto max-h-[90vh]">
+            <div class="modal-content py-4 text-left px-6">
+                <div class="flex justify-between items-center pb-3">
+                    <p class="text-2xl font-bold">Class Notes</p>
+                    <div class="modal-close cursor-pointer z-50 p-2" onclick="toggleNotesModal(false)">
+                        <span class="text-2xl">&times;</span>
+                    </div>
+                </div>
+                <div id="class-notes-content" class="mb-6"></div>
+                <div id="class-notes-editor" class="hidden">
+                    <textarea id="class-notes-input" class="w-full p-3 border rounded-md resize-none" rows="5"></textarea>
+                    <div class="mt-2 flex justify-end">
+                        <button onclick="saveClassNotes()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Save</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-    <div id="class-notes-editor" class="hidden">
-        <textarea id="class-notes-input" class="w-full p-3 border rounded-md resize-none" rows="5"></textarea>
-        <div class="mt-2 flex justify-end">
-            <button onclick="saveClassNotes()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Save</button>
-        </div>
-    </div>
+   
     <script>
         // --- SUPABASE CONFIGURATION ---
         const SUPABASE_URL = 'https://njgjgpiamweujgyknqtz.supabase.co';
@@ -529,7 +543,8 @@
             activeTab: null,
             user: null,
             currentView: 'dashboard',
-            calendarDate: new Date()
+            calendarDate: new Date(),
+            notesModalOpen: false
         };
 
         // --- DARK MODE LOGIC ---
@@ -1465,7 +1480,7 @@
             closeAssignmentModal();
         });
 
-        // --- NOTES UI ---
+        // --- NOTES MODAL ---
         function showClassNotes(classId) {
             const notesSection = document.getElementById('class-notes');
             const contentSection = document.getElementById('class-content');
@@ -1488,6 +1503,7 @@
                     </svg>
                 </button>
             </div>
+            <div id="class-notes-content" class="mb-6"></div>
             <div id="class-notes-editor" class="hidden">
                 <textarea id="class-notes-input" class="w-full p-3 border rounded-md resize-none" rows="5">${notes}</textarea>
                 <div class="mt-2 flex justify-end">
