@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -31,102 +32,222 @@
         }
     </script>
     <style>
-        body { font-family: 'Inter', sans-serif; transition: background-color 0.3s, color 0.3s; }
-        
-        /* Light Mode Defaults */
-        body { background-color: #f3f4f6; color: #1f2937; }
-        .card { background-color: #ffffff; }
-        .tab-active { border-bottom: 2px solid #2563eb; color: #2563eb; font-weight: 600; }
-        .tab-inactive { color: #6b7280; border-bottom: 2px solid transparent; }
-        
-        /* Dark Mode Overrides */
-        .dark body { background-color: #111827; color: #f3f4f6; }
-        .dark .card { background-color: #1f2937; border-color: #374151; }
-        .dark .tab-inactive { color: #9ca3af; }
-        .dark nav { background-color: #1f2937; border-color: #374151; }
-        .dark input, .dark select, .dark textarea { background-color: #374151; color: white; border-color: #4b5563; }
-        .dark .modal-container { background-color: #1f2937; color: white; }
+        body {
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
 
-        .modal { transition: opacity 0.25s ease; }
-        body.modal-active { overflow: hidden; }
-        
+        /* Light Mode Defaults */
+        body {
+            background-color: #f3f4f6;
+            color: #1f2937;
+        }
+
+        .card {
+            background-color: #ffffff;
+        }
+
+        .tab-active {
+            border-bottom: 2px solid #2563eb;
+            color: #2563eb;
+            font-weight: 600;
+        }
+
+        .tab-inactive {
+            color: #6b7280;
+            border-bottom: 2px solid transparent;
+        }
+
+        /* Dark Mode Overrides */
+        .dark body {
+            background-color: #111827;
+            color: #f3f4f6;
+        }
+
+        .dark .card {
+            background-color: #1f2937;
+            border-color: #374151;
+        }
+
+        .dark .tab-inactive {
+            color: #9ca3af;
+        }
+
+        .dark nav {
+            background-color: #1f2937;
+            border-color: #374151;
+        }
+
+        .dark input,
+        .dark select,
+        .dark textarea {
+            background-color: #374151;
+            color: white;
+            border-color: #4b5563;
+        }
+
+        .dark .modal-container {
+            background-color: #1f2937;
+            color: white;
+        }
+
+        .modal {
+            transition: opacity 0.25s ease;
+        }
+
+        body.modal-active {
+            overflow: hidden;
+        }
+
         /* Status Badges */
-        .status-not-started { background-color: #f3f4f6; color: #374151; }
-        .status-in-progress { background-color: #e0f2fe; color: #0284c7; }
-        .status-completed { background-color: #dcfce7; color: #16a34a; }
-        .status-submitted { background-color: #e0e7ff; color: #4338ca; }
-        .status-na { background-color: #f9fafb; color: #9ca3af; text-decoration: line-through; }
+        .status-not-started {
+            background-color: #f3f4f6;
+            color: #374151;
+        }
+
+        .status-in-progress {
+            background-color: #e0f2fe;
+            color: #0284c7;
+        }
+
+        .status-completed {
+            background-color: #dcfce7;
+            color: #16a34a;
+        }
+
+        .status-submitted {
+            background-color: #e0e7ff;
+            color: #4338ca;
+        }
+
+        .status-na {
+            background-color: #f9fafb;
+            color: #9ca3af;
+            text-decoration: line-through;
+        }
 
         /* Calendar Styles */
-        .calendar-day { min-height: 100px; transition: background-color 0.2s; }
-        .calendar-day:hover { background-color: #f9fafb; }
-        .calendar-event { font-size: 0.75rem; padding: 2px 4px; margin-bottom: 2px; border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+        .calendar-day {
+            min-height: 100px;
+            transition: background-color 0.2s;
+        }
+
+        .calendar-day:hover {
+            background-color: #f9fafb;
+        }
+
+        .calendar-event {
+            font-size: 0.75rem;
+            padding: 2px 4px;
+            margin-bottom: 2px;
+            border-radius: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            cursor: pointer;
+        }
 
         /* Dark Mode Calendar */
-        .dark .calendar-day { background-color: #1f2937; border-color: #374151; }
-        .dark .calendar-day:hover { background-color: #374151; }
-        .dark .calendar-header { background-color: #374151; color: #d1d5db; }
-        .dark .calendar-grid-bg { background-color: #374151; border-color: #374151; }
+        .dark .calendar-day {
+            background-color: #1f2937;
+            border-color: #374151;
+        }
+
+        .dark .calendar-day:hover {
+            background-color: #374151;
+        }
+
+        .dark .calendar-header {
+            background-color: #374151;
+            color: #d1d5db;
+        }
+
+        .dark .calendar-grid-bg {
+            background-color: #374151;
+            border-color: #374151;
+        }
 
         /* QUILL EDITOR OVERRIDES */
         .dark .ql-toolbar {
             background-color: #374151;
             border-color: #4b5563;
         }
+
         .dark .ql-container {
             background-color: #1f2937;
             border-color: #4b5563;
             color: #f3f4f6;
         }
-        .dark .ql-stroke { stroke: #d1d5db !important; }
-        .dark .ql-fill { fill: #d1d5db !important; }
-        .dark .ql-picker { color: #d1d5db; }
-        .dark .ql-picker-options { background-color: #374151; border-color: #4b5563; }
-        
+
+        .dark .ql-stroke {
+            stroke: #d1d5db !important;
+        }
+
+        .dark .ql-fill {
+            fill: #d1d5db !important;
+        }
+
+        .dark .ql-picker {
+            color: #d1d5db;
+        }
+
+        .dark .ql-picker-options {
+            background-color: #374151;
+            border-color: #4b5563;
+        }
+
         #editor-container {
             height: 400px;
         }
-        
+
         /* Fix for Quill font size dropdown width */
-        .ql-snow .ql-picker.ql-size { width: 60px; }
+        .ql-snow .ql-picker.ql-size {
+            width: 60px;
+        }
     </style>
 </head>
+
 <body class="text-gray-800">
 
     <!-- Navbar -->
     <nav class="bg-white shadow-sm p-4 sticky top-0 z-30 dark:bg-gray-800 dark:border-gray-700 transition-colors">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
             <h1 class="text-2xl font-bold text-blue-600 tracking-tight">EduTrack</h1>
-            
+
             <!-- Main View Switcher -->
             <div class="hidden md:flex space-x-6">
-                <button onclick="switchMainView('dashboard')" id="nav-dashboard" class="tab-active py-2">Dashboard</button>
-                <button onclick="switchMainView('calendar')" id="nav-calendar" class="tab-inactive py-2 hover:text-gray-700 dark:hover:text-gray-300">Calendar</button>
+                <button onclick="switchMainView('dashboard')" id="nav-dashboard"
+                    class="tab-active py-2">Dashboard</button>
+                <button onclick="switchMainView('calendar')" id="nav-calendar"
+                    class="tab-inactive py-2 hover:text-gray-700 dark:hover:text-gray-300">Calendar</button>
             </div>
 
             <div id="auth-section" class="flex items-center gap-3">
                 <!-- Dark Mode Toggle -->
-                <button onclick="toggleDarkMode()" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+                <button onclick="toggleDarkMode()"
+                    class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition">
                     <span id="dark-icon">🌙</span>
                 </button>
 
-                <button onclick="toggleModal('login-modal', true)" id="login-btn-nav" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition hidden">
+                <button onclick="toggleModal('login-modal', true)" id="login-btn-nav"
+                    class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition hidden">
                     Login / Sign Up
                 </button>
                 <div id="user-info" class="hidden flex items-center gap-4">
-                    <!-- Data Tools Dropdown Trigger -->
-                    <div class="relative group">
-                        <button class="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-blue-600 flex items-center gap-1">
-                            Data Tools ▾
-                        </button>
-                        <div class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 hidden group-hover:block border border-gray-100 dark:border-gray-700 z-50">
-                            <button onclick="exportCSV()" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left">Export CSV</button>
-                            <label class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left cursor-pointer">
-                                Import CSV
-                                <input type="file" id="csv-upload" class="hidden" accept=".csv" onchange="importCSV(this)">
-                            </label>
-                        </div>
-                    </div>
+                    <!-- Separate Data Buttons -->
+                    <button onclick="exportCSV()"
+                        class="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                        Export CSV
+                    </button>
+
+                    <label
+                        class="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">
+                        Import CSV
+                        <input type="file" id="csv-upload" class="hidden" accept=".csv" onchange="importCSV(this)">
+                    </label>
+
+                    <!-- Visual Separator -->
+                    <div class="h-4 w-px bg-gray-300 dark:bg-gray-600 mx-2"></div>
 
                     <span id="user-email" class="text-sm font-medium hidden md:inline dark:text-gray-300"></span>
                     <button id="logout-btn" class="text-sm text-red-500 hover:text-red-700">Logout</button>
@@ -136,14 +257,16 @@
         </div>
         <!-- Mobile Nav View Switcher -->
         <div class="md:hidden flex justify-center space-x-6 mt-4 border-t pt-2 dark:border-gray-700">
-            <button onclick="switchMainView('dashboard')" id="nav-dashboard-mobile" class="text-blue-600 font-bold">Dashboard</button>
-            <button onclick="switchMainView('calendar')" id="nav-calendar-mobile" class="text-gray-500 dark:text-gray-400">Calendar</button>
+            <button onclick="switchMainView('dashboard')" id="nav-dashboard-mobile"
+                class="text-blue-600 font-bold">Dashboard</button>
+            <button onclick="switchMainView('calendar')" id="nav-calendar-mobile"
+                class="text-gray-500 dark:text-gray-400">Calendar</button>
         </div>
     </nav>
 
     <!-- Main Content Container -->
     <div class="max-w-7xl mx-auto p-4 mt-6">
-        
+
         <!-- VIEW: DASHBOARD -->
         <div id="view-dashboard">
             <div id="main-app-container">
@@ -151,16 +274,19 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                     <!-- GPA Card -->
                     <div class="card p-6 rounded-xl shadow-sm flex flex-col justify-center relative">
-                        <button onclick="exportPDF()" class="absolute top-4 right-4 text-gray-400 hover:text-red-600 text-xs border border-gray-200 dark:border-gray-600 p-1 rounded" title="Download PDF Report">
+                        <button onclick="exportPDF()"
+                            class="absolute top-4 right-4 text-gray-400 hover:text-red-600 text-xs border border-gray-200 dark:border-gray-600 p-1 rounded"
+                            title="Download PDF Report">
                             PDF Report
                         </button>
                         <h2 class="text-gray-500 dark:text-gray-400 text-sm uppercase tracking-wide">Cumulative GPA</h2>
                         <div class="text-4xl font-bold text-gray-900 dark:text-white mt-1" id="overall-gpa">0.00</div>
                     </div>
-                    
+
                     <!-- To-Do List -->
                     <div class="card p-6 rounded-xl shadow-sm col-span-2 overflow-y-auto max-h-48">
-                        <h2 class="text-gray-500 dark:text-gray-400 text-sm uppercase tracking-wide mb-2">Upcoming Deadlines</h2>
+                        <h2 class="text-gray-500 dark:text-gray-400 text-sm uppercase tracking-wide mb-2">Upcoming
+                            Deadlines</h2>
                         <div id="todo-list" class="space-y-2 text-sm">
                             <!-- Injected via JS -->
                             <p class="text-gray-400">No upcoming assignments.</p>
@@ -175,7 +301,8 @@
                             <!-- Tabs injected by JS -->
                         </nav>
                     </div>
-                    <button id="add-class-btn" onclick="openClassModal()" class="ml-4 bg-gray-900 dark:bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-gray-800 dark:hover:bg-blue-700 transition whitespace-nowrap">
+                    <button id="add-class-btn" onclick="openClassModal()"
+                        class="ml-4 bg-gray-900 dark:bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-gray-800 dark:hover:bg-blue-700 transition whitespace-nowrap">
                         + Add Class
                     </button>
                 </div>
@@ -195,30 +322,40 @@
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-2xl font-bold text-gray-800 dark:text-white" id="calendar-month-year"></h2>
                     <div class="flex space-x-2">
-                        <button onclick="changeMonth(-1)" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-300">
+                        <button onclick="changeMonth(-1)"
+                            class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-300">
                             &lt; Prev
                         </button>
-                        <button onclick="changeMonth(1)" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-300">
+                        <button onclick="changeMonth(1)"
+                            class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-300">
                             Next &gt;
                         </button>
                     </div>
                 </div>
-                
+
                 <!-- Calendar Grid -->
-                <div class="grid grid-cols-7 gap-px bg-gray-200 dark:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                <div
+                    class="grid grid-cols-7 gap-px bg-gray-200 dark:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
                     <!-- Weekday Headers -->
-                    <div class="calendar-header bg-gray-50 p-2 text-center text-xs font-semibold text-gray-500">Sun</div>
-                    <div class="calendar-header bg-gray-50 p-2 text-center text-xs font-semibold text-gray-500">Mon</div>
-                    <div class="calendar-header bg-gray-50 p-2 text-center text-xs font-semibold text-gray-500">Tue</div>
-                    <div class="calendar-header bg-gray-50 p-2 text-center text-xs font-semibold text-gray-500">Wed</div>
-                    <div class="calendar-header bg-gray-50 p-2 text-center text-xs font-semibold text-gray-500">Thu</div>
-                    <div class="calendar-header bg-gray-50 p-2 text-center text-xs font-semibold text-gray-500">Fri</div>
-                    <div class="calendar-header bg-gray-50 p-2 text-center text-xs font-semibold text-gray-500">Sat</div>
-                    
+                    <div class="calendar-header bg-gray-50 p-2 text-center text-xs font-semibold text-gray-500">Sun
+                    </div>
+                    <div class="calendar-header bg-gray-50 p-2 text-center text-xs font-semibold text-gray-500">Mon
+                    </div>
+                    <div class="calendar-header bg-gray-50 p-2 text-center text-xs font-semibold text-gray-500">Tue
+                    </div>
+                    <div class="calendar-header bg-gray-50 p-2 text-center text-xs font-semibold text-gray-500">Wed
+                    </div>
+                    <div class="calendar-header bg-gray-50 p-2 text-center text-xs font-semibold text-gray-500">Thu
+                    </div>
+                    <div class="calendar-header bg-gray-50 p-2 text-center text-xs font-semibold text-gray-500">Fri
+                    </div>
+                    <div class="calendar-header bg-gray-50 p-2 text-center text-xs font-semibold text-gray-500">Sat
+                    </div>
+
                     <!-- Days injected via JS -->
                     <div id="calendar-grid" class="contents"></div>
                 </div>
-                
+
                 <!-- Legend -->
                 <div id="calendar-legend" class="mt-4 flex flex-wrap gap-4 text-xs dark:text-gray-300">
                     <!-- Legend items injected via JS -->
@@ -229,7 +366,8 @@
     </div>
 
     <!-- LOGIN MODAL -->
-    <div id="login-modal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
+    <div id="login-modal"
+        class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
         <div class="modal-overlay absolute w-full h-full bg-gray-900 opacity-50"></div>
         <div class="modal-container bg-white w-11/12 md:max-w-md mx-auto rounded-lg shadow-lg z-50 overflow-y-auto">
             <div class="modal-content py-4 text-left px-6">
@@ -241,8 +379,22 @@
                 </div>
 
                 <!-- Google Login -->
-                <button id="google-login-btn" class="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition mb-4">
-                    <svg class="w-5 h-5" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                <button id="google-login-btn"
+                    class="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition mb-4">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24">
+                        <path
+                            d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                            fill="#4285F4" />
+                        <path
+                            d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                            fill="#34A853" />
+                        <path
+                            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                            fill="#FBBC05" />
+                        <path
+                            d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                            fill="#EA4335" />
+                    </svg>
                     Sign in with Google
                 </button>
 
@@ -256,15 +408,19 @@
                 <form id="email-auth-form" class="space-y-4">
                     <div>
                         <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Email</label>
-                        <input type="email" id="auth-email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
+                        <input type="email" id="auth-email"
+                            class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
                     </div>
                     <div>
                         <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Password</label>
-                        <input type="password" id="auth-password" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
+                        <input type="password" id="auth-password"
+                            class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
                     </div>
                     <div class="flex gap-2 pt-2">
-                        <button type="button" id="signin-btn" class="w-1/2 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">Sign In</button>
-                        <button type="button" id="signup-btn" class="w-1/2 bg-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-300">Sign Up</button>
+                        <button type="button" id="signin-btn"
+                            class="w-1/2 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">Sign In</button>
+                        <button type="button" id="signup-btn"
+                            class="w-1/2 bg-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-300">Sign Up</button>
                     </div>
                 </form>
                 <div id="auth-message" class="text-center text-sm mt-3 text-red-500 min-h-[20px]"></div>
@@ -273,9 +429,11 @@
     </div>
 
     <!-- ADD/EDIT CLASS MODAL -->
-    <div id="class-modal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
+    <div id="class-modal"
+        class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
         <div class="modal-overlay absolute w-full h-full bg-gray-900 opacity-50"></div>
-        <div class="modal-container bg-white w-11/12 md:max-w-md mx-auto rounded-lg shadow-lg z-50 overflow-y-auto max-h-[90vh]">
+        <div
+            class="modal-container bg-white w-11/12 md:max-w-md mx-auto rounded-lg shadow-lg z-50 overflow-y-auto max-h-[90vh]">
             <div class="modal-content py-4 text-left px-6">
                 <div class="flex justify-between items-center pb-3">
                     <p class="text-2xl font-bold">Manage Class</p>
@@ -287,20 +445,27 @@
                     <input type="hidden" id="edit-class-id">
                     <div class="mb-4">
                         <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Class Name</label>
-                        <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="class-name" type="text" placeholder="e.g. Calculus I" required>
+                        <input
+                            class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                            id="class-name" type="text" placeholder="e.g. Calculus I" required>
                     </div>
-                    
+
                     <div class="mb-4">
-                        <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Categories & Weights (%)</label>
+                        <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Categories &
+                            Weights (%)</label>
                         <div id="category-inputs" class="space-y-2">
                             <!-- Categories injected here -->
                         </div>
-                        <button type="button" onclick="addCategoryInput()" class="text-blue-500 text-sm mt-2 hover:underline font-bold">+ Add Category</button>
+                        <button type="button" onclick="addCategoryInput()"
+                            class="text-blue-500 text-sm mt-2 hover:underline font-bold">+ Add Category</button>
                     </div>
 
                     <div class="flex justify-end pt-2">
-                        <button type="button" onclick="deleteClass()" id="delete-class-btn" class="hidden text-red-500 mr-auto hover:text-red-700 font-bold border border-red-200 px-3 py-1 rounded">Delete Class</button>
-                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save Class</button>
+                        <button type="button" onclick="deleteClass()" id="delete-class-btn"
+                            class="hidden text-red-500 mr-auto hover:text-red-700 font-bold border border-red-200 px-3 py-1 rounded">Delete
+                            Class</button>
+                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save
+                            Class</button>
                     </div>
                 </form>
             </div>
@@ -308,9 +473,11 @@
     </div>
 
     <!-- ADD ASSIGNMENT MODAL -->
-    <div id="assignment-modal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
+    <div id="assignment-modal"
+        class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
         <div class="modal-overlay absolute w-full h-full bg-gray-900 opacity-50"></div>
-        <div class="modal-container bg-white w-11/12 md:max-w-md mx-auto rounded-lg shadow-lg z-50 overflow-y-auto max-h-[90vh]">
+        <div
+            class="modal-container bg-white w-11/12 md:max-w-md mx-auto rounded-lg shadow-lg z-50 overflow-y-auto max-h-[90vh]">
             <div class="modal-content py-4 text-left px-6">
                 <div class="flex justify-between items-center pb-3">
                     <p class="text-2xl font-bold">Assignment</p>
@@ -321,22 +488,26 @@
                 <form id="assignment-form">
                     <input type="hidden" id="asg-class-id">
                     <input type="hidden" id="asg-id">
-                    
+
                     <div class="mb-4">
                         <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Name</label>
-                        <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" id="asg-name" type="text" required>
+                        <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700"
+                            id="asg-name" type="text" required>
                     </div>
 
                     <div class="flex gap-4 mb-4">
                         <div class="w-1/2">
-                            <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Category</label>
-                            <select id="asg-category" class="shadow border rounded w-full py-2 px-3 text-gray-700 bg-white" required>
+                            <label
+                                class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Category</label>
+                            <select id="asg-category"
+                                class="shadow border rounded w-full py-2 px-3 text-gray-700 bg-white" required>
                                 <!-- Options filled via JS -->
                             </select>
                         </div>
                         <div class="w-1/2">
                             <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Status</label>
-                            <select id="asg-status" class="shadow border rounded w-full py-2 px-3 text-gray-700 bg-white">
+                            <select id="asg-status"
+                                class="shadow border rounded w-full py-2 px-3 text-gray-700 bg-white">
                                 <option value="not-started">Not Started</option>
                                 <option value="in-progress">In Progress</option>
                                 <option value="completed">Completed</option>
@@ -347,24 +518,31 @@
                     </div>
 
                     <div class="mb-4">
-                        <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Due Date (Optional)</label>
-                        <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" id="asg-date" type="date">
+                        <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Due Date
+                            (Optional)</label>
+                        <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700"
+                            id="asg-date" type="date">
                     </div>
 
                     <div class="flex gap-4 mb-4">
                         <div class="w-1/2">
                             <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Score</label>
-                            <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" id="asg-score" type="number" step="0.1" placeholder="--" >
+                            <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700"
+                                id="asg-score" type="number" step="0.1" placeholder="--">
                         </div>
                         <div class="w-1/2">
                             <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Total</label>
-                            <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" id="asg-total" type="number" value="100" step="0.1">
+                            <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700"
+                                id="asg-total" type="number" value="100" step="0.1">
                         </div>
                     </div>
 
                     <div class="flex justify-end pt-2">
-                        <button type="button" id="delete-asg-btn" class="hidden text-red-500 mr-auto hover:text-red-700 font-bold border border-red-200 px-3 py-1 rounded" onclick="deleteAssignment()">Delete</button>
-                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save</button>
+                        <button type="button" id="delete-asg-btn"
+                            class="hidden text-red-500 mr-auto hover:text-red-700 font-bold border border-red-200 px-3 py-1 rounded"
+                            onclick="deleteAssignment()">Delete</button>
+                        <button type="submit"
+                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save</button>
                     </div>
                 </form>
             </div>
@@ -372,9 +550,11 @@
     </div>
 
     <!-- NOTES EDITOR MODAL -->
-    <div id="note-modal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
+    <div id="note-modal"
+        class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
         <div class="modal-overlay absolute w-full h-full bg-gray-900 opacity-50"></div>
-        <div class="modal-container bg-white w-11/12 md:max-w-2xl mx-auto rounded-lg shadow-lg z-50 overflow-y-auto max-h-[90vh]">
+        <div
+            class="modal-container bg-white w-11/12 md:max-w-2xl mx-auto rounded-lg shadow-lg z-50 overflow-y-auto max-h-[90vh]">
             <div class="modal-content py-4 text-left px-6">
                 <div class="flex justify-between items-center pb-3">
                     <p class="text-2xl font-bold">Edit Note</p>
@@ -382,15 +562,19 @@
                         <span class="text-2xl">&times;</span>
                     </div>
                 </div>
-                
+
                 <div class="flex gap-4 mb-4">
                     <div class="w-2/3">
                         <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Title</label>
-                        <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="note-title" type="text" placeholder="Note Title" required>
+                        <input
+                            class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                            id="note-title" type="text" placeholder="Note Title" required>
                     </div>
                     <div class="w-1/3">
                         <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Date</label>
-                        <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="note-date" type="date">
+                        <input
+                            class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                            id="note-date" type="date">
                     </div>
                 </div>
 
@@ -399,10 +583,14 @@
                 <input type="hidden" id="note-id">
 
                 <div class="flex justify-end pt-4 gap-2">
-                    <button type="button" onclick="exportNotePDF()" class="mr-auto px-4 py-2 border border-gray-300 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">Export PDF</button>
-                    
-                    <button type="button" onclick="deleteNote()" id="delete-note-btn" class="hidden text-red-500 hover:text-red-700 font-bold border border-red-200 px-3 py-1 rounded">Delete</button>
-                    <button onclick="saveNote()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save Note</button>
+                    <button type="button" onclick="exportNotePDF()"
+                        class="mr-auto px-4 py-2 border border-gray-300 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">Export
+                        PDF</button>
+
+                    <button type="button" onclick="deleteNote()" id="delete-note-btn"
+                        class="hidden text-red-500 hover:text-red-700 font-bold border border-red-200 px-3 py-1 rounded">Delete</button>
+                    <button onclick="saveNote()"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save Note</button>
                 </div>
             </div>
         </div>
@@ -411,15 +599,15 @@
     <script>
         // --- SUPABASE CONFIGURATION ---
         const SUPABASE_URL = 'https://njgjgpiamweujgyknqtz.supabase.co';
-        const SUPABASE_KEY = 'sb_publishable_3bRvo_Zuppdi4ICnOtfjeA_VWfp6Zyx'; 
+        const SUPABASE_KEY = 'sb_publishable_3bRvo_Zuppdi4ICnOtfjeA_VWfp6Zyx';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         // --- STATE MANAGEMENT ---
         let state = {
-            classes: [], 
+            classes: [],
             activeTab: null,
             user: null,
-            currentView: 'dashboard', 
+            currentView: 'dashboard',
             calendarDate: new Date()
         };
 
@@ -437,8 +625,8 @@
                     [{ 'size': Size.whitelist }], // Use number based sizes
                     ['bold', 'italic', 'underline', 'strike'],
                     [{ 'color': [] }, { 'background': [] }],
-                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                    [{ 'indent': '-1'}, { 'indent': '+1' }], 
+                    [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                    [{ 'indent': '-1' }, { 'indent': '+1' }],
                     ['link', 'image']
                 ]
             }
@@ -489,7 +677,7 @@
         function scrambleData(data) {
             try {
                 const jsonString = JSON.stringify(data);
-                return btoa(unescape(encodeURIComponent(jsonString))); 
+                return btoa(unescape(encodeURIComponent(jsonString)));
             } catch (e) {
                 console.error("Scramble failed", e);
                 return null;
@@ -505,7 +693,7 @@
                 return JSON.parse(jsonString);
             } catch (e) {
                 console.error("Unscramble failed", e);
-                try { return JSON.parse(scrambledString); } catch(e2) { return []; }
+                try { return JSON.parse(scrambledString); } catch (e2) { return []; }
             }
         }
 
@@ -517,7 +705,7 @@
             if (user) {
                 loadDataFromSupabase();
             } else {
-                loadLocalData(); 
+                loadLocalData();
             }
         }
 
@@ -530,7 +718,7 @@
                 loginBtn.classList.add('hidden');
                 userInfo.classList.remove('hidden');
                 userEmail.innerText = state.user.email;
-                toggleModal('login-modal', false); 
+                toggleModal('login-modal', false);
             } else {
                 loginBtn.classList.remove('hidden');
                 userInfo.classList.add('hidden');
@@ -549,7 +737,7 @@
             const password = document.getElementById('auth-password').value;
             const msg = document.getElementById('auth-message');
             msg.innerText = '';
-            
+
             const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
             if (error) msg.innerText = error.message;
             else checkUser();
@@ -588,11 +776,11 @@
         // --- NAVIGATION LOGIC ---
         function switchMainView(view) {
             state.currentView = view;
-            
+
             const dashBtn = document.getElementById('nav-dashboard');
             const calBtn = document.getElementById('nav-calendar');
-            
-            if(view === 'dashboard') {
+
+            if (view === 'dashboard') {
                 document.getElementById('view-dashboard').classList.remove('hidden');
                 document.getElementById('view-calendar').classList.add('hidden');
                 dashBtn.className = "tab-active py-2";
@@ -623,9 +811,9 @@
             for (let i = 0; i < text.length; i++) {
                 const char = text[i];
                 if (char === '"') {
-                    if (insideQuote && text[i+1] === '"') {
+                    if (insideQuote && text[i + 1] === '"') {
                         curValue += '"';
-                        i++; 
+                        i++;
                     } else {
                         insideQuote = !insideQuote;
                     }
@@ -653,7 +841,7 @@
                         escapeCsv(cat.id),
                         escapeCsv(cat.name),
                         escapeCsv(cat.weight),
-                        '','','','','',''
+                        '', '', '', '', '', ''
                     ].join(',') + '\n';
                 });
                 cls.assignments.forEach(asg => {
@@ -688,12 +876,12 @@
             const file = input.files[0];
             if (!file) return;
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = function (e) {
                 const text = e.target.result;
                 const rows = text.replace(/\r\n/g, '\n').split('\n').slice(1);
                 const newClasses = [];
-                const classMap = {}; 
-                
+                const classMap = {};
+
                 rows.forEach(row => {
                     if (!row.trim()) return;
                     const cols = parseCSVRow(row);
@@ -734,9 +922,9 @@
                 });
 
                 if (newClasses.length > 0) {
-                    if(confirm(`Found ${newClasses.length} classes. This will overwrite current data. Continue?`)) {
+                    if (confirm(`Found ${newClasses.length} classes. This will overwrite current data. Continue?`)) {
                         state.classes = newClasses;
-                        if(state.classes.length > 0) state.activeTab = state.classes[0].id;
+                        if (state.classes.length > 0) state.activeTab = state.classes[0].id;
                         saveData();
                         render();
                         alert("Import successful!");
@@ -744,7 +932,7 @@
                 } else {
                     alert("Could not parse CSV data. Format might be incorrect.");
                 }
-                input.value = ''; 
+                input.value = '';
             };
             reader.readAsText(file);
         }
@@ -772,21 +960,21 @@
                 const letterGrade = getLetterGrade(currentGrade);
                 const gradeColor = letterGrade === 'A' ? '#16a34a' : letterGrade === 'F' ? '#ef4444' : '#2563eb';
 
-                let sortedAssignments = [...cls.assignments].sort((a,b) => {
-                     if (a.dueDate && b.dueDate) return new Date(b.dueDate) - new Date(a.dueDate);
-                     return 0;
+                let sortedAssignments = [...cls.assignments].sort((a, b) => {
+                    if (a.dueDate && b.dueDate) return new Date(b.dueDate) - new Date(a.dueDate);
+                    return 0;
                 });
 
                 let assignmentsRows = '';
-                if(sortedAssignments.length === 0) {
+                if (sortedAssignments.length === 0) {
                     assignmentsRows = '<tr><td colspan="4" style="text-align:center; padding: 10px; color: #999;">No assignments found.</td></tr>';
                 } else {
                     sortedAssignments.forEach(asg => {
                         const cat = cls.categories.find(c => c.id === asg.categoryId);
                         const catName = cat ? cat.name : 'Unknown';
                         const scoreDisplay = (asg.score !== null && asg.score !== "") ? `${asg.score}/${asg.total}` : '-';
-                        const percent = (asg.score !== null && asg.score !== "") ? Math.round((asg.score/asg.total)*100) + '%' : '';
-                        
+                        const percent = (asg.score !== null && asg.score !== "") ? Math.round((asg.score / asg.total) * 100) + '%' : '';
+
                         assignmentsRows += `
                             <tr style="border-bottom: 1px solid #e5e7eb;">
                                 <td style="padding: 8px;">${asg.name}</td>
@@ -831,11 +1019,11 @@
             });
 
             const opt = {
-                margin:       0.5,
-                filename:     'edutrack_report_paged.pdf',
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2 },
-                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+                margin: 0.5,
+                filename: 'edutrack_report_paged.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
             };
             html2pdf().set(opt).from(tempDiv).save();
         }
@@ -863,7 +1051,7 @@
             const stored = localStorage.getItem('edutrack_data');
             if (stored) {
                 state.classes = JSON.parse(stored);
-                if(state.classes.length > 0 && !state.activeTab) state.activeTab = state.classes[0].id;
+                if (state.classes.length > 0 && !state.activeTab) state.activeTab = state.classes[0].id;
                 render();
             }
         }
@@ -873,13 +1061,13 @@
             const { data, error } = await supabaseClient.from('user_data').select('data').eq('user_id', state.user.id).single();
             if (data && data.data) {
                 if (data.data.scrambled) {
-                     state.classes = unscrambleData(data.data.scrambled);
+                    state.classes = unscrambleData(data.data.scrambled);
                 } else {
-                     state.classes = Array.isArray(data.data) ? data.data : [];
+                    state.classes = Array.isArray(data.data) ? data.data : [];
                 }
-                if(state.classes.length > 0) state.activeTab = state.classes[0].id;
+                if (state.classes.length > 0) state.activeTab = state.classes[0].id;
                 render();
-            } 
+            }
             document.getElementById('sync-status').innerText = 'Synced';
         }
 
@@ -903,7 +1091,7 @@
                     }
                 }
             });
-            if (totalWeightUsed === 0) return null; 
+            if (totalWeightUsed === 0) return null;
             return (weightedSum / totalWeightUsed) * 100;
         }
 
@@ -939,7 +1127,7 @@
         }
 
         function getStatusLabel(status) {
-            switch(status) {
+            switch (status) {
                 case 'in-progress': return 'In Progress';
                 case 'completed': return 'Completed';
                 case 'submitted': return 'Submitted';
@@ -953,13 +1141,13 @@
             let hash = 0;
             for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
             const hue = Math.abs(hash % 360);
-            return `hsl(${hue}, 70%, 85%)`; 
+            return `hsl(${hue}, 70%, 85%)`;
         }
         function stringToTextColor(str) {
             let hash = 0;
             for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
             const hue = Math.abs(hash % 360);
-            return `hsl(${hue}, 80%, 30%)`; 
+            return `hsl(${hue}, 80%, 30%)`;
         }
 
         function changeMonth(offset) {
@@ -987,7 +1175,7 @@
             const firstDay = new Date(year, month, 1);
             const lastDay = new Date(year, month + 1, 0);
             const daysInMonth = lastDay.getDate();
-            const startDayIndex = firstDay.getDay(); 
+            const startDayIndex = firstDay.getDay();
             for (let i = 0; i < startDayIndex; i++) {
                 const cell = document.createElement('div');
                 cell.className = 'bg-gray-100 dark:bg-gray-800 min-h-[100px] border-b border-r border-gray-200 dark:border-gray-700';
@@ -1003,7 +1191,7 @@
                 const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 state.classes.forEach(cls => {
                     cls.assignments.forEach(asg => {
-                        if(asg.dueDate === dateStr) {
+                        if (asg.dueDate === dateStr) {
                             const event = document.createElement('div');
                             event.className = 'calendar-event';
                             event.style.backgroundColor = stringToColor(cls.id);
@@ -1042,11 +1230,11 @@
                 deleteBtn.classList.remove('hidden');
             } else {
                 titleInput.value = '';
-                quill.root.innerHTML = ''; 
+                quill.root.innerHTML = '';
                 idInput.value = '';
                 // Default to today using local YYYY-MM-DD
                 const now = new Date();
-                dateInput.value = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+                dateInput.value = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
                 deleteBtn.classList.add('hidden');
             }
             toggleModal('note-modal', true);
@@ -1067,9 +1255,9 @@
 
             // Use the user-picked date directly (YYYY-MM-DD) or fallback to today
             let finalDate = dateVal;
-            if(!finalDate) {
+            if (!finalDate) {
                 const now = new Date();
-                finalDate = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+                finalDate = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
             }
 
             if (!cls.notes) cls.notes = [];
@@ -1095,7 +1283,7 @@
         }
 
         function deleteNote() {
-            if(confirm("Delete this note?")) {
+            if (confirm("Delete this note?")) {
                 const cls = state.classes.find(c => c.id === state.activeTab);
                 const id = document.getElementById('note-id').value;
                 cls.notes = cls.notes.filter(n => n.id !== id);
@@ -1109,7 +1297,7 @@
             const title = document.getElementById('note-title').value || "Untitled Note";
             const content = quill.root.innerHTML;
             const dateVal = document.getElementById('note-date').value;
-            
+
             const element = document.createElement('div');
             element.style.padding = '30px';
             element.style.fontFamily = 'Inter, sans-serif';
@@ -1127,11 +1315,11 @@
             `;
 
             const opt = {
-                margin:       0.5,
-                filename:     `${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`,
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2 },
-                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+                margin: 0.5,
+                filename: `${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
             };
 
             html2pdf().set(opt).from(element).save();
@@ -1158,8 +1346,8 @@
                 listEl.innerHTML = '<p class="text-gray-400 italic">No pending assignments.</p>';
                 return;
             }
-            const today = new Date(); today.setHours(0,0,0,0);
-            
+            const today = new Date(); today.setHours(0, 0, 0, 0);
+
             allAssignments.forEach(asg => {
                 let timeText = formatDateDisplay(asg.dueDate) || 'No Date';
                 let timeColor = 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300';
@@ -1179,9 +1367,9 @@
                 item.className = 'flex justify-between items-center bg-gray-50 dark:bg-gray-800 p-2 rounded border border-gray-100 dark:border-gray-700 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700';
                 item.onclick = () => {
                     state.activeTab = asg.classId;
-                    switchMainView('dashboard'); 
+                    switchMainView('dashboard');
                     render();
-                    editAssignment(asg.id); 
+                    editAssignment(asg.id);
                 };
                 item.innerHTML = `
                     <div>
@@ -1196,16 +1384,16 @@
 
         function render() {
             renderTodoList();
-            
+
             if (state.currentView === 'calendar') {
                 renderCalendar();
             }
 
             const tabsContainer = document.getElementById('class-tabs');
             const contentContainer = document.getElementById('class-content');
-            
+
             tabsContainer.innerHTML = '';
-            
+
             if (state.classes.length === 0) {
                 contentContainer.innerHTML = '<div class="text-center text-gray-400 mt-20"><p>No classes added yet.</p></div>';
                 calculateOverallGPA();
@@ -1231,20 +1419,20 @@
 
                 // --- ASSIGNMENTS HTML ---
                 let assignmentsHtml = '';
-                if(!activeClass.assignments || activeClass.assignments.length === 0) {
-                     assignmentsHtml = `<div class="text-center text-gray-400 py-10">No assignments yet.</div>`;
-                     if(!activeClass.assignments) activeClass.assignments = [];
+                if (!activeClass.assignments || activeClass.assignments.length === 0) {
+                    assignmentsHtml = `<div class="text-center text-gray-400 py-10">No assignments yet.</div>`;
+                    if (!activeClass.assignments) activeClass.assignments = [];
                 } else {
                     assignmentsHtml = `<div class="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-md mt-4"><ul class="divide-y divide-gray-200 dark:divide-gray-700">`;
-                    activeClass.assignments.sort((a,b) => {
-                         if (a.dueDate && b.dueDate) return new Date(b.dueDate) - new Date(a.dueDate);
-                         return 0;
+                    activeClass.assignments.sort((a, b) => {
+                        if (a.dueDate && b.dueDate) return new Date(b.dueDate) - new Date(a.dueDate);
+                        return 0;
                     });
                     activeClass.assignments.forEach(asg => {
                         const cat = activeClass.categories.find(c => c.id === asg.categoryId);
                         const catName = cat ? cat.name : 'Unknown';
                         const scoreDisplay = (asg.score !== null && asg.score !== "") ? `${asg.score}/${asg.total}` : '-';
-                        const percent = (asg.score !== null && asg.score !== "") ? Math.round((asg.score/asg.total)*100) : null;
+                        const percent = (asg.score !== null && asg.score !== "") ? Math.round((asg.score / asg.total) * 100) : null;
                         let percentColor = 'text-gray-500 dark:text-gray-400';
                         if (percent !== null) {
                             percentColor = percent >= 90 ? 'text-green-600' : percent < 60 ? 'text-red-500' : 'text-gray-500 dark:text-gray-400';
@@ -1310,17 +1498,17 @@
                                     <h4 class="text-xs font-semibold text-gray-400 mb-2">Category Breakdown</h4>
                                     <div class="space-y-2">
                                         ${activeClass.categories.map(cat => {
-                                            const catAsgs = activeClass.assignments.filter(a => a.categoryId === cat.id && a.score);
-                                            let earned = 0, total = 0;
-                                            catAsgs.forEach(a => { earned += parseFloat(a.score); total += parseFloat(a.total); });
-                                            const avg = total > 0 ? Math.round((earned/total)*100) : 0;
-                                            return `
+                    const catAsgs = activeClass.assignments.filter(a => a.categoryId === cat.id && a.score);
+                    let earned = 0, total = 0;
+                    catAsgs.forEach(a => { earned += parseFloat(a.score); total += parseFloat(a.total); });
+                    const avg = total > 0 ? Math.round((earned / total) * 100) : 0;
+                    return `
                                                 <div class="flex justify-between text-sm">
                                                     <span class="text-gray-600 dark:text-gray-300">${cat.name} <span class="text-xs text-gray-400">(${cat.weight}%)</span></span>
                                                     <span class="font-bold ${total > 0 ? 'text-gray-700 dark:text-gray-200' : 'text-gray-300'}">${total > 0 ? avg + '%' : '--'}</span>
                                                 </div>
                                             `;
-                                        }).join('')}
+                }).join('')}
                                     </div>
                                 </div>
                             </div>
@@ -1369,7 +1557,7 @@
             const form = document.getElementById('class-form');
             const deleteBtn = document.getElementById('delete-class-btn');
             const catInputs = document.getElementById('category-inputs');
-            catInputs.innerHTML = ''; 
+            catInputs.innerHTML = '';
             if (classId) {
                 const cls = state.classes.find(c => c.id === classId);
                 document.getElementById('edit-class-id').value = cls.id;
@@ -1438,7 +1626,7 @@
         });
 
         function deleteClass() {
-            if(confirm('Are you sure? This will delete all assignments for this class.')) {
+            if (confirm('Are you sure? This will delete all assignments for this class.')) {
                 const id = document.getElementById('edit-class-id').value;
                 state.classes = state.classes.filter(c => c.id !== id);
                 state.activeTab = state.classes.length > 0 ? state.classes[0].id : null;
@@ -1464,7 +1652,7 @@
                 select.appendChild(opt);
             });
             document.getElementById('asg-class-id').value = activeClass.id;
-            document.getElementById('asg-id').value = ''; 
+            document.getElementById('asg-id').value = '';
             document.getElementById('delete-asg-btn').classList.add('hidden');
             document.getElementById('assignment-form').reset();
             document.getElementById('asg-status').value = 'not-started';
@@ -1474,7 +1662,7 @@
         function editAssignment(asgId) {
             const activeClass = state.classes.find(c => c.id === state.activeTab);
             const asg = activeClass.assignments.find(a => a.id === asgId);
-            openAssignmentModal(); 
+            openAssignmentModal();
             document.getElementById('asg-id').value = asg.id;
             document.getElementById('asg-name').value = asg.name;
             document.getElementById('asg-category').value = asg.categoryId;
@@ -1484,9 +1672,9 @@
             document.getElementById('asg-status').value = asg.status || 'not-started';
             document.getElementById('delete-asg-btn').classList.remove('hidden');
         }
-        
+
         function deleteAssignment() {
-            if(confirm('Are you sure you want to delete this assignment?')) {
+            if (confirm('Are you sure you want to delete this assignment?')) {
                 const classId = document.getElementById('asg-class-id').value;
                 const asgId = document.getElementById('asg-id').value;
                 const cls = state.classes.find(c => c.id === classId);
@@ -1540,4 +1728,5 @@
 
     </script>
 </body>
+
 </html>
