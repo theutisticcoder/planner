@@ -421,7 +421,7 @@
         </div>
     </div>
 
-    <script>
+<script>
         // --- SUPABASE CONFIGURATION ---
         const SUPABASE_URL = 'https://njgjgpiamweujgyknqtz.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_3bRvo_Zuppdi4ICnOtfjeA_VWfp6Zyx'; 
@@ -582,20 +582,87 @@
         }
 
         // --- IMPORT / EXPORT LOGIC ---
+        
+        // Helper: Escape CSV fields
+        function escapeCsv(text) {
+            if (text === null || text === undefined) return '';
+            const str = String(text);
+            if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                return `"${str.replace(/"/g, '""')}"`;
+            }
+            return str;
+        }
+
+        // Helper: Robust CSV Parser to handle empty columns (,,) correctly
+        function parseCSVRow(text) {
+            const result = [];
+            let curValue = '';
+            let insideQuote = false;
+            
+            for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                
+                if (char === '"') {
+                    // Check for escaped quote ("")
+                    if (insideQuote && text[i+1] === '"') {
+                        curValue += '"';
+                        i++; // skip next quote
+                    } else {
+                        insideQuote = !insideQuote;
+                    }
+                } else if (char === ',' && !insideQuote) {
+                    result.push(curValue);
+                    curValue = '';
+                } else {
+                    curValue += char;
+                }
+            }
+            result.push(curValue);
+            return result;
+        }
+
         function exportCSV() {
             if (state.classes.length === 0) return alert("No data to export.");
+            
+            // Header
             let csvContent = "data:text/csv;charset=utf-8,";
             csvContent += "Type,ClassID,ClassName,CatID,CatName,CatWeight,AsgID,AsgName,AsgScore,AsgTotal,AsgDate,AsgStatus\n";
+            
             state.classes.forEach(cls => {
+                // Export Categories
                 cls.categories.forEach(cat => {
-                    csvContent += `Category,${cls.id},"${cls.name}",${cat.id},"${cat.name}",${cat.weight},,,,,,\n`;
+                    csvContent += [
+                        'Category',
+                        escapeCsv(cls.id),
+                        escapeCsv(cls.name),
+                        escapeCsv(cat.id),
+                        escapeCsv(cat.name),
+                        escapeCsv(cat.weight),
+                        '','','','','','' // Empty Assignment Fields
+                    ].join(',') + '\n';
                 });
+                
+                // Export Assignments
                 cls.assignments.forEach(asg => {
                     const cat = cls.categories.find(c => c.id === asg.categoryId);
                     const catName = cat ? cat.name : "Unknown";
-                    csvContent += `Assignment,${cls.id},"${cls.name}",${asg.categoryId},"${catName}",,${asg.id},"${asg.name}",${asg.score || ''},${asg.total || ''},${asg.dueDate || ''},${asg.status || ''}\n`;
+                    csvContent += [
+                        'Assignment',
+                        escapeCsv(cls.id),
+                        escapeCsv(cls.name),
+                        escapeCsv(asg.categoryId),
+                        escapeCsv(catName),
+                        '', // Empty Weight Field
+                        escapeCsv(asg.id),
+                        escapeCsv(asg.name),
+                        escapeCsv(asg.score),
+                        escapeCsv(asg.total),
+                        escapeCsv(asg.dueDate),
+                        escapeCsv(asg.status)
+                    ].join(',') + '\n';
                 });
             });
+
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
@@ -611,44 +678,59 @@
             const reader = new FileReader();
             reader.onload = function(e) {
                 const text = e.target.result;
-                const rows = text.split('\n').slice(1);
+                // Split by newline but handle carriage returns
+                const rows = text.replace(/\r\n/g, '\n').split('\n').slice(1);
+                
                 const newClasses = [];
                 const classMap = {}; 
+                
                 rows.forEach(row => {
                     if (!row.trim()) return;
-                    const cols = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || [];
-                    const cleanCols = cols.map(c => c.replace(/^"|"$/g, '').trim()); 
-                    if (cleanCols.length < 3) return;
-                    const type = cleanCols[0];
-                    const classId = cleanCols[1];
-                    const className = cleanCols[2];
+                    
+                    // Use the robust parser
+                    const cols = parseCSVRow(row);
+                    
+                    // Need at least index 3 (CatID) to be valid
+                    if (cols.length < 4) return;
+
+                    // MAPPING
+                    // 0:Type, 1:ClassID, 2:ClassName, 3:CatID, 4:CatName, 5:CatWeight
+                    // 6:AsgID, 7:AsgName, 8:AsgScore, 9:AsgTotal, 10:AsgDate, 11:AsgStatus
+
+                    const type = cols[0];
+                    const classId = cols[1];
+                    const className = cols[2];
+
                     if (!classMap[classId]) {
                         classMap[classId] = {
                             id: classId,
                             name: className,
                             categories: [],
-                            assignments: []
+                            assignments: [],
+                            notes: [] // Init empty notes
                         };
                         newClasses.push(classMap[classId]);
                     }
+
                     if (type === 'Category') {
                         classMap[classId].categories.push({
-                            id: cleanCols[3],
-                            name: cleanCols[4],
-                            weight: cleanCols[5]
+                            id: cols[3],
+                            name: cols[4],
+                            weight: cols[5]
                         });
                     } else if (type === 'Assignment') {
                         classMap[classId].assignments.push({
-                            id: cleanCols[6],
-                            categoryId: cleanCols[3],
-                            name: cleanCols[7],
-                            score: cleanCols[8],
-                            total: cleanCols[9],
-                            dueDate: cleanCols[10],
-                            status: cleanCols[11]
+                            id: cols[6],
+                            categoryId: cols[3],
+                            name: cols[7],
+                            score: cols[8],
+                            total: cols[9],
+                            dueDate: cols[10],
+                            status: cols[11]
                         });
                     }
                 });
+
                 if (newClasses.length > 0) {
                     if(confirm(`Found ${newClasses.length} classes. This will overwrite current data. Continue?`)) {
                         state.classes = newClasses;
@@ -658,7 +740,7 @@
                         alert("Import successful!");
                     }
                 } else {
-                    alert("Could not parse CSV data.");
+                    alert("Could not parse CSV data. Format might be incorrect.");
                 }
                 input.value = ''; 
             };
@@ -1046,7 +1128,6 @@
 
             const activeClass = state.classes.find(c => c.id === state.activeTab);
             if (activeClass) {
-                // Ensure notes array exists
                 if (!activeClass.notes) activeClass.notes = [];
 
                 const currentGrade = calculateClassGrade(activeClass);
@@ -1363,5 +1444,5 @@
         checkUser();
 
     </script>
-</body>
+    </body>
 </html>
