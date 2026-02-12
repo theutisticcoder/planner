@@ -940,57 +940,57 @@
 
         // --- PDF GENERATION LOGIC ---
 
-        // --- PDF EXPORT FUNCTIONS ---
+       // --- PDF EXPORT FUNCTIONS ---
 
-        // Export entire class report to PDF
-        function exportPDF() {
-            if (state.classes.length === 0) return alert("No classes to export.");
-
-            // Create off-screen container
-            const tempDiv = document.createElement('div');
-            tempDiv.style.position = 'absolute';
-            tempDiv.style.top = '0';
-            tempDiv.style.left = '-9999px';
-            tempDiv.style.width = '800px';
-            tempDiv.style.zIndex = 'auto';
-            tempDiv.style.backgroundColor = 'white';
-            tempDiv.style.color = 'black';
-            tempDiv.style.padding = '20px';
-            tempDiv.style.fontFamily = 'Inter, sans-serif';
-
-            // Calculate overall GPA
-            let overallGPA = document.getElementById('overall-gpa').innerText;
-            let header = `
+// Export entire class report to PDF
+function exportPDF() {
+    if (state.classes.length === 0) return alert("No classes to export.");
+    
+    // Create off-screen container
+    const tempDiv = document.createElement('div');
+    tempDiv.style.position = 'absolute';
+    tempDiv.style.top = '0';
+    tempDiv.style.left = '-9999px';
+    tempDiv.style.width = '800px';
+    tempDiv.style.zIndex = 'auto';
+    tempDiv.style.backgroundColor = 'white';
+    tempDiv.style.color = 'black';
+    tempDiv.style.padding = '20px';
+    tempDiv.style.fontFamily = 'Inter, sans-serif';
+    
+    // Calculate overall GPA
+    let overallGPA = document.getElementById('overall-gpa').innerText;
+    let header = `
         <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #2563eb; padding-bottom: 10px;">
             <h1 style="color: #2563eb; margin: 0;">EduTrack Report</h1>
             <p style="color: #6b7280; margin: 5px 0;">Generated on ${new Date().toLocaleDateString()}</p>
             <h2 style="margin: 10px 0;">Cumulative GPA: ${overallGPA}</h2>
         </div>
     `;
-            tempDiv.innerHTML = header;
-
-            // Process each class
-            state.classes.forEach((cls, index) => {
-                const currentGrade = calculateClassGrade(cls);
-                const letterGrade = getLetterGrade(currentGrade);
-                const gradeColor = letterGrade === 'A' ? '#16a34a' : letterGrade === 'F' ? '#ef4444' : '#2563eb';
-
-                let sortedAssignments = [...cls.assignments].sort((a, b) => {
-                    if (a.dueDate && b.dueDate) return new Date(b.dueDate) - new Date(a.dueDate);
-                    return 0;
-                });
-
-                let assignmentsRows = '';
-                if (sortedAssignments.length === 0) {
-                    assignmentsRows = '<tr><td colspan="4" style="text-align:center; padding: 10px; color: #999;">No assignments found.</td></tr>';
-                } else {
-                    sortedAssignments.forEach(asg => {
-                        const cat = cls.categories.find(c => c.id === asg.categoryId);
-                        const catName = cat ? cat.name : 'Unknown';
-                        const scoreDisplay = (asg.score !== null && asg.score !== "") ? `${asg.score}/${asg.total}` : '-';
-                        const percent = (asg.score !== null && asg.score !== "") ? Math.round((asg.score / asg.total) * 100) + '%' : '';
-
-                        assignmentsRows += `
+    tempDiv.innerHTML = header;
+    
+    // Process each class
+    state.classes.forEach((cls, index) => {
+        const currentGrade = calculateClassGrade(cls);
+        const letterGrade = getLetterGrade(currentGrade);
+        const gradeColor = letterGrade === 'A' ? '#16a34a' : letterGrade === 'F' ? '#ef4444' : '#2563eb';
+        
+        let sortedAssignments = [...cls.assignments].sort((a, b) => {
+            if (a.dueDate && b.dueDate) return new Date(b.dueDate) - new Date(a.dueDate);
+            return 0;
+        });
+        
+        let assignmentsRows = '';
+        if (sortedAssignments.length === 0) {
+            assignmentsRows = '<tr><td colspan="4" style="text-align:center; padding: 10px; color: #999;">No assignments found.</td></tr>';
+        } else {
+            sortedAssignments.forEach(asg => {
+                const cat = cls.categories.find(c => c.id === asg.categoryId);
+                const catName = cat ? cat.name : 'Unknown';
+                const scoreDisplay = (asg.score !== null && asg.score !== "") ? `${asg.score}/${asg.total}` : '-';
+                const percent = (asg.score !== null && asg.score !== "") ? Math.round((asg.score / asg.total) * 100) + '%' : '';
+                
+                assignmentsRows += `
                     <tr style="border-bottom: 1px solid #e5e7eb;">
                         <td style="padding: 8px;">${asg.name}</td>
                         <td style="padding: 8px;">${catName}</td>
@@ -998,12 +998,12 @@
                         <td style="padding: 8px; font-weight: bold;">${scoreDisplay} (${percent})</td>
                     </tr>
                 `;
-                    });
-                }
-
-                const pageBreak = index < state.classes.length - 1 ? `<div style="page-break-after: always;"></div>` : '';
-
-                const classHtml = `
+            });
+        }
+        
+        const pageBreak = index < state.classes.length - 1 ? `<div style="page-break-after: always;"></div>` : '';
+        
+        const classHtml = `
             <div style="margin-bottom: 20px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                     <h2 style="font-size: 24px; font-weight: bold; margin: 0;">${cls.name}</h2>
@@ -1031,42 +1031,42 @@
                 </table>
             </div>
         `;
-                tempDiv.innerHTML += classHtml;
-            });
+        tempDiv.innerHTML += classHtml;
+    });
+    
+    document.body.appendChild(tempDiv);
+    
+    const opt = {
+        margin: 0.5,
+        filename: 'edutrack_report.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+    };
+    
+    html2pdf().set(opt).from(tempDiv).save().then(() => {
+        document.body.removeChild(tempDiv);
+    });
+}
 
-            document.body.appendChild(tempDiv);
-
-            const opt = {
-                margin: 0.5,
-                filename: 'edutrack_report.pdf',
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true },
-                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-            };
-
-            html2pdf().set(opt).from(tempDiv).save().then(() => {
-                document.body.removeChild(tempDiv);
-            });
-        }
-
-        // Export single note to PDF
-        function exportNotePDF() {
-            const title = document.getElementById('note-title').value || "Untitled Note";
-            const content = `<div class="ql-container ql-snow" style="border:none;"><div class="ql-editor" style="padding:0;">${quill.root.innerHTML}</div></div>`;
-            const dateVal = document.getElementById('note-date').value;
-
-            const element = document.createElement('div');
-            element.style.position = 'absolute';
-            element.style.top = '0';
-            element.style.left = '-9999px';
-            element.style.width = '800px';
-            element.style.zIndex = 'auto';
-            element.style.backgroundColor = 'white';
-            element.style.color = 'black';
-            element.style.padding = '30px';
-            element.style.fontFamily = 'Inter, sans-serif';
-
-            element.innerHTML = `
+// Export single note to PDF
+function exportNotePDF() {
+    const title = document.getElementById('note-title').value || "Untitled Note";
+    const content = `<div class="ql-container ql-snow" style="border:none;"><div class="ql-editor" style="padding:0;">${quill.root.innerHTML}</div></div>`;
+    const dateVal = document.getElementById('note-date').value;
+    
+    const element = document.createElement('div');
+    element.style.position = 'absolute';
+    element.style.top = '0';
+    element.style.left = '-9999px';
+    element.style.width = '800px';
+    element.style.zIndex = 'auto';
+    element.style.backgroundColor = 'white';
+    element.style.color = 'black';
+    element.style.padding = '30px';
+    element.style.fontFamily = 'Inter, sans-serif';
+    
+    element.innerHTML = `
         <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
         <div style="border-bottom: 2px solid #2563eb; padding-bottom: 10px; margin-bottom: 20px;">
             <h1 style="margin: 0; color: #2563eb;">${title}</h1>
@@ -1076,51 +1076,51 @@
             ${content}
         </div>
     `;
+    
+    document.body.appendChild(element);
+    
+    const opt = {
+        margin: 0.5,
+        filename: `${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+    };
+    
+    html2pdf().set(opt).from(element).save().then(() => {
+        document.body.removeChild(element);
+    });
+}
 
-            document.body.appendChild(element);
-
-            const opt = {
-                margin: 0.5,
-                filename: `${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true },
-                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-            };
-
-            html2pdf().set(opt).from(element).save().then(() => {
-                document.body.removeChild(element);
-            });
-        }
-
-        // Export all notes for a class to PDF
-        function exportAllNotesPDF() {
-            const cls = state.classes.find(c => c.id === state.activeTab);
-            if (!cls || !cls.notes || cls.notes.length === 0) return alert("No notes to export.");
-
-            const element = document.createElement('div');
-            element.style.position = 'absolute';
-            element.style.top = '0';
-            element.style.left = '-9999px';
-            element.style.width = '800px';
-            element.style.zIndex = 'auto';
-            element.style.backgroundColor = 'white';
-            element.style.color = 'black';
-            element.style.padding = '30px';
-            element.style.fontFamily = 'Inter, sans-serif';
-
-            let contentHtml = `
+// Export all notes for a class to PDF
+function exportAllNotesPDF() {
+    const cls = state.classes.find(c => c.id === state.activeTab);
+    if (!cls || !cls.notes || cls.notes.length === 0) return alert("No notes to export.");
+    
+    const element = document.createElement('div');
+    element.style.position = 'absolute';
+    element.style.top = '0';
+    element.style.left = '-9999px';
+    element.style.width = '800px';
+    element.style.zIndex = 'auto';
+    element.style.backgroundColor = 'white';
+    element.style.color = 'black';
+    element.style.padding = '30px';
+    element.style.fontFamily = 'Inter, sans-serif';
+    
+    let contentHtml = `
         <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
         <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #2563eb; padding-bottom: 10px;">
             <h1 style="color: #2563eb; margin: 0;">${cls.name} - Class Notes</h1>
             <p style="color: #6b7280; margin: 5px 0;">Generated on ${new Date().toLocaleDateString()}</p>
         </div>
     `;
-
-            cls.notes.forEach((note, index) => {
-                const dateDisplay = formatDateDisplay(note.date);
-                const formattedContent = `<div class="ql-container ql-snow" style="border:none;"><div class="ql-editor" style="padding:0;">${note.content}</div></div>`;
-
-                contentHtml += `
+    
+    cls.notes.forEach((note, index) => {
+        const dateDisplay = formatDateDisplay(note.date);
+        const formattedContent = `<div class="ql-container ql-snow" style="border:none;"><div class="ql-editor" style="padding:0;">${note.content}</div></div>`;
+        
+        contentHtml += `
             <div style="margin-bottom: 30px; page-break-inside: avoid;">
                 <h2 style="font-size: 18px; border-bottom: 1px solid #e5e7eb; padding-bottom: 5px; margin-bottom: 10px;">
                     ${note.title} <span style="font-size: 12px; color: #6b7280; font-weight: normal;">(${dateDisplay})</span>
@@ -1130,23 +1130,41 @@
                 </div>
             </div>
         `;
-            });
-
-            element.innerHTML = contentHtml;
-            document.body.appendChild(element);
-
-            const opt = {
-                margin: 0.5,
-                filename: `${cls.name}_notes.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true },
-                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-            };
-
-            html2pdf().set(opt).from(element).save().then(() => {
-                document.body.removeChild(element);
-            });
+    });
+    
+    element.innerHTML = contentHtml;
+    document.body.appendChild(element);
+    
+    const opt = {
+        margin: 0.5,
+        filename: `${cls.name}_notes.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+    };
+    
+    html2pdf().set(opt).from(element).save().then(() => {
+        document.body.removeChild(element);
+    });
+}        // --- DATA PERSISTENCE ---
+        async function saveData() {
+            if (state.user) {
+                document.getElementById('sync-status').innerText = 'Saving...';
+                const scrambled = scrambleData(state.classes);
+                const { data: existingData } = await supabaseClient.from('user_data').select('id').eq('user_id', state.user.id).single();
+                const dataToSave = { scrambled: scrambled };
+                const updatePayload = { data: dataToSave, updated_at: new Date() };
+                if (existingData) {
+                    await supabaseClient.from('user_data').update(updatePayload).eq('user_id', state.user.id);
+                } else {
+                    await supabaseClient.from('user_data').insert([{ user_id: state.user.id, data: dataToSave }]);
+                }
+                setTimeout(() => { document.getElementById('sync-status').innerText = 'Saved'; }, 1000);
+            } else {
+                localStorage.setItem('edutrack_data', JSON.stringify(state.classes));
+            }
         }
+
         function loadLocalData() {
             const stored = localStorage.getItem('edutrack_data');
             if (stored) {
