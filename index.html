@@ -200,9 +200,22 @@
             height: 400px;
         }
 
-        /* Fix for Quill font size dropdown width */
+        /* Fix for Quill font size dropdown width to accommodate numbers */
         .ql-snow .ql-picker.ql-size {
-            width: 60px;
+            width: 90px;
+        }
+        
+        /* Ensure the dropdown labels appear correctly */
+        .ql-snow .ql-picker.ql-size .ql-picker-label::before,
+        .ql-snow .ql-picker.ql-size .ql-picker-item::before {
+            content: attr(data-value) !important;
+        }
+        /* Handle default state */
+        .ql-snow .ql-picker.ql-size .ql-picker-label[data-value="16px"]::before {
+             content: "16px (Default)" !important;
+        }
+        .ql-snow .ql-picker.ql-size .ql-picker-label:not([data-value])::before {
+             content: "16px (Default)" !important;
         }
     </style>
 </head>
@@ -560,7 +573,7 @@
                 </div>
 
                 <!-- Quill Editor Container -->
-                <div id="editor-container" class="bg-white"></div>
+                <div id="editor-container" class="bg-white text-black"></div>
                 <input type="hidden" id="note-id">
 
                 <div class="flex justify-end pt-4 gap-2">
@@ -592,10 +605,12 @@
             calendarDate: new Date()
         };
 
-        // --- QUILL INIT ---
-        // Register Font Sizes in PX for numbers
+        // --- QUILL INIT WITH NUMERIC FONT SIZES ---
+        // 1. Import the Size style attributor
         var Size = Quill.import('attributors/style/size');
-        Size.whitelist = ['10px', '12px', '14px', '16px', '18px', '20px', '24px', '30px', '36px', '48px'];
+        // 2. Define the whitelist
+        Size.whitelist = ['10px', '12px', '14px', '16px', '18px', '20px', '24px', '30px', '32px', '48px'];
+        // 3. Register it
         Quill.register(Size, true);
 
         var quill = new Quill('#editor-container', {
@@ -603,7 +618,7 @@
             modules: {
                 toolbar: [
                     [{ 'font': [] }],
-                    [{ 'size': Size.whitelist }], // Use number based sizes
+                    [{ 'size': Size.whitelist }], // Add the whitelist here
                     ['bold', 'italic', 'underline', 'strike'],
                     [{ 'color': [] }, { 'background': [] }],
                     [{ 'list': 'ordered' }, { 'list': 'bullet' }],
@@ -612,7 +627,7 @@
                 ]
             }
         });
-
+        
         // --- DATE HELPER (Fixes Off-by-one error) ---
         // Splits YYYY-MM-DD and creates local date to avoid UTC conversion shifts
         function getLocalDateObject(dateString) {
@@ -913,33 +928,36 @@
             reader.readAsText(file);
         }
 
+        // --- FIXED EXPORT PDF LOGIC ---
         function exportPDF() {
             if (state.classes.length === 0) return alert("No classes to export.");
 
             // Create element
             const tempDiv = document.createElement('div');
 
-            // STYLE FIXES: Ensure it has width and is attached to body
-            tempDiv.style.width = '800px';
-            tempDiv.style.padding = '20px';
+            // STYLE FIXES:
+            // 1. Use absolute positioning with top/left at 0 but z-index -1 so it's "visible" to the renderer but hidden behind other stuff.
+            //    Positioning at left: -9999px often makes pdf renderers return blank pages.
+            // 2. Set white background specifically.
+            tempDiv.style.width = '800px'; 
+            tempDiv.style.minHeight = '1000px'; 
+            tempDiv.style.padding = '40px';
             tempDiv.style.fontFamily = 'Inter, sans-serif';
-            tempDiv.style.color = 'black';
-            tempDiv.style.backgroundColor = 'white';
-
-            // Position off-screen but keep it rendered
+            tempDiv.style.color = '#000000';
+            tempDiv.style.backgroundColor = '#ffffff';
             tempDiv.style.position = 'absolute';
-            tempDiv.style.left = '-9999px';
-            tempDiv.style.top = '0px';
+            tempDiv.style.top = '0';
+            tempDiv.style.left = '0';
+            tempDiv.style.zIndex = '-1';
 
-            // IMPORTANT: Append to body BEFORE generating PDF
             document.body.appendChild(tempDiv);
 
             let overallGPA = document.getElementById('overall-gpa').innerText;
             let header = `
                 <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #2563eb; padding-bottom: 10px;">
-                    <h1 style="color: #2563eb; margin: 0;">EduTrack Report</h1>
+                    <h1 style="color: #2563eb; margin: 0; font-size: 28px;">EduTrack Report</h1>
                     <p style="color: #6b7280; margin: 5px 0;">Generated on ${new Date().toLocaleDateString()}</p>
-                    <h2 style="margin: 10px 0;">Cumulative GPA: ${overallGPA}</h2>
+                    <h2 style="margin: 10px 0; font-size: 20px;">Cumulative GPA: ${overallGPA}</h2>
                 </div>
             `;
             tempDiv.innerHTML = header;
@@ -966,33 +984,33 @@
 
                         assignmentsRows += `
                             <tr style="border-bottom: 1px solid #e5e7eb;">
-                                <td style="padding: 8px;">${asg.name}</td>
-                                <td style="padding: 8px;">${catName}</td>
-                                <td style="padding: 8px;">${formatDateDisplay(asg.dueDate) || '-'}</td>
-                                <td style="padding: 8px; font-weight: bold;">${scoreDisplay} (${percent})</td>
+                                <td style="padding: 8px; color: #000;">${asg.name}</td>
+                                <td style="padding: 8px; color: #555;">${catName}</td>
+                                <td style="padding: 8px; color: #555;">${formatDateDisplay(asg.dueDate) || '-'}</td>
+                                <td style="padding: 8px; font-weight: bold; color: #000;">${scoreDisplay} (${percent})</td>
                             </tr>
                         `;
                     });
                 }
-                const pageBreak = `<div style="page-break-after: always;"></div>`;
+                
                 const classHtml = `
-                    <div style="margin-bottom: 20px; page-break-inside: avoid;">
+                    <div style="margin-bottom: 40px; page-break-inside: avoid;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                            <h2 style="font-size: 24px; font-weight: bold; margin: 0;">${cls.name}</h2>
+                            <h2 style="font-size: 22px; font-weight: bold; margin: 0; color: #111827;">${cls.name}</h2>
                             <div style="text-align: right;">
-                                <span style="font-size: 24px; font-weight: bold; color: ${gradeColor};">${currentGrade ? currentGrade.toFixed(2) : '--'}%</span>
+                                <span style="font-size: 22px; font-weight: bold; color: ${gradeColor};">${currentGrade ? currentGrade.toFixed(2) : '--'}%</span>
                                 <span style="font-size: 18px; color: #6b7280; margin-left: 5px;">(${letterGrade})</span>
                             </div>
                         </div>
-                        <div style="margin-bottom: 20px; background: #f9fafb; padding: 10px; border-radius: 8px;">
-                            <h3 style="font-size: 14px; margin: 0 0 5px 0; text-transform: uppercase; color: #6b7280;">Weighting</h3>
-                            <ul style="margin: 0; padding-left: 20px; font-size: 14px;">
+                        <div style="margin-bottom: 20px; background: #f9fafb; padding: 10px; border-radius: 8px; border: 1px solid #e5e7eb;">
+                            <h3 style="font-size: 12px; margin: 0 0 5px 0; text-transform: uppercase; color: #6b7280; font-weight: bold;">Weighting</h3>
+                            <ul style="margin: 0; padding-left: 20px; font-size: 14px; color: #4b5563;">
                                 ${cls.categories.map(cat => `<li>${cat.name}: ${cat.weight}%</li>`).join('')}
                             </ul>
                         </div>
                         <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
                             <thead>
-                                <tr style="background-color: #f3f4f6; text-align: left;">
+                                <tr style="background-color: #f3f4f6; text-align: left; color: #374151;">
                                     <th style="padding: 8px; border-bottom: 2px solid #e5e7eb;">Assignment</th>
                                     <th style="padding: 8px; border-bottom: 2px solid #e5e7eb;">Category</th>
                                     <th style="padding: 8px; border-bottom: 2px solid #e5e7eb;">Due Date</th>
@@ -1002,7 +1020,6 @@
                             <tbody>${assignmentsRows}</tbody>
                         </table>
                     </div>
-                    <br/>
                 `;
                 tempDiv.innerHTML += classHtml;
             });
@@ -1015,11 +1032,11 @@
                 jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
             };
 
-            // Generate PDF and remove element afterward
             html2pdf().set(opt).from(tempDiv).save().then(() => {
                 document.body.removeChild(tempDiv);
             });
         }
+        
         // --- DATA PERSISTENCE ---
         async function saveData() {
             if (state.user) {
@@ -1290,27 +1307,26 @@
             const dateVal = document.getElementById('note-date').value;
             
             const element = document.createElement('div');
+            // Fixed PDF Export container style
             element.style.width = '800px'; 
             element.style.padding = '40px';
             element.style.fontFamily = 'Inter, sans-serif';
-            element.style.color = 'black';
-            element.style.backgroundColor = 'white';
-            
-            // Positioning fix
+            element.style.color = '#000000';
+            element.style.backgroundColor = '#ffffff';
             element.style.position = 'absolute';
-            element.style.left = '-9999px';
-            element.style.top = '0px'; // Ensure top is 0 so it doesn't float into negative space
+            element.style.top = '0'; // Position at top of doc
+            element.style.left = '0'; // Position at left
+            element.style.zIndex = '-1'; // Hide behind everything
 
             element.innerHTML = `
                 <div style="border-bottom: 2px solid #2563eb; padding-bottom: 10px; margin-bottom: 20px;">
-                    <h1 style="margin: 0; color: #2563eb;">${title}</h1>
+                    <h1 style="margin: 0; color: #2563eb; font-size: 24px;">${title}</h1>
                     <p style="margin: 5px 0; color: #666; font-size: 0.9em;">${formatDateDisplay(dateVal)}</p>
                 </div>
-                <div class="ql-editor" style="padding: 0;"> 
+                <div class="ql-editor" style="padding: 0; font-size: 14px;"> 
                     ${content}
                 </div>
             `;
-            // Note: Added class "ql-editor" above to inherit Quill styles if needed
 
             document.body.appendChild(element);
 
@@ -1318,7 +1334,7 @@
                 margin:       0.5,
                 filename:     `${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`,
                 image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true, scrollY: 0 }, // scrollY: 0 helps prevent blank tops
+                html2canvas:  { scale: 2, useCORS: true, scrollY: 0 }, 
                 jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
             };
 
