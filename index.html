@@ -7,8 +7,11 @@
     <title>EduTrack - Smart Assignment Tracker</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- Library for PDF Export -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <!-- PDF Generation Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
     <!-- Quill.js for Rich Text Editing -->
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
@@ -210,12 +213,8 @@
         .ql-snow .ql-picker.ql-size .ql-picker-item::before {
             content: attr(data-value) !important;
         }
-        /* Handle default state */
-        .ql-snow .ql-picker.ql-size .ql-picker-label[data-value="16px"]::before {
-             content: "16px (Default)" !important;
-        }
         .ql-snow .ql-picker.ql-size .ql-picker-label:not([data-value])::before {
-             content: "16px (Default)" !important;
+             content: "16px" !important;
         }
     </style>
 </head>
@@ -287,7 +286,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                     <!-- GPA Card -->
                     <div class="card p-6 rounded-xl shadow-sm flex flex-col justify-center relative">
-                        <button onclick="exportPDF()"
+                        <button onclick="generateReportPDF()"
                             class="absolute top-4 right-4 text-gray-400 hover:text-red-600 text-xs border border-gray-200 dark:border-gray-600 p-1 rounded"
                             title="Download PDF Report">
                             PDF Report
@@ -577,9 +576,9 @@
                 <input type="hidden" id="note-id">
 
                 <div class="flex justify-end pt-4 gap-2">
-                    <button type="button" onclick="exportNotePDF()"
+                    <button type="button" onclick="exportSingleNotePDF()"
                         class="mr-auto px-4 py-2 border border-gray-300 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">Export
-                        PDF</button>
+                        Current Note</button>
 
                     <button type="button" onclick="deleteNote()" id="delete-note-btn"
                         class="hidden text-red-500 hover:text-red-700 font-bold border border-red-200 px-3 py-1 rounded">Delete</button>
@@ -595,6 +594,8 @@
         const SUPABASE_URL = 'https://njgjgpiamweujgyknqtz.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_3bRvo_Zuppdi4ICnOtfjeA_VWfp6Zyx';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // Expose jsPDF from window
+        const { jsPDF } = window.jspdf;
 
         // --- STATE MANAGEMENT ---
         let state = {
@@ -606,11 +607,8 @@
         };
 
         // --- QUILL INIT WITH NUMERIC FONT SIZES ---
-        // 1. Import the Size style attributor
         var Size = Quill.import('attributors/style/size');
-        // 2. Define the whitelist
         Size.whitelist = ['10px', '12px', '14px', '16px', '18px', '20px', '24px', '30px', '32px', '48px'];
-        // 3. Register it
         Quill.register(Size, true);
 
         var quill = new Quill('#editor-container', {
@@ -618,7 +616,7 @@
             modules: {
                 toolbar: [
                     [{ 'font': [] }],
-                    [{ 'size': Size.whitelist }], // Add the whitelist here
+                    [{ 'size': Size.whitelist }], 
                     ['bold', 'italic', 'underline', 'strike'],
                     [{ 'color': [] }, { 'background': [] }],
                     [{ 'list': 'ordered' }, { 'list': 'bullet' }],
@@ -628,13 +626,11 @@
             }
         });
         
-        // --- DATE HELPER (Fixes Off-by-one error) ---
-        // Splits YYYY-MM-DD and creates local date to avoid UTC conversion shifts
+        // --- DATE HELPER ---
         function getLocalDateObject(dateString) {
             if (!dateString) return null;
-            // Check if ISO string (has T) or simple date
             if (dateString.includes('T')) {
-                return new Date(dateString); // Treat ISO as is (though often best to stick to one format)
+                return new Date(dateString); 
             }
             const [y, m, d] = dateString.split('-').map(Number);
             return new Date(y, m - 1, d);
@@ -721,8 +717,6 @@
             }
         }
 
-
-
         document.getElementById('signin-btn').addEventListener('click', async () => {
             const email = document.getElementById('auth-email').value;
             const password = document.getElementById('auth-password').value;
@@ -785,7 +779,7 @@
             }
         }
 
-        // --- IMPORT / EXPORT LOGIC ---
+        // --- IMPORT / EXPORT CSV ---
         function escapeCsv(text) {
             if (text === null || text === undefined) return '';
             const str = String(text);
@@ -928,115 +922,201 @@
             reader.readAsText(file);
         }
 
-        // --- FIXED EXPORT PDF LOGIC ---
-        function exportPDF() {
+        // --- PDF GENERATION LOGIC ---
+        
+        // Helper: Convert an HTML element to a canvas image URL
+        async function elementToImage(element) {
+            const canvas = await html2canvas(element, { scale: 2, useCORS: true });
+            return {
+                imgData: canvas.toDataURL('image/jpeg', 1.0),
+                width: canvas.width,
+                height: canvas.height
+            };
+        }
+
+        async function generateReportPDF() {
             if (state.classes.length === 0) return alert("No classes to export.");
 
-            // Create element
-            const tempDiv = document.createElement('div');
+            // Create invisible container
+            const container = document.createElement('div');
+            container.style.width = '700px'; 
+            container.style.padding = '40px';
+            container.style.position = 'absolute';
+            container.style.top = '0';
+            container.style.left = '0';
+            container.style.zIndex = '-1';
+            container.style.background = '#fff';
+            container.style.color = '#000';
+            
+            document.body.appendChild(container);
 
-            // STYLE FIXES:
-            // 1. Use absolute positioning with top/left at 0 but z-index -1 so it's "visible" to the renderer but hidden behind other stuff.
-            //    Positioning at left: -9999px often makes pdf renderers return blank pages.
-            // 2. Set white background specifically.
-            tempDiv.style.width = '800px'; 
-            tempDiv.style.minHeight = '1000px'; 
-            tempDiv.style.padding = '40px';
-            tempDiv.style.fontFamily = 'Inter, sans-serif';
-            tempDiv.style.color = '#000000';
-            tempDiv.style.backgroundColor = '#ffffff';
-            tempDiv.style.position = 'absolute';
-            tempDiv.style.top = '0';
-            tempDiv.style.left = '0';
-            tempDiv.style.zIndex = '-1';
+            const doc = new jsPDF('p', 'mm', 'a4');
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const margin = 15;
 
-            document.body.appendChild(tempDiv);
-
+            // Generate Overall Report HTML
             let overallGPA = document.getElementById('overall-gpa').innerText;
-            let header = `
-                <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #2563eb; padding-bottom: 10px;">
-                    <h1 style="color: #2563eb; margin: 0; font-size: 28px;">EduTrack Report</h1>
-                    <p style="color: #6b7280; margin: 5px 0;">Generated on ${new Date().toLocaleDateString()}</p>
-                    <h2 style="margin: 10px 0; font-size: 20px;">Cumulative GPA: ${overallGPA}</h2>
+            let reportHtml = `
+                <div style="font-family: sans-serif;">
+                    <h1 style="color: #2563eb; text-align: center; border-bottom: 2px solid #2563eb; padding-bottom: 10px;">EduTrack Report</h1>
+                    <p style="text-align: center; color: #666; margin-bottom: 20px;">Cumulative GPA: ${overallGPA}</p>
                 </div>
             `;
-            tempDiv.innerHTML = header;
-
-            state.classes.forEach((cls, index) => {
-                const currentGrade = calculateClassGrade(cls);
-                const letterGrade = getLetterGrade(currentGrade);
-                const gradeColor = letterGrade === 'A' ? '#16a34a' : letterGrade === 'F' ? '#ef4444' : '#2563eb';
-
-                let sortedAssignments = [...cls.assignments].sort((a, b) => {
-                    if (a.dueDate && b.dueDate) return new Date(b.dueDate) - new Date(a.dueDate);
-                    return 0;
+            
+            // Iterate classes
+            for (let i = 0; i < state.classes.length; i++) {
+                const cls = state.classes[i];
+                const grade = calculateClassGrade(cls);
+                const letter = getLetterGrade(grade);
+                
+                let rowsHtml = '';
+                cls.assignments.sort((a,b) => new Date(b.dueDate) - new Date(a.dueDate)).forEach(asg => {
+                    const cat = cls.categories.find(c => c.id === asg.categoryId);
+                    const scoreText = (asg.score) ? `${asg.score}/${asg.total}` : '-';
+                    rowsHtml += `
+                        <tr style="border-bottom: 1px solid #ddd;">
+                            <td style="padding: 6px;">${asg.name}</td>
+                            <td style="padding: 6px;">${cat ? cat.name : ''}</td>
+                            <td style="padding: 6px;">${formatDateDisplay(asg.dueDate)}</td>
+                            <td style="padding: 6px;">${scoreText}</td>
+                        </tr>
+                    `;
                 });
 
-                let assignmentsRows = '';
-                if (sortedAssignments.length === 0) {
-                    assignmentsRows = '<tr><td colspan="4" style="text-align:center; padding: 10px; color: #999;">No assignments found.</td></tr>';
-                } else {
-                    sortedAssignments.forEach(asg => {
-                        const cat = cls.categories.find(c => c.id === asg.categoryId);
-                        const catName = cat ? cat.name : "Unknown";
-                        const scoreDisplay = (asg.score !== null && asg.score !== "") ? `${asg.score}/${asg.total}` : '-';
-                        const percent = (asg.score !== null && asg.score !== "") ? Math.round((asg.score / asg.total) * 100) + '%' : '';
-
-                        assignmentsRows += `
-                            <tr style="border-bottom: 1px solid #e5e7eb;">
-                                <td style="padding: 8px; color: #000;">${asg.name}</td>
-                                <td style="padding: 8px; color: #555;">${catName}</td>
-                                <td style="padding: 8px; color: #555;">${formatDateDisplay(asg.dueDate) || '-'}</td>
-                                <td style="padding: 8px; font-weight: bold; color: #000;">${scoreDisplay} (${percent})</td>
-                            </tr>
-                        `;
-                    });
-                }
-                
-                const classHtml = `
-                    <div style="margin-bottom: 40px; page-break-inside: avoid;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                            <h2 style="font-size: 22px; font-weight: bold; margin: 0; color: #111827;">${cls.name}</h2>
-                            <div style="text-align: right;">
-                                <span style="font-size: 22px; font-weight: bold; color: ${gradeColor};">${currentGrade ? currentGrade.toFixed(2) : '--'}%</span>
-                                <span style="font-size: 18px; color: #6b7280; margin-left: 5px;">(${letterGrade})</span>
-                            </div>
-                        </div>
-                        <div style="margin-bottom: 20px; background: #f9fafb; padding: 10px; border-radius: 8px; border: 1px solid #e5e7eb;">
-                            <h3 style="font-size: 12px; margin: 0 0 5px 0; text-transform: uppercase; color: #6b7280; font-weight: bold;">Weighting</h3>
-                            <ul style="margin: 0; padding-left: 20px; font-size: 14px; color: #4b5563;">
-                                ${cls.categories.map(cat => `<li>${cat.name}: ${cat.weight}%</li>`).join('')}
-                            </ul>
-                        </div>
-                        <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                reportHtml += `
+                    <div style="font-family: sans-serif; margin-bottom: 30px; page-break-inside: avoid;">
+                        <h2 style="background: #f3f4f6; padding: 10px; border-radius: 5px;">${cls.name} <span style="float: right;">${grade ? grade.toFixed(1)+'%' : ''} (${letter})</span></h2>
+                        <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
                             <thead>
-                                <tr style="background-color: #f3f4f6; text-align: left; color: #374151;">
-                                    <th style="padding: 8px; border-bottom: 2px solid #e5e7eb;">Assignment</th>
-                                    <th style="padding: 8px; border-bottom: 2px solid #e5e7eb;">Category</th>
-                                    <th style="padding: 8px; border-bottom: 2px solid #e5e7eb;">Due Date</th>
-                                    <th style="padding: 8px; border-bottom: 2px solid #e5e7eb;">Score</th>
+                                <tr style="background: #eee; font-weight: bold;">
+                                    <td style="padding: 6px;">Assignment</td>
+                                    <td style="padding: 6px;">Category</td>
+                                    <td style="padding: 6px;">Due</td>
+                                    <td style="padding: 6px;">Score</td>
                                 </tr>
                             </thead>
-                            <tbody>${assignmentsRows}</tbody>
+                            <tbody>${rowsHtml}</tbody>
                         </table>
                     </div>
                 `;
-                tempDiv.innerHTML += classHtml;
-            });
+            }
 
-            const opt = {
-                margin: 0.5,
-                filename: 'edutrack_report.pdf',
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true },
-                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-            };
+            container.innerHTML = reportHtml;
+            
+            // Render to canvas using html2canvas
+            const { imgData, width, height } = await elementToImage(container);
+            
+            const imgWidth = pageWidth - (margin * 2);
+            const imgHeight = (height * imgWidth) / width;
+            
+            let heightLeft = imgHeight;
+            let position = margin;
+            
+            // Add first page
+            doc.addImage(imgData, 'JPEG', margin, position, imgWidth, imgHeight);
+            heightLeft -= (pageHeight - margin);
 
-            html2pdf().set(opt).from(tempDiv).save().then(() => {
-                document.body.removeChild(tempDiv);
-            });
+            // Add extra pages if needed
+            while (heightLeft >= 0) {
+                position = heightLeft - imgHeight + margin; // negative offset
+                doc.addPage();
+                doc.addImage(imgData, 'JPEG', margin, position - margin, imgWidth, imgHeight); // Adjust position to simulate scroll
+                heightLeft -= pageHeight;
+            }
+
+            doc.save('edutrack_report.pdf');
+            document.body.removeChild(container);
         }
-        
+
+        async function exportSingleNotePDF() {
+            const title = document.getElementById('note-title').value || "Untitled";
+            const content = quill.root.innerHTML;
+            const date = document.getElementById('note-date').value;
+            
+            const container = document.createElement('div');
+            container.style.width = '700px'; 
+            container.style.padding = '40px';
+            container.style.position = 'absolute';
+            container.style.top = '0'; 
+            container.style.left = '0';
+            container.style.zIndex = '-1';
+            container.style.background = '#fff';
+            
+            container.innerHTML = `
+                <div style="font-family: sans-serif;">
+                    <h1 style="color: #2563eb; border-bottom: 2px solid #eee; padding-bottom: 10px;">${title}</h1>
+                    <p style="color: #666; font-size: 14px; margin-bottom: 20px;">${formatDateDisplay(date)}</p>
+                    <div class="ql-editor" style="padding: 0;">${content}</div>
+                </div>
+            `;
+            
+            document.body.appendChild(container);
+            
+            const { imgData, width, height } = await elementToImage(container);
+            const doc = new jsPDF('p', 'mm', 'a4');
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const imgWidth = pageWidth - 30; // 15mm margin
+            const imgHeight = (height * imgWidth) / width;
+            
+            doc.addImage(imgData, 'JPEG', 15, 15, imgWidth, imgHeight);
+            doc.save(`${title.replace(/\s+/g, '_')}.pdf`);
+            document.body.removeChild(container);
+        }
+
+        async function exportAllClassNotes() {
+            if (!state.activeTab) return alert("No class selected");
+            const cls = state.classes.find(c => c.id === state.activeTab);
+            if (!cls.notes || cls.notes.length === 0) return alert("No notes to export.");
+
+            const doc = new jsPDF('p', 'mm', 'a4');
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const margin = 15;
+            
+            // Create container for rendering
+            const container = document.createElement('div');
+            container.style.width = '700px'; 
+            container.style.padding = '40px';
+            container.style.position = 'absolute';
+            container.style.top = '0';
+            container.style.left = '0';
+            container.style.zIndex = '-1';
+            container.style.background = '#fff';
+            document.body.appendChild(container);
+
+            let firstPage = true;
+
+            // Sort notes by date
+            const sortedNotes = [...cls.notes].sort((a,b) => new Date(b.date) - new Date(a.date));
+
+            for (let i = 0; i < sortedNotes.length; i++) {
+                const note = sortedNotes[i];
+                
+                // Set HTML for this specific note
+                container.innerHTML = `
+                    <div style="font-family: sans-serif; min-height: 900px;">
+                        <h1 style="color: #2563eb; border-bottom: 2px solid #eee; padding-bottom: 10px;">${note.title}</h1>
+                        <p style="color: #666; font-size: 14px; margin-bottom: 20px;">${formatDateDisplay(note.date)}</p>
+                        <div class="ql-editor" style="padding: 0;">${note.content}</div>
+                    </div>
+                `;
+
+                // Render this note to image
+                const { imgData, width, height } = await elementToImage(container);
+                
+                const imgWidth = pageWidth - (margin * 2);
+                const imgHeight = (height * imgWidth) / width;
+
+                if (!firstPage) doc.addPage();
+                doc.addImage(imgData, 'JPEG', margin, margin, imgWidth, imgHeight);
+                firstPage = false;
+            }
+
+            document.body.removeChild(container);
+            doc.save(`${cls.name}_Notes.pdf`);
+        }
+
         // --- DATA PERSISTENCE ---
         async function saveData() {
             if (state.user) {
@@ -1234,14 +1314,12 @@
                 titleInput.value = note.title;
                 quill.root.innerHTML = note.content;
                 idInput.value = note.id;
-                // If note.date is simple YYYY-MM-DD, use it. If ISO, slice it.
                 dateInput.value = note.date.includes('T') ? note.date.slice(0, 10) : note.date;
                 deleteBtn.classList.remove('hidden');
             } else {
                 titleInput.value = '';
                 quill.root.innerHTML = '';
                 idInput.value = '';
-                // Default to today using local YYYY-MM-DD
                 const now = new Date();
                 dateInput.value = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
                 deleteBtn.classList.add('hidden');
@@ -1262,7 +1340,6 @@
 
             if (!title) return alert("Please enter a title");
 
-            // Use the user-picked date directly (YYYY-MM-DD) or fallback to today
             let finalDate = dateVal;
             if (!finalDate) {
                 const now = new Date();
@@ -1301,47 +1378,7 @@
                 closeNoteModal();
             }
         }
-       function exportNotePDF() {
-            const title = document.getElementById('note-title').value || "Untitled Note";
-            const content = quill.root.innerHTML; // Get HTML from Quill
-            const dateVal = document.getElementById('note-date').value;
-            
-            const element = document.createElement('div');
-            // Fixed PDF Export container style
-            element.style.width = '800px'; 
-            element.style.padding = '40px';
-            element.style.fontFamily = 'Inter, sans-serif';
-            element.style.color = '#000000';
-            element.style.backgroundColor = '#ffffff';
-            element.style.position = 'absolute';
-            element.style.top = '0'; // Position at top of doc
-            element.style.left = '0'; // Position at left
-            element.style.zIndex = '-1'; // Hide behind everything
-
-            element.innerHTML = `
-                <div style="border-bottom: 2px solid #2563eb; padding-bottom: 10px; margin-bottom: 20px;">
-                    <h1 style="margin: 0; color: #2563eb; font-size: 24px;">${title}</h1>
-                    <p style="margin: 5px 0; color: #666; font-size: 0.9em;">${formatDateDisplay(dateVal)}</p>
-                </div>
-                <div class="ql-editor" style="padding: 0; font-size: 14px;"> 
-                    ${content}
-                </div>
-            `;
-
-            document.body.appendChild(element);
-
-            const opt = {
-                margin:       0.5,
-                filename:     `${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`,
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true, scrollY: 0 }, 
-                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
-            };
-
-            html2pdf().set(opt).from(element).save().then(() => {
-                document.body.removeChild(element);
-            });
-        }
+        
         // --- UI RENDERING ---
         function renderTodoList() {
             const listEl = document.getElementById('todo-list');
@@ -1534,7 +1571,10 @@
                             <div class="card p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
                                 <div class="flex justify-between items-center mb-2">
                                     <h3 class="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Class Notes</h3>
-                                    <button onclick="openNoteModal()" class="text-xs text-blue-600 hover:text-blue-800 font-bold">+ New</button>
+                                    <div class="flex gap-2">
+                                        <button onclick="exportAllClassNotes()" class="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200" title="Export All Notes PDF">⬇ PDF</button>
+                                        <button onclick="openNoteModal()" class="text-xs text-blue-600 hover:text-blue-800 font-bold">+ New</button>
+                                    </div>
                                 </div>
                                 ${notesHtml}
                             </div>
