@@ -78,15 +78,13 @@
             border-color: #4b5563;
             color: #f3f4f6;
         }
-        /* Fix Quill Icons for Dark Mode */
         .dark .ql-stroke { stroke: #d1d5db !important; }
         .dark .ql-fill { fill: #d1d5db !important; }
         .dark .ql-picker { color: #d1d5db; }
         .dark .ql-picker-options { background-color: #374151; border-color: #4b5563; }
         
-        /* Ensure editor has height */
         #editor-container {
-            height: 300px;
+            height: 400px;
         }
     </style>
 </head>
@@ -382,17 +380,25 @@
                     </div>
                 </div>
                 
-                <div class="mb-4">
-                    <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Title</label>
-                    <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="note-title" type="text" placeholder="Note Title" required>
+                <div class="flex gap-4 mb-4">
+                    <div class="w-2/3">
+                        <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Title</label>
+                        <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="note-title" type="text" placeholder="Note Title" required>
+                    </div>
+                    <div class="w-1/3">
+                        <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Date</label>
+                        <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="note-date" type="date">
+                    </div>
                 </div>
 
                 <!-- Quill Editor Container -->
                 <div id="editor-container" class="bg-white"></div>
                 <input type="hidden" id="note-id">
 
-                <div class="flex justify-end pt-4">
-                    <button type="button" onclick="deleteNote()" id="delete-note-btn" class="hidden text-red-500 mr-auto hover:text-red-700 font-bold border border-red-200 px-3 py-1 rounded">Delete</button>
+                <div class="flex justify-end pt-4 gap-2">
+                    <button type="button" onclick="exportNotePDF()" class="mr-auto px-4 py-2 border border-gray-300 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">Export PDF</button>
+                    
+                    <button type="button" onclick="deleteNote()" id="delete-note-btn" class="hidden text-red-500 hover:text-red-700 font-bold border border-red-200 px-3 py-1 rounded">Delete</button>
                     <button onclick="saveNote()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save Note</button>
                 </div>
             </div>
@@ -419,6 +425,8 @@
             theme: 'snow',
             modules: {
                 toolbar: [
+                    [{ 'font': [] }],
+                    [{ 'size': ['small', false, 'large', 'huge'] }],
                     [{ 'header': [1, 2, 3, false] }],
                     ['bold', 'italic', 'underline', 'strike'],
                     [{ 'color': [] }, { 'background': [] }],
@@ -996,20 +1004,23 @@
             const cls = state.classes.find(c => c.id === state.activeTab);
             const editor = document.getElementById('editor-container');
             const titleInput = document.getElementById('note-title');
+            const dateInput = document.getElementById('note-date');
             const deleteBtn = document.getElementById('delete-note-btn');
             const idInput = document.getElementById('note-id');
 
             if (noteId) {
                 const note = cls.notes.find(n => n.id === noteId);
                 titleInput.value = note.title;
-                // Load content into Quill
                 quill.root.innerHTML = note.content;
                 idInput.value = note.id;
+                // Format date for input type="date"
+                dateInput.value = note.date ? note.date.slice(0, 10) : new Date().toISOString().slice(0,10);
                 deleteBtn.classList.remove('hidden');
             } else {
                 titleInput.value = '';
-                quill.root.innerHTML = ''; // Clear Quill
+                quill.root.innerHTML = ''; 
                 idInput.value = '';
+                dateInput.value = new Date().toISOString().slice(0,10); // Default to today
                 deleteBtn.classList.add('hidden');
             }
             toggleModal('note-modal', true);
@@ -1023,10 +1034,13 @@
             const cls = state.classes.find(c => c.id === state.activeTab);
             const id = document.getElementById('note-id').value;
             const title = document.getElementById('note-title').value;
-            // Get content from Quill
             const content = quill.root.innerHTML;
+            const dateVal = document.getElementById('note-date').value;
 
             if (!title) return alert("Please enter a title");
+
+            // Ensure dateVal is a proper ISO string or default to now
+            const finalDate = dateVal ? new Date(dateVal).toISOString() : new Date().toISOString();
 
             if (!cls.notes) cls.notes = [];
 
@@ -1035,14 +1049,14 @@
                 const note = cls.notes.find(n => n.id === id);
                 note.title = title;
                 note.content = content;
-                note.date = new Date().toISOString();
+                note.date = finalDate;
             } else {
                 // Create
                 cls.notes.push({
                     id: 'note_' + Date.now(),
                     title: title,
                     content: content,
-                    date: new Date().toISOString()
+                    date: finalDate
                 });
             }
             saveData();
@@ -1059,6 +1073,40 @@
                 render();
                 closeNoteModal();
             }
+        }
+
+        function exportNotePDF() {
+            const title = document.getElementById('note-title').value || "Untitled Note";
+            const content = quill.root.innerHTML;
+            const dateVal = document.getElementById('note-date').value;
+            
+            // Create a temporary container
+            const element = document.createElement('div');
+            element.style.padding = '30px';
+            element.style.fontFamily = 'Inter, sans-serif';
+            // Force light mode styles for the PDF
+            element.style.color = 'black';
+            element.style.backgroundColor = 'white';
+
+            element.innerHTML = `
+                <div style="border-bottom: 2px solid #2563eb; padding-bottom: 10px; margin-bottom: 20px;">
+                    <h1 style="margin: 0; color: #2563eb;">${title}</h1>
+                    <p style="margin: 5px 0; color: #666; font-size: 0.9em;">${dateVal}</p>
+                </div>
+                <div class="note-content">
+                    ${content}
+                </div>
+            `;
+
+            const opt = {
+                margin:       0.5,
+                filename:     `${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(element).save();
         }
 
         // --- UI RENDERING ---
@@ -1465,5 +1513,5 @@
         checkUser();
 
     </script>
-    </body>
+</body>
 </html>
