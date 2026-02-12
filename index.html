@@ -8,7 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- Library for PDF Export -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.5.3/jspdf.umd.min.js"></script>
     <!-- Quill.js for Rich Text Editing -->
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
@@ -529,53 +529,55 @@
                 </form>
             </div>
         </div>
+    </div>
 
-        <!-- NOTES EDITOR MODAL -->
-        <div id="note-modal"
-            class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
-            <div class="modal-overlay absolute w-full h-full bg-gray-900 opacity-50"></div>
-            <div
-                class="modal-container bg-white w-11/12 md:max-w-2xl mx-auto rounded-lg shadow-lg z-50 overflow-y-auto max-h-[90vh]">
-                <div class="modal-content py-4 text-left px-6">
-                    <div class="flex justify-between items-center pb-3">
-                        <p class="text-2xl font-bold">Edit Note</p>
-                        <div class="modal-close cursor-pointer z-50 p-2" onclick="closeNoteModal()">
-                            <span class="text-2xl">&times;</span>
-                        </div>
+    <!-- NOTES EDITOR MODAL -->
+    <div id="note-modal"
+        class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
+        <div class="modal-overlay absolute w-full h-full bg-gray-900 opacity-50"></div>
+        <div
+            class="modal-container bg-white w-11/12 md:max-w-2xl mx-auto rounded-lg shadow-lg z-50 overflow-y-auto max-h-[90vh]">
+            <div class="modal-content py-4 text-left px-6">
+                <div class="flex justify-between items-center pb-3">
+                    <p class="text-2xl font-bold">Edit Note</p>
+                    <div class="modal-close cursor-pointer z-50 p-2" onclick="closeNoteModal()">
+                        <span class="text-2xl">&times;</span>
                     </div>
+                </div>
 
-                    <div class="flex gap-4 mb-4">
-                        <div class="w-2/3">
-                            <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Title</label>
-                            <input
-                                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                                id="note-title" type="text" placeholder="Note Title" required>
-                        </div>
-                        <div class="w-1/3">
-                            <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Date</label>
-                            <input
-                                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                                id="note-date" type="date">
-                        </div>
+                <div class="flex gap-4 mb-4">
+                    <div class="w-2/3">
+                        <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Title</label>
+                        <input
+                            class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                            id="note-title" type="text" placeholder="Note Title" required>
                     </div>
-
-                    <!-- Quill Editor Container -->
-                    <div id="editor-container" class="bg-white"></div>
-                    <input type="hidden" id="note-id">
-
-                    <div class="flex justify-end pt-4 gap-2">
-                        <button type="button" onclick="exportNotePDF()"
-                            class="mr-auto px-4 py-2 border border-gray-300 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">Export
-                            PDF</button>
-
-                        <button type="button" onclick="deleteNote()" id="delete-note-btn"
-                            class="hidden text-red-500 hover:text-red-700 font-bold border border-red-200 px-3 py-1 rounded">Delete</button>
-                        <button onclick="saveNote()"
-                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save Note</button>
+                    <div class="w-1/3">
+                        <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Date</label>
+                        <input
+                            class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                            id="note-date" type="date">
                     </div>
+                </div>
+
+                <!-- Quill Editor Container -->
+                <div id="editor-container" class="bg-white"></div>
+                <input type="hidden" id="note-id">
+
+                <div class="flex justify-end pt-4 gap-2">
+                    <button type="button" onclick="exportNotePDF()"
+                        class="mr-auto px-4 py-2 border border-gray-300 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">Export
+                        PDF</button>
+
+                    <button type="button" onclick="deleteNote()" id="delete-note-btn"
+                        class="hidden text-red-500 hover:text-red-700 font-bold border border-red-200 px-3 py-1 rounded">Delete
+                    </button>
+                    <button onclick="saveNote()"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save Note</button>
                 </div>
             </div>
         </div>
+    </div>
 
     <script>
         // --- SUPABASE CONFIGURATION ---
@@ -1014,7 +1016,7 @@
                 margin: 0.5,
                 filename: 'edutrack_report.pdf',
                 image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
+                html2canvas: { scale: 2, useCORS: true },
                 jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
             };
 
@@ -1436,24 +1438,31 @@
                         const cat = activeClass.categories.find(c => c.id === asg.categoryId);
                         const catName = cat ? cat.name : 'Unknown';
                         const scoreDisplay = (asg.score !== null && asg.score !== "") ? `${asg.score}/${asg.total}` : '-';
-                        const percent = (asg.score !== null && asg.score !== "") ? Math.round((asg.score / asg.total) * 100) + '%' : '';
+                        const percent = (asg.score !== null && asg.score !== "") ? Math.round((asg.score / asg.total) * 100) : null;
+                        let percentColor = 'text-gray-500 dark:text-gray-400';
+                        if (percent !== null) {
+                            percentColor = percent >= 90 ? 'text-green-600' : percent < 60 ? 'text-red-500' : 'text-gray-500';
+                        }
+                        const statusKey = asg.status || 'not-started';
+                        const statusBadgeHtml = `<span class="text-[10px] uppercase font-bold px-2 py-0.5 rounded status-${statusKey} mr-2">${getStatusLabel(statusKey)}</span>`;
+                        const dateBadge = asg.dueDate ? `<span class="ml-2 text-xs text-gray-400 border border-gray-200 dark:border-gray-600 rounded px-1">${formatDateDisplay(asg.dueDate)}</span>` : '';
 
                         assignmentsHtml += `
                             <li class="px-4 py-4 sm:px-6 flex justify-between items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 group" onclick="editAssignment('${asg.id}')">
                                 <div>
                                     <div class="flex items-center mb-1">
                                         <p class="text-sm font-medium text-blue-600 dark:text-blue-400 truncate mr-2">${asg.name}</p>
-                                        <span class="text-xs font-semibold px-2 py-1 rounded ${getStatusLabel(asg.status)}">${getStatusLabel(asg.status)}</span>
+                                        ${statusBadgeHtml}
                                     </div>
                                     <div class="flex items-center">
                                         <p class="text-xs text-gray-500 dark:text-gray-400">${catName}</p>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400">${formatDateDisplay(asg.dueDate) || 'No Date'}</p>
+                                        ${dateBadge}
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-4">
                                     <div class="text-right">
                                         <p class="text-sm font-bold text-gray-900 dark:text-gray-100">${scoreDisplay}</p>
-                                        <p class="text-xs ${percentColor}">${percent}</p>
+                                        <p class="text-xs ${percentColor}">${percent !== null ? percent + '%' : 'Pending'}</p>
                                     </div>
                                     <span class="text-gray-300 text-sm group-hover:text-gray-900">Edit</span>
                                 </div>
@@ -1503,11 +1512,11 @@
                     });
                     const avg = total > 0 ? Math.round((earned / total) * 100) : 0;
                     return `
-                                                <div class="flex justify-between text-sm">
-                                                    <span class="text-gray-600 dark:text-gray-300">${cat.name} <span class="text-xs text-gray-400">(${cat.weight}%)</span></span>
-                                                    <span class="font-bold ${total > 0 ? 'text-gray-700 dark:text-gray-200' : 'text-gray-400'}">${total > 0 ? avg + '%' : '--'}</span>
-                                                </div>
-                                            `;
+                                            <div class="flex justify-between text-sm">
+                                                <span class="text-gray-600 dark:text-gray-300">${cat.name} <span class="text-xs text-gray-400">(${cat.weight}%)</span></span>
+                                                <span class="font-bold ${total > 0 ? 'text-gray-700 dark:text-gray-200' : 'text-gray-300'}">${total > 0 ? avg + '%' : '--'}</span>
+                                            </div>
+                                        `;
                 }).join('')}
                                     </div>
                                 </div>
@@ -1524,9 +1533,11 @@
                         </div>
 
                         <div class="md:w-2/3">
-                            <div class="flex justify-between items-center mb-4">
+                            <div class="flex justify-between items-center mb-2">
                                 <h3 class="text-lg font-bold text-gray-800 dark:text-gray-200">Assignments</h3>
-                                <button onclick="openAssignmentModal()" class="bg-blue-600 text-white text-sm px-3 py-1.5 rounded hover:bg-blue-700 shadow-sm">+ Add Assignment</button>
+                                <button onclick="openAssignmentModal()" class="bg-blue-600 text-white text-sm px-3 py-1.5 rounded hover:bg-blue-700 shadow-sm">
+                                    + Add Assignment
+                                </button>
                             </div>
                             ${assignmentsHtml}
                         </div>
