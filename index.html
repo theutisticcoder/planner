@@ -420,7 +420,6 @@
             </div>
         </div>
     </div>
-
 <script>
         // --- SUPABASE CONFIGURATION ---
         const SUPABASE_URL = 'https://njgjgpiamweujgyknqtz.supabase.co';
@@ -593,7 +592,7 @@
             return str;
         }
 
-        // Helper: Robust CSV Parser to handle empty columns (,,) correctly
+        // Helper: Robust CSV Parser
         function parseCSVRow(text) {
             const result = [];
             let curValue = '';
@@ -601,12 +600,10 @@
             
             for (let i = 0; i < text.length; i++) {
                 const char = text[i];
-                
                 if (char === '"') {
-                    // Check for escaped quote ("")
                     if (insideQuote && text[i+1] === '"') {
                         curValue += '"';
-                        i++; // skip next quote
+                        i++; 
                     } else {
                         insideQuote = !insideQuote;
                     }
@@ -623,13 +620,9 @@
 
         function exportCSV() {
             if (state.classes.length === 0) return alert("No data to export.");
-            
-            // Header
             let csvContent = "data:text/csv;charset=utf-8,";
             csvContent += "Type,ClassID,ClassName,CatID,CatName,CatWeight,AsgID,AsgName,AsgScore,AsgTotal,AsgDate,AsgStatus\n";
-            
             state.classes.forEach(cls => {
-                // Export Categories
                 cls.categories.forEach(cat => {
                     csvContent += [
                         'Category',
@@ -638,11 +631,9 @@
                         escapeCsv(cat.id),
                         escapeCsv(cat.name),
                         escapeCsv(cat.weight),
-                        '','','','','','' // Empty Assignment Fields
+                        '','','','','',''
                     ].join(',') + '\n';
                 });
-                
-                // Export Assignments
                 cls.assignments.forEach(asg => {
                     const cat = cls.categories.find(c => c.id === asg.categoryId);
                     const catName = cat ? cat.name : "Unknown";
@@ -652,7 +643,7 @@
                         escapeCsv(cls.name),
                         escapeCsv(asg.categoryId),
                         escapeCsv(catName),
-                        '', // Empty Weight Field
+                        '',
                         escapeCsv(asg.id),
                         escapeCsv(asg.name),
                         escapeCsv(asg.score),
@@ -662,7 +653,6 @@
                     ].join(',') + '\n';
                 });
             });
-
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
@@ -678,24 +668,14 @@
             const reader = new FileReader();
             reader.onload = function(e) {
                 const text = e.target.result;
-                // Split by newline but handle carriage returns
                 const rows = text.replace(/\r\n/g, '\n').split('\n').slice(1);
-                
                 const newClasses = [];
                 const classMap = {}; 
                 
                 rows.forEach(row => {
                     if (!row.trim()) return;
-                    
-                    // Use the robust parser
                     const cols = parseCSVRow(row);
-                    
-                    // Need at least index 3 (CatID) to be valid
                     if (cols.length < 4) return;
-
-                    // MAPPING
-                    // 0:Type, 1:ClassID, 2:ClassName, 3:CatID, 4:CatName, 5:CatWeight
-                    // 6:AsgID, 7:AsgName, 8:AsgScore, 9:AsgTotal, 10:AsgDate, 11:AsgStatus
 
                     const type = cols[0];
                     const classId = cols[1];
@@ -707,7 +687,7 @@
                             name: className,
                             categories: [],
                             assignments: [],
-                            notes: [] // Init empty notes
+                            notes: []
                         };
                         newClasses.push(classMap[classId]);
                     }
@@ -1099,6 +1079,64 @@
         }
 
         // --- UI RENDERING ---
+        function renderTodoList() {
+            const listEl = document.getElementById('todo-list');
+            listEl.innerHTML = '';
+            let allAssignments = [];
+            state.classes.forEach(cls => {
+                cls.assignments.forEach(asg => {
+                    if (asg.status !== 'completed' && asg.status !== 'submitted' && asg.status !== 'na') {
+                        allAssignments.push({ ...asg, className: cls.name, classId: cls.id });
+                    }
+                });
+            });
+            allAssignments.sort((a, b) => {
+                if (!a.dueDate) return 1;
+                if (!b.dueDate) return -1;
+                return new Date(a.dueDate) - new Date(b.dueDate);
+            });
+            if (allAssignments.length === 0) {
+                listEl.innerHTML = '<p class="text-gray-400 italic">No pending assignments.</p>';
+                return;
+            }
+            const today = new Date(Date.now());
+            allAssignments.forEach(asg => {
+                let timeText = asg.dueDate || 'No Date';
+                let timeColor = 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300';
+                if (asg.dueDate) {
+                    const dueDate = new Date(asg.dueDate);
+                    const todayZero = new Date(); todayZero.setHours(0,0,0,0);
+                    const dueZero = new Date(dueDate); dueZero.setHours(0,0,0,0);
+                    
+                    if (dueZero < todayZero) {
+                        timeColor = 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+                        timeText += ' (Overdue)';
+                    } else if (dueZero.getTime() === todayZero.getTime()) {
+                        timeColor = 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
+                        timeText = 'Today';
+                    } else {
+                        timeColor = 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+                    }
+                }
+                const item = document.createElement('div');
+                item.className = 'flex justify-between items-center bg-gray-50 dark:bg-gray-800 p-2 rounded border border-gray-100 dark:border-gray-700 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700';
+                item.onclick = () => {
+                    state.activeTab = asg.classId;
+                    switchMainView('dashboard'); 
+                    render();
+                    editAssignment(asg.id); 
+                };
+                item.innerHTML = `
+                    <div>
+                        <span class="font-medium text-gray-800 dark:text-gray-200">${asg.name}</span>
+                        <span class="text-xs text-gray-500 dark:text-gray-400 block">${asg.className}</span>
+                    </div>
+                    <span class="text-xs font-semibold px-2 py-1 rounded ${timeColor}">${timeText}</span>
+                `;
+                listEl.appendChild(item);
+            });
+        }
+
         function render() {
             renderTodoList();
             
