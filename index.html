@@ -925,10 +925,21 @@
         // --- PDF GENERATION LOGIC ---
         
         // Helper: Convert an HTML element to a canvas image URL
+       // --- PDF GENERATION LOGIC ---
+        
+        // Helper: Convert an HTML element to a canvas image URL
         async function elementToImage(element) {
-            const canvas = await html2canvas(element, { scale: 2, useCORS: true });
+            // We increase scale for better resolution, but we must ensure the 
+            // element width fits within standard paper ratios first.
+            const canvas = await html2canvas(element, { 
+                scale: 2, 
+                useCORS: true,
+                logging: false,
+                windowWidth: element.scrollWidth, 
+                windowHeight: element.scrollHeight
+            });
             return {
-                imgData: canvas.toDataURL('image/jpeg', 1.0),
+                imgData: canvas.toDataURL('image/jpeg', 0.95), // 0.95 quality
                 width: canvas.width,
                 height: canvas.height
             };
@@ -937,14 +948,15 @@
         async function generateReportPDF() {
             if (state.classes.length === 0) return alert("No classes to export.");
 
-            // Create invisible container
+            // A4 dimensions in px at 96dpi is roughly 794px width. 
+            // We set width to 750px to leave room for margins.
             const container = document.createElement('div');
-            container.style.width = '700px'; 
+            container.style.width = '750px'; 
             container.style.padding = '40px';
             container.style.position = 'absolute';
             container.style.top = '0';
             container.style.left = '0';
-            container.style.zIndex = '-1';
+            container.style.zIndex = '-1'; // Hide behind UI
             container.style.background = '#fff';
             container.style.color = '#000';
             
@@ -953,12 +965,12 @@
             const doc = new jsPDF('p', 'mm', 'a4');
             const pageWidth = doc.internal.pageSize.getWidth();
             const pageHeight = doc.internal.pageSize.getHeight();
-            const margin = 15;
+            const margin = 10; // 10mm margin
 
             // Generate Overall Report HTML
             let overallGPA = document.getElementById('overall-gpa').innerText;
             let reportHtml = `
-                <div style="font-family: sans-serif;">
+                <div style="font-family: sans-serif; width: 100%; box-sizing: border-box;">
                     <h1 style="color: #2563eb; text-align: center; border-bottom: 2px solid #2563eb; padding-bottom: 10px;">EduTrack Report</h1>
                     <p style="text-align: center; color: #666; margin-bottom: 20px;">Cumulative GPA: ${overallGPA}</p>
                 </div>
@@ -976,7 +988,7 @@
                     const scoreText = (asg.score) ? `${asg.score}/${asg.total}` : '-';
                     rowsHtml += `
                         <tr style="border-bottom: 1px solid #ddd;">
-                            <td style="padding: 6px;">${asg.name}</td>
+                            <td style="padding: 6px; word-wrap: break-word;">${asg.name}</td>
                             <td style="padding: 6px;">${cat ? cat.name : ''}</td>
                             <td style="padding: 6px;">${formatDateDisplay(asg.dueDate)}</td>
                             <td style="padding: 6px;">${scoreText}</td>
@@ -985,15 +997,15 @@
                 });
 
                 reportHtml += `
-                    <div style="font-family: sans-serif; margin-bottom: 30px; page-break-inside: avoid;">
-                        <h2 style="background: #f3f4f6; padding: 10px; border-radius: 5px;">${cls.name} <span style="float: right;">${grade ? grade.toFixed(1)+'%' : ''} (${letter})</span></h2>
-                        <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                    <div style="font-family: sans-serif; margin-bottom: 30px; page-break-inside: avoid; width: 100%;">
+                        <h2 style="background: #f3f4f6; padding: 10px; border-radius: 5px; margin-top: 0;">${cls.name} <span style="float: right;">${grade ? grade.toFixed(1)+'%' : ''} (${letter})</span></h2>
+                        <table style="width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed;">
                             <thead>
                                 <tr style="background: #eee; font-weight: bold;">
-                                    <td style="padding: 6px;">Assignment</td>
-                                    <td style="padding: 6px;">Category</td>
-                                    <td style="padding: 6px;">Due</td>
-                                    <td style="padding: 6px;">Score</td>
+                                    <td style="padding: 6px; width: 40%;">Assignment</td>
+                                    <td style="padding: 6px; width: 25%;">Category</td>
+                                    <td style="padding: 6px; width: 20%;">Due</td>
+                                    <td style="padding: 6px; width: 15%;">Score</td>
                                 </tr>
                             </thead>
                             <tbody>${rowsHtml}</tbody>
@@ -1004,7 +1016,6 @@
 
             container.innerHTML = reportHtml;
             
-            // Render to canvas using html2canvas
             const { imgData, width, height } = await elementToImage(container);
             
             const imgWidth = pageWidth - (margin * 2);
@@ -1013,15 +1024,13 @@
             let heightLeft = imgHeight;
             let position = margin;
             
-            // Add first page
             doc.addImage(imgData, 'JPEG', margin, position, imgWidth, imgHeight);
             heightLeft -= (pageHeight - margin);
 
-            // Add extra pages if needed
             while (heightLeft >= 0) {
-                position = heightLeft - imgHeight + margin; // negative offset
+                position = heightLeft - imgHeight + margin; 
                 doc.addPage();
-                doc.addImage(imgData, 'JPEG', margin, position - margin, imgWidth, imgHeight); // Adjust position to simulate scroll
+                doc.addImage(imgData, 'JPEG', margin, position - margin, imgWidth, imgHeight); 
                 heightLeft -= pageHeight;
             }
 
@@ -1034,20 +1043,24 @@
             const content = quill.root.innerHTML;
             const date = document.getElementById('note-date').value;
             
+            // Fix: Set width explicitly to match A4 proportions (approx 210mm / 8.27in)
+            // 750px is a safe printable width for typical screens to render canvas
             const container = document.createElement('div');
-            container.style.width = '700px'; 
-            container.style.padding = '40px';
+            container.style.width = '750px'; 
+            container.style.padding = '40px'; 
+            container.style.boxSizing = 'border-box'; // Ensure padding doesn't expand width
             container.style.position = 'absolute';
             container.style.top = '0'; 
             container.style.left = '0';
             container.style.zIndex = '-1';
             container.style.background = '#fff';
             
+            // Fix: Add white-space properties to force wrapping
             container.innerHTML = `
-                <div style="font-family: sans-serif;">
-                    <h1 style="color: #2563eb; border-bottom: 2px solid #eee; padding-bottom: 10px;">${title}</h1>
+                <div style="font-family: sans-serif; width: 100%; word-wrap: break-word; overflow-wrap: break-word;">
+                    <h1 style="color: #2563eb; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 0;">${title}</h1>
                     <p style="color: #666; font-size: 14px; margin-bottom: 20px;">${formatDateDisplay(date)}</p>
-                    <div class="ql-editor" style="padding: 0;">${content}</div>
+                    <div class="ql-editor" style="padding: 0; white-space: normal;">${content}</div>
                 </div>
             `;
             
@@ -1056,11 +1069,25 @@
             const { imgData, width, height } = await elementToImage(container);
             const doc = new jsPDF('p', 'mm', 'a4');
             const pageWidth = doc.internal.pageSize.getWidth();
-            const imgWidth = pageWidth - 30; // 15mm margin
+            const margin = 15;
+            const imgWidth = pageWidth - (margin * 2); 
             const imgHeight = (height * imgWidth) / width;
             
-            doc.addImage(imgData, 'JPEG', 15, 15, imgWidth, imgHeight);
-            doc.save(`${title.replace(/\s+/g, '_')}.pdf`);
+            // Handle pagination if the note is very long
+            let heightLeft = imgHeight;
+            let position = margin;
+            
+            doc.addImage(imgData, 'JPEG', margin, position, imgWidth, imgHeight);
+            heightLeft -= (doc.internal.pageSize.getHeight() - margin);
+            
+             while (heightLeft >= 0) {
+                position = heightLeft - imgHeight + margin;
+                doc.addPage();
+                doc.addImage(imgData, 'JPEG', margin, position - margin, imgWidth, imgHeight);
+                heightLeft -= doc.internal.pageSize.getHeight();
+            }
+            
+            doc.save(`${title.replace(/[^a-z0-9]/gi, '_')}.pdf`);
             document.body.removeChild(container);
         }
 
@@ -1074,10 +1101,10 @@
             const pageHeight = doc.internal.pageSize.getHeight();
             const margin = 15;
             
-            // Create container for rendering
             const container = document.createElement('div');
-            container.style.width = '700px'; 
+            container.style.width = '750px'; // Fixed width
             container.style.padding = '40px';
+            container.style.boxSizing = 'border-box';
             container.style.position = 'absolute';
             container.style.top = '0';
             container.style.left = '0';
@@ -1087,36 +1114,47 @@
 
             let firstPage = true;
 
-            // Sort notes by date
             const sortedNotes = [...cls.notes].sort((a,b) => new Date(b.date) - new Date(a.date));
 
             for (let i = 0; i < sortedNotes.length; i++) {
                 const note = sortedNotes[i];
                 
-                // Set HTML for this specific note
                 container.innerHTML = `
-                    <div style="font-family: sans-serif; min-height: 900px;">
-                        <h1 style="color: #2563eb; border-bottom: 2px solid #eee; padding-bottom: 10px;">${note.title}</h1>
+                    <div style="font-family: sans-serif; min-height: 800px; width: 100%; word-wrap: break-word;">
+                        <h1 style="color: #2563eb; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 0;">${note.title}</h1>
                         <p style="color: #666; font-size: 14px; margin-bottom: 20px;">${formatDateDisplay(note.date)}</p>
-                        <div class="ql-editor" style="padding: 0;">${note.content}</div>
+                        <div class="ql-editor" style="padding: 0; white-space: normal;">${note.content}</div>
                     </div>
                 `;
 
-                // Render this note to image
                 const { imgData, width, height } = await elementToImage(container);
                 
                 const imgWidth = pageWidth - (margin * 2);
                 const imgHeight = (height * imgWidth) / width;
 
                 if (!firstPage) doc.addPage();
-                doc.addImage(imgData, 'JPEG', margin, margin, imgWidth, imgHeight);
+                
+                // Add content
+                let heightLeft = imgHeight;
+                let position = margin;
+                
+                doc.addImage(imgData, 'JPEG', margin, position, imgWidth, imgHeight);
+                heightLeft -= (pageHeight - margin);
+
+                 // Handle pagination within a single long note
+                while (heightLeft >= 0) {
+                    position = heightLeft - imgHeight + margin;
+                    doc.addPage();
+                    doc.addImage(imgData, 'JPEG', margin, position - margin, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                }
+                
                 firstPage = false;
             }
 
             document.body.removeChild(container);
             doc.save(`${cls.name}_Notes.pdf`);
         }
-
         // --- DATA PERSISTENCE ---
         async function saveData() {
             if (state.user) {
