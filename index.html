@@ -68,7 +68,7 @@
         .dark .calendar-header { background-color: #374151; color: #d1d5db; }
         .dark .calendar-grid-bg { background-color: #374151; border-color: #374151; }
 
-        /* QUILL EDITOR DARK MODE OVERRIDES */
+        /* QUILL EDITOR OVERRIDES */
         .dark .ql-toolbar {
             background-color: #374151;
             border-color: #4b5563;
@@ -86,6 +86,9 @@
         #editor-container {
             height: 400px;
         }
+        
+        /* Fix for Quill font size dropdown width */
+        .ql-snow .ql-picker.ql-size { width: 60px; }
     </style>
 </head>
 <body class="text-gray-800">
@@ -421,13 +424,17 @@
         };
 
         // --- QUILL INIT ---
+        // Register Font Sizes in PX for numbers
+        var Size = Quill.import('attributors/style/size');
+        Size.whitelist = ['10px', '12px', '14px', '16px', '18px', '20px', '24px', '30px', '36px', '48px'];
+        Quill.register(Size, true);
+
         var quill = new Quill('#editor-container', {
             theme: 'snow',
             modules: {
                 toolbar: [
                     [{ 'font': [] }],
-                    [{ 'size': ['small', false, 'large', 'huge'] }],
-                    [{ 'header': [1, 2, 3, false] }],
+                    [{ 'size': Size.whitelist }], // Use number based sizes
                     ['bold', 'italic', 'underline', 'strike'],
                     [{ 'color': [] }, { 'background': [] }],
                     [{ 'list': 'ordered'}, { 'list': 'bullet' }],
@@ -436,6 +443,23 @@
                 ]
             }
         });
+
+        // --- DATE HELPER (Fixes Off-by-one error) ---
+        // Splits YYYY-MM-DD and creates local date to avoid UTC conversion shifts
+        function getLocalDateObject(dateString) {
+            if (!dateString) return null;
+            // Check if ISO string (has T) or simple date
+            if (dateString.includes('T')) {
+                return new Date(dateString); // Treat ISO as is (though often best to stick to one format)
+            }
+            const [y, m, d] = dateString.split('-').map(Number);
+            return new Date(y, m - 1, d);
+        }
+
+        function formatDateDisplay(dateString) {
+            const date = getLocalDateObject(dateString);
+            return date ? date.toLocaleDateString() : '';
+        }
 
         // --- DARK MODE LOGIC ---
         function initDarkMode() {
@@ -767,7 +791,7 @@
                             <tr style="border-bottom: 1px solid #e5e7eb;">
                                 <td style="padding: 8px;">${asg.name}</td>
                                 <td style="padding: 8px;">${catName}</td>
-                                <td style="padding: 8px;">${asg.dueDate || '-'}</td>
+                                <td style="padding: 8px;">${formatDateDisplay(asg.dueDate) || '-'}</td>
                                 <td style="padding: 8px; font-weight: bold;">${scoreDisplay} (${percent})</td>
                             </tr>
                         `;
@@ -1013,14 +1037,16 @@
                 titleInput.value = note.title;
                 quill.root.innerHTML = note.content;
                 idInput.value = note.id;
-                // Format date for input type="date"
-                dateInput.value = note.date ? note.date.slice(0, 10) : new Date().toISOString().slice(0,10);
+                // If note.date is simple YYYY-MM-DD, use it. If ISO, slice it.
+                dateInput.value = note.date.includes('T') ? note.date.slice(0, 10) : note.date;
                 deleteBtn.classList.remove('hidden');
             } else {
                 titleInput.value = '';
                 quill.root.innerHTML = ''; 
                 idInput.value = '';
-                dateInput.value = new Date().toISOString().slice(0,10); // Default to today
+                // Default to today using local YYYY-MM-DD
+                const now = new Date();
+                dateInput.value = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
                 deleteBtn.classList.add('hidden');
             }
             toggleModal('note-modal', true);
@@ -1039,8 +1065,12 @@
 
             if (!title) return alert("Please enter a title");
 
-            // Ensure dateVal is a proper ISO string or default to now
-            const finalDate = dateVal ? new Date(dateVal).toISOString() : new Date().toISOString();
+            // Use the user-picked date directly (YYYY-MM-DD) or fallback to today
+            let finalDate = dateVal;
+            if(!finalDate) {
+                const now = new Date();
+                finalDate = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+            }
 
             if (!cls.notes) cls.notes = [];
 
@@ -1080,18 +1110,16 @@
             const content = quill.root.innerHTML;
             const dateVal = document.getElementById('note-date').value;
             
-            // Create a temporary container
             const element = document.createElement('div');
             element.style.padding = '30px';
             element.style.fontFamily = 'Inter, sans-serif';
-            // Force light mode styles for the PDF
             element.style.color = 'black';
             element.style.backgroundColor = 'white';
 
             element.innerHTML = `
                 <div style="border-bottom: 2px solid #2563eb; padding-bottom: 10px; margin-bottom: 20px;">
                     <h1 style="margin: 0; color: #2563eb;">${title}</h1>
-                    <p style="margin: 5px 0; color: #666; font-size: 0.9em;">${dateVal}</p>
+                    <p style="margin: 5px 0; color: #666; font-size: 0.9em;">${formatDateDisplay(dateVal)}</p>
                 </div>
                 <div class="note-content">
                     ${content}
@@ -1130,19 +1158,17 @@
                 listEl.innerHTML = '<p class="text-gray-400 italic">No pending assignments.</p>';
                 return;
             }
-            const today = new Date(Date.now());
+            const today = new Date(); today.setHours(0,0,0,0);
+            
             allAssignments.forEach(asg => {
-                let timeText = asg.dueDate || 'No Date';
+                let timeText = formatDateDisplay(asg.dueDate) || 'No Date';
                 let timeColor = 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300';
                 if (asg.dueDate) {
-                    const dueDate = new Date(asg.dueDate);
-                    const todayZero = new Date(); todayZero.setHours(0,0,0,0);
-                    const dueZero = new Date(dueDate); dueZero.setHours(0,0,0,0);
-                    
-                    if (dueZero < todayZero) {
+                    const dueZero = getLocalDateObject(asg.dueDate);
+                    if (dueZero < today) {
                         timeColor = 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
                         timeText += ' (Overdue)';
-                    } else if (dueZero.getTime() === todayZero.getTime()) {
+                    } else if (dueZero.getTime() === today.getTime()) {
                         timeColor = 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
                         timeText = 'Today';
                     } else {
@@ -1225,7 +1251,7 @@
                         }
                         const statusKey = asg.status || 'not-started';
                         const statusBadgeHtml = `<span class="text-[10px] uppercase font-bold px-2 py-0.5 rounded status-${statusKey} mr-2">${getStatusLabel(statusKey)}</span>`;
-                        const dateBadge = asg.dueDate ? `<span class="ml-2 text-xs text-gray-400 border border-gray-200 dark:border-gray-600 rounded px-1">${asg.dueDate}</span>` : '';
+                        const dateBadge = asg.dueDate ? `<span class="ml-2 text-xs text-gray-400 border border-gray-200 dark:border-gray-600 rounded px-1">${formatDateDisplay(asg.dueDate)}</span>` : '';
 
                         assignmentsHtml += `
                             <li class="px-4 py-4 sm:px-6 flex justify-between items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 group" onclick="editAssignment('${asg.id}')">
@@ -1262,7 +1288,7 @@
                         notesHtml += `
                             <div onclick="openNoteModal('${note.id}')" class="p-2 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700">
                                 <p class="font-bold text-sm text-gray-800 dark:text-gray-200">${note.title}</p>
-                                <p class="text-xs text-gray-500">${new Date(note.date).toLocaleDateString()}</p>
+                                <p class="text-xs text-gray-500">${formatDateDisplay(note.date)}</p>
                             </div>
                         `;
                     });
